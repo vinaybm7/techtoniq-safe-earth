@@ -1,61 +1,35 @@
-
 import { Activity, Filter, Info, MapPin, Search } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
 import PageLayout from "@/components/PageLayout";
 import EarthquakeCard from "@/components/EarthquakeCard";
+import { fetchRecentEarthquakes } from "@/services/earthquakeService";
+import { useToast } from "@/hooks/use-toast";
 
 const RealTimeData = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
 
-  // Mock data for earthquakes
-  const recentEarthquakes = [
-    {
-      magnitude: 6.7,
-      location: "Santiago, Chile",
-      date: "Today, 04:32 AM",
-      depth: 35,
+  const { data: earthquakes, isLoading, error } = useQuery({
+    queryKey: ['earthquakes'],
+    queryFn: fetchRecentEarthquakes,
+    refetchInterval: 300000,
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to fetch earthquake data. Please try again later.",
+        variant: "destructive",
+      });
     },
-    {
-      magnitude: 5.1,
-      location: "Tokyo, Japan",
-      date: "Yesterday, 11:47 PM",
-      depth: 22,
-    },
-    {
-      magnitude: 4.2,
-      location: "Alaska, USA",
-      date: "April 15, 2025, 08:12 AM",
-      depth: 18,
-    },
-    {
-      magnitude: 3.8,
-      location: "Los Angeles, California",
-      date: "April 14, 2025, 02:53 PM",
-      depth: 12,
-    },
-    {
-      magnitude: 5.4,
-      location: "Wellington, New Zealand",
-      date: "April 13, 2025, 07:22 AM",
-      depth: 28,
-    },
-    {
-      magnitude: 4.7,
-      location: "Athens, Greece",
-      date: "April 12, 2025, 11:39 PM",
-      depth: 15,
-    },
-  ];
+  });
 
-  // Filter earthquakes based on search term
-  const filteredEarthquakes = recentEarthquakes.filter((quake) =>
+  const filteredEarthquakes = earthquakes?.filter((quake) =>
     quake.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
 
-  // Mock data for intensity chart
   const intenseRegions = [
     { region: "Pacific Ring of Fire", activity: 85 },
     { region: "Mediterranean-Himalayan Belt", activity: 62 },
@@ -84,7 +58,6 @@ const RealTimeData = () => {
               <TabsTrigger value="locations">Earthquake Locations</TabsTrigger>
             </TabsList>
 
-            {/* Latest Events Tab */}
             <TabsContent value="latest" className="animate-fade-in">
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative max-w-md">
@@ -102,10 +75,20 @@ const RealTimeData = () => {
                 </Button>
               </div>
 
-              {filteredEarthquakes.length > 0 ? (
+              {isLoading ? (
+                <div className="flex h-60 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-techtoniq-blue border-t-transparent"></div>
+                  <p className="mt-4 text-techtoniq-earth">Loading earthquake data...</p>
+                </div>
+              ) : error ? (
+                <div className="flex h-60 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50">
+                  <Info className="mb-2 h-10 w-10 text-techtoniq-alert" />
+                  <p className="text-techtoniq-earth">Failed to load earthquake data</p>
+                </div>
+              ) : filteredEarthquakes.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredEarthquakes.map((quake, index) => (
-                    <EarthquakeCard key={index} {...quake} />
+                  {filteredEarthquakes.map((quake) => (
+                    <EarthquakeCard key={quake.id} {...quake} />
                   ))}
                 </div>
               ) : (
@@ -121,20 +104,18 @@ const RealTimeData = () => {
                     Data is refreshed every 5 minutes
                   </p>
                   <p className="mt-1 text-techtoniq-earth">
-                    Last updated: April 16, 2025, 11:45 AM
+                    Last updated: {new Date().toLocaleString()}
                   </p>
                 </div>
               </div>
             </TabsContent>
 
-            {/* Intensity Chart Tab */}
             <TabsContent value="intensity" className="animate-fade-in">
               <div className="rounded-lg border bg-white p-6">
                 <h3 className="mb-6 text-xl font-medium text-techtoniq-earth-dark">
                   Global Earthquake Intensity
                 </h3>
                 <div className="mb-8 h-64 w-full rounded-lg bg-gray-50 p-4">
-                  {/* This would be a real chart in production */}
                   <div className="flex h-full w-full flex-col justify-between">
                     {intenseRegions.map((region, i) => (
                       <div key={i} className="flex items-center gap-2">
@@ -167,14 +148,12 @@ const RealTimeData = () => {
               </div>
             </TabsContent>
 
-            {/* Earthquake Locations Tab */}
             <TabsContent value="locations" className="animate-fade-in">
               <div className="rounded-lg border bg-white p-6">
                 <h3 className="mb-6 text-xl font-medium text-techtoniq-earth-dark">
                   Global Earthquake Map
                 </h3>
                 <div className="aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-200">
-                  {/* This would be an interactive map in production */}
                   <div className="flex h-full items-center justify-center">
                     <div className="text-center">
                       <MapPin className="mx-auto h-12 w-12 text-gray-400" />
