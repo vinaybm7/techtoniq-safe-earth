@@ -1,3 +1,4 @@
+
 import { Activity, Filter, Info, MapPin, Search } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -17,12 +18,14 @@ const RealTimeData = () => {
     queryKey: ['earthquakes'],
     queryFn: fetchRecentEarthquakes,
     refetchInterval: 300000,
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to fetch earthquake data. Please try again later.",
-        variant: "destructive",
-      });
+    meta: {
+      onError: () => {
+        toast({
+          title: "Error",
+          description: "Failed to fetch earthquake data. Please try again later.",
+          variant: "destructive",
+        });
+      },
     },
   });
 

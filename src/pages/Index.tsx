@@ -1,4 +1,3 @@
-
 import { AlertTriangle, ArrowRight, Book, ChevronLeft, ChevronRight, Clock, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -31,21 +30,23 @@ const Index = () => {
     },
   ];
 
-  // Recent earthquakes data (mock data)
   const recentEarthquakes = [
     {
+      id: "eq-chile-1",
       magnitude: 6.7,
       location: "Santiago, Chile",
       date: "Today, 04:32 AM",
       depth: 35,
     },
     {
+      id: "eq-japan-1",
       magnitude: 5.1,
       location: "Tokyo, Japan",
       date: "Yesterday, 11:47 PM",
       depth: 22,
     },
     {
+      id: "eq-alaska-1",
       magnitude: 4.2,
       location: "Alaska, USA",
       date: "April 15, 2025, 08:12 AM",
@@ -63,7 +64,6 @@ const Index = () => {
 
   return (
     <PageLayout>
-      {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-techtoniq-blue-light to-white py-16">
         <div className="container relative z-10 px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
@@ -93,12 +93,10 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Decorative elements */}
         <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-techtoniq-teal/10"></div>
         <div className="absolute -right-10 top-20 h-32 w-32 rounded-full bg-techtoniq-blue/10"></div>
       </section>
 
-      {/* Real-time data section */}
       <section className="py-12 md:py-16">
         <div className="container px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
@@ -131,7 +129,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Learn how to prepare section */}
       <section className="bg-techtoniq-teal-light/30 py-12 md:py-16">
         <div className="container px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
@@ -194,7 +191,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Get Started section */}
       <section className="bg-white py-12 md:py-16">
         <div className="container px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
