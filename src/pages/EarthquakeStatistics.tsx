@@ -1,10 +1,15 @@
-
 import { BarChart, BookOpen, LineChart } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 const EarthquakeStatistics = () => {
   return (
     <PageLayout>
+      <PageBreadcrumbs
+        items={[
+          { label: "Earthquake Statistics" }
+        ]}
+      />
       <section className="bg-techtoniq-blue-light/30 py-12">
         <div className="container">
           <h1 className="mb-4 text-3xl font-bold text-techtoniq-earth-dark">Earthquake Statistics</h1>

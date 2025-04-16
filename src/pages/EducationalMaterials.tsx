@@ -1,11 +1,16 @@
-
 import { BookOpen, PlayCircle, ScrollText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageLayout from "@/components/PageLayout";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 const EducationalMaterials = () => {
   return (
     <PageLayout>
+      <PageBreadcrumbs
+        items={[
+          { label: "Educational Materials" }
+        ]}
+      />
       <section className="bg-techtoniq-teal-light/30 py-12">
         <div className="container">
           <h1 className="mb-4 text-3xl font-bold text-techtoniq-earth-dark">Educational Materials</h1>

@@ -1,11 +1,16 @@
-
 import { MapPin, Map } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageLayout from "@/components/PageLayout";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 const EarthquakeByRegion = () => {
   return (
     <PageLayout>
+      <PageBreadcrumbs
+        items={[
+          { label: "Earthquake by Region" }
+        ]}
+      />
       <section className="bg-techtoniq-blue-light/30 py-12">
         <div className="container">
           <h1 className="mb-4 text-3xl font-bold text-techtoniq-earth-dark">Earthquake by Region</h1>

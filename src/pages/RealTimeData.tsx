@@ -1,4 +1,3 @@
-
 import { Activity, Filter, Info, MapPin, Search } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import PageLayout from "@/components/PageLayout";
 import EarthquakeCard from "@/components/EarthquakeCard";
 import { fetchRecentEarthquakes } from "@/services/earthquakeService";
 import { useToast } from "@/hooks/use-toast";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 const RealTimeData = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,6 +43,11 @@ const RealTimeData = () => {
 
   return (
     <PageLayout>
+      <PageBreadcrumbs
+        items={[
+          { label: "Real-Time Data" }
+        ]}
+      />
       <section className="bg-techtoniq-blue-light/30 py-12">
         <div className="container">
           <h1 className="mb-4 text-3xl font-bold text-techtoniq-earth-dark">Real-Time Earthquake Data</h1>

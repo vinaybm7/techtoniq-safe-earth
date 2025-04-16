@@ -1,10 +1,15 @@
-
 import { Phone, Landmark, MapPin } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 const EmergencyResources = () => {
   return (
     <PageLayout>
+      <PageBreadcrumbs
+        items={[
+          { label: "Emergency Resources" }
+        ]}
+      />
       <section className="bg-techtoniq-alert-light/20 py-12">
         <div className="container">
           <h1 className="mb-4 text-3xl font-bold text-techtoniq-earth-dark">Emergency Resources</h1>
