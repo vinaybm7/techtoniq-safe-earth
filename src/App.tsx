@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import EarthquakeStatistics from "./pages/EarthquakeStatistics";
 import EarthquakeByRegion from "./pages/EarthquakeByRegion";
 import EmergencyResources from "./pages/EmergencyResources";
 import EducationalMaterials from "./pages/EducationalMaterials";
+import LatestNews from "./pages/LatestNews";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,7 @@ const App = () => (
           <Route path="/earthquake-by-region" element={<EarthquakeByRegion />} />
           <Route path="/emergency-resources" element={<EmergencyResources />} />
           <Route path="/educational-materials" element={<EducationalMaterials />} />
+          <Route path="/latest-news" element={<LatestNews />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
