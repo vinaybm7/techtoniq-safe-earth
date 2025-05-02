@@ -12,14 +12,6 @@ const SafetyGuidelines = () => {
   const [isDuringOpen, setIsDuringOpen] = useState(false);
   const [isAfterOpen, setIsAfterOpen] = useState(false);
 
-  const handleHover = (section: 'before' | 'during' | 'after', isHovering: boolean) => {
-    if (isHovering) {
-      if (section === 'before') setIsBeforeOpen(true);
-      if (section === 'during') setIsDuringOpen(true);
-      if (section === 'after') setIsAfterOpen(true);
-    }
-  };
-
   return (
     <PageLayout>
       <PageBreadcrumbs
@@ -42,8 +34,8 @@ const SafetyGuidelines = () => {
             {/* Before an Earthquake */}
             <div 
               className="group"
-              onMouseEnter={() => handleHover('before', true)}
-              onMouseLeave={() => handleHover('before', false)}
+              onMouseEnter={() => setIsBeforeOpen(true)}
+              onMouseLeave={() => setIsBeforeOpen(false)}
             >
               <Collapsible
                 open={isBeforeOpen}
@@ -116,8 +108,8 @@ const SafetyGuidelines = () => {
             {/* During an Earthquake */}
             <div 
               className="group"
-              onMouseEnter={() => handleHover('during', true)}
-              onMouseLeave={() => handleHover('during', false)}
+              onMouseEnter={() => setIsDuringOpen(true)}
+              onMouseLeave={() => setIsDuringOpen(false)}
             >
               <Collapsible
                 open={isDuringOpen}
@@ -190,8 +182,8 @@ const SafetyGuidelines = () => {
             {/* After an Earthquake */}
             <div 
               className="group"
-              onMouseEnter={() => handleHover('after', true)}
-              onMouseLeave={() => handleHover('after', false)}
+              onMouseEnter={() => setIsAfterOpen(true)}
+              onMouseLeave={() => setIsAfterOpen(false)}
             >
               <Collapsible
                 open={isAfterOpen}

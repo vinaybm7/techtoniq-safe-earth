@@ -38,21 +38,21 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
       iframe.style.borderRadius = '0.5rem'; // 8px rounded corners
       iframe.allow = "fullscreen";
       
-      // Set URL based on filterType - focus on Indian region when possible
-      let baseUrl = 'https://earthquake.usgs.gov/earthquakes/map/';
+      // Set URL based on filterType with focus on Indian region when possible
+      const baseUrl = 'https://earthquake.usgs.gov/earthquakes/map/';
       
       switch (filterType) {
         case 'continent':
-          // More focused on India and surrounding regions
-          iframe.src = `${baseUrl}?extent=8.7547,-9.0381&extent=40.1130,115.4932&list=false&listOnlyShown=true`;
+          // Focus on India and surrounding regions
+          iframe.src = `${baseUrl}?extent=8.7547,60.4932&extent=40.1130,115.4932`;
           break;
         case 'magnitude':
           // URL for focusing on magnitude with India-centric view
-          iframe.src = `${baseUrl}?extent=8.7547,-9.0381&extent=40.1130,115.4932&list=false&listOnlyShown=true&search=false&sort=newest&basemap=grayscale&timeZone=utc&settings=false&feed=1.0_week_age_link`;
+          iframe.src = `${baseUrl}?extent=8.7547,60.4932&extent=40.1130,115.4932&list=false&sort=magnitude`;
           break;
         case 'time':
           // URL for recent earthquakes with India-centric view
-          iframe.src = `${baseUrl}?extent=8.7547,-9.0381&extent=40.1130,115.4932&list=false&listOnlyShown=true&search=false&timeZone=utc&settings=false&sort=newest&feed=1.0_day_age_link`;
+          iframe.src = `${baseUrl}?extent=8.7547,60.4932&extent=40.1130,115.4932&list=false&sort=newest`;
           break;
         default:
           iframe.src = baseUrl;
@@ -60,6 +60,9 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
 
       // Add the iframe to the container
       mapContainer.current?.appendChild(iframe);
+      
+      // Log successful creation
+      console.log("Creating USGS Earthquake Map iframe with src:", iframe.src);
     };
 
     // Create the initial iframe
