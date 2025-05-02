@@ -5,11 +5,20 @@ import PageLayout from "@/components/PageLayout";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 const SafetyGuidelines = () => {
   const [isBeforeOpen, setIsBeforeOpen] = useState(false);
   const [isDuringOpen, setIsDuringOpen] = useState(false);
   const [isAfterOpen, setIsAfterOpen] = useState(false);
+
+  const handleHover = (section: 'before' | 'during' | 'after', isHovering: boolean) => {
+    if (isHovering) {
+      if (section === 'before') setIsBeforeOpen(true);
+      if (section === 'during') setIsDuringOpen(true);
+      if (section === 'after') setIsAfterOpen(true);
+    }
+  };
 
   return (
     <PageLayout>
@@ -31,208 +40,226 @@ const SafetyGuidelines = () => {
         <div className="container">
           <div className="mx-auto max-w-4xl space-y-12">
             {/* Before an Earthquake */}
-            <Collapsible
-              open={isBeforeOpen}
-              onOpenChange={setIsBeforeOpen}
+            <div 
               className="group"
+              onMouseEnter={() => handleHover('before', true)}
+              onMouseLeave={() => handleHover('before', false)}
             >
-              <CollapsibleTrigger className="w-full">
-                <div className="mb-6 flex items-center gap-3 transition-colors duration-200 group-hover:bg-techtoniq-blue-light/10 rounded-lg p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-techtoniq-blue-light">
-                    <Clock className="h-5 w-5 text-techtoniq-blue" />
+              <Collapsible
+                open={isBeforeOpen}
+                onOpenChange={setIsBeforeOpen}
+                className="group"
+              >
+                <CollapsibleTrigger className="w-full">
+                  <div className="mb-6 flex items-center gap-3 transition-colors duration-200 group-hover:bg-techtoniq-blue-light/10 rounded-lg p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-techtoniq-blue-light">
+                      <Clock className="h-5 w-5 text-techtoniq-blue" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-techtoniq-earth-dark">Before an Earthquake</h2>
+                    <ChevronDown className={`ml-auto h-5 w-5 transition-transform duration-200 ${isBeforeOpen ? "transform rotate-180" : ""}`} />
                   </div>
-                  <h2 className="text-2xl font-bold text-techtoniq-earth-dark">Before an Earthquake</h2>
-                  <ChevronDown className={`ml-auto h-5 w-5 transition-transform duration-200 ${isBeforeOpen ? "transform rotate-180" : ""}`} />
-                </div>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4">
-                <div className="rounded-lg border bg-white p-6 shadow-sm">
-                  <ul className="space-y-6">
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Develop an Emergency Plan</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Create a family emergency plan that includes meeting places, emergency contact information, and plans for different scenarios. Make sure all family members know the plan.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Prepare Emergency Supplies</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Put together an emergency kit with water, non-perishable food, first aid supplies, flashlights, batteries, medications, and other essentials. Plan for at least 72 hours of self-sufficiency.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Secure Your Home</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Bolt bookcases and tall furniture to wall studs. Secure heavy items on lower shelves. Install latches on cabinets. Secure water heaters with straps. Repair structural defects.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Know Utility Shutoffs</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Learn the location of utility shutoffs (gas, water, electricity) and how to turn them off. Keep necessary tools nearby and teach responsible family members how to use them.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Practice Drills</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Practice "drop, cover, and hold on" drills with your family regularly. Identify safe spots in each room — under sturdy tables or against interior walls away from windows.
-                        </p>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4">
+                  <div className="rounded-lg border bg-white p-6 shadow-sm">
+                    <ul className="space-y-6">
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Develop an Emergency Plan</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Create a family emergency plan that includes meeting places, emergency contact information, and plans for different scenarios. Make sure all family members know the plan.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Prepare Emergency Supplies</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Put together an emergency kit with water, non-perishable food, first aid supplies, flashlights, batteries, medications, and other essentials. Plan for at least 72 hours of self-sufficiency.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Secure Your Home</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Bolt bookcases and tall furniture to wall studs. Secure heavy items on lower shelves. Install latches on cabinets. Secure water heaters with straps. Repair structural defects.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Know Utility Shutoffs</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Learn the location of utility shutoffs (gas, water, electricity) and how to turn them off. Keep necessary tools nearby and teach responsible family members how to use them.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Practice Drills</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Practice "drop, cover, and hold on" drills with your family regularly. Identify safe spots in each room — under sturdy tables or against interior walls away from windows.
+                          </p>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
 
             {/* During an Earthquake */}
-            <Collapsible
-              open={isDuringOpen}
-              onOpenChange={setIsDuringOpen}
+            <div 
               className="group"
+              onMouseEnter={() => handleHover('during', true)}
+              onMouseLeave={() => handleHover('during', false)}
             >
-              <CollapsibleTrigger className="w-full">
-                <div className="mb-6 flex items-center gap-3 transition-colors duration-200 group-hover:bg-techtoniq-alert-light/10 rounded-lg p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-techtoniq-alert-light">
-                    <Compass className="h-5 w-5 text-techtoniq-alert" />
+              <Collapsible
+                open={isDuringOpen}
+                onOpenChange={setIsDuringOpen}
+                className="group"
+              >
+                <CollapsibleTrigger className="w-full">
+                  <div className="mb-6 flex items-center gap-3 transition-colors duration-200 group-hover:bg-techtoniq-alert-light/10 rounded-lg p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-techtoniq-alert-light">
+                      <Compass className="h-5 w-5 text-techtoniq-alert" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-techtoniq-earth-dark">During an Earthquake</h2>
+                    <ChevronDown className={`ml-auto h-5 w-5 transition-transform duration-200 ${isDuringOpen ? "transform rotate-180" : ""}`} />
                   </div>
-                  <h2 className="text-2xl font-bold text-techtoniq-earth-dark">During an Earthquake</h2>
-                  <ChevronDown className={`ml-auto h-5 w-5 transition-transform duration-200 ${isDuringOpen ? "transform rotate-180" : ""}`} />
-                </div>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4">
-                <div className="rounded-lg border bg-white p-6 shadow-sm">
-                  <ul className="space-y-6">
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Drop, Cover, and Hold On</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Drop to your hands and knees. Cover your head and neck with your arms. If possible, seek shelter under a sturdy table or desk. Hold on to your shelter until the shaking stops.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">If Indoors</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Stay inside until the shaking stops. Stay away from windows, exterior walls, and anything that could fall. Do not use elevators. If you're in bed, stay there and cover your head with a pillow.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">If Outdoors</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Move to a clear area away from buildings, trees, streetlights, and power lines. Once in the open, drop to the ground and stay there until the shaking is over.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">If Driving</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Pull over to a clear location, stop, and set the parking brake. Avoid bridges, overpasses, and utility wires. Stay inside the vehicle until the shaking is over.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">If in a Crowded Place</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Do not rush for the exits. Take cover where you are. Move away from display shelves, windows, or other items that might fall.
-                        </p>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4">
+                  <div className="rounded-lg border bg-white p-6 shadow-sm">
+                    <ul className="space-y-6">
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Drop, Cover, and Hold On</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Drop to your hands and knees. Cover your head and neck with your arms. If possible, seek shelter under a sturdy table or desk. Hold on to your shelter until the shaking stops.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">If Indoors</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Stay inside until the shaking stops. Stay away from windows, exterior walls, and anything that could fall. Do not use elevators. If you're in bed, stay there and cover your head with a pillow.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">If Outdoors</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Move to a clear area away from buildings, trees, streetlights, and power lines. Once in the open, drop to the ground and stay there until the shaking is over.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">If Driving</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Pull over to a clear location, stop, and set the parking brake. Avoid bridges, overpasses, and utility wires. Stay inside the vehicle until the shaking is over.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">If in a Crowded Place</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Do not rush for the exits. Take cover where you are. Move away from display shelves, windows, or other items that might fall.
+                          </p>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
 
             {/* After an Earthquake */}
-            <Collapsible
-              open={isAfterOpen}
-              onOpenChange={setIsAfterOpen}
+            <div 
               className="group"
+              onMouseEnter={() => handleHover('after', true)}
+              onMouseLeave={() => handleHover('after', false)}
             >
-              <CollapsibleTrigger className="w-full">
-                <div className="mb-6 flex items-center gap-3 transition-colors duration-200 group-hover:bg-techtoniq-teal-light/10 rounded-lg p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-techtoniq-teal-light">
-                    <Home className="h-5 w-5 text-techtoniq-teal" />
+              <Collapsible
+                open={isAfterOpen}
+                onOpenChange={setIsAfterOpen}
+                className="group"
+              >
+                <CollapsibleTrigger className="w-full">
+                  <div className="mb-6 flex items-center gap-3 transition-colors duration-200 group-hover:bg-techtoniq-teal-light/10 rounded-lg p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-techtoniq-teal-light">
+                      <Home className="h-5 w-5 text-techtoniq-teal" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-techtoniq-earth-dark">After an Earthquake</h2>
+                    <ChevronDown className={`ml-auto h-5 w-5 transition-transform duration-200 ${isAfterOpen ? "transform rotate-180" : ""}`} />
                   </div>
-                  <h2 className="text-2xl font-bold text-techtoniq-earth-dark">After an Earthquake</h2>
-                  <ChevronDown className={`ml-auto h-5 w-5 transition-transform duration-200 ${isAfterOpen ? "transform rotate-180" : ""}`} />
-                </div>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4">
-                <div className="rounded-lg border bg-white p-6 shadow-sm">
-                  <ul className="space-y-6">
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Check for Injuries</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          First, check yourself for injuries and get first aid if necessary before helping others. Assist those who need special help, like infants, elderly people, and people with disabilities.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Check for Hazards</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Look for and extinguish small fires. Check for gas leaks, water leaks, or electrical shorts. Turn off damaged utilities if safe to do so. Clean up spilled medications, bleach, gasoline, or other flammable liquids.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Inspect your Home</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Check for cracks in the ceiling or foundation. Look for damage to utilities. Check for sewage and water line damage. Evacuate if your home is unsafe.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Be Prepared for Aftershocks</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Be ready for potentially strong aftershocks, especially in the first hours and days after the main quake. Each time you feel one, drop, cover, and hold on.
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
-                      <div>
-                        <h3 className="font-medium text-techtoniq-earth-dark">Stay Informed</h3>
-                        <p className="mt-1 text-sm text-techtoniq-earth">
-                          Listen to a battery-operated radio or television for the latest emergency information. Follow instructions from emergency officials. Use phones only for emergency calls.
-                        </p>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4">
+                  <div className="rounded-lg border bg-white p-6 shadow-sm">
+                    <ul className="space-y-6">
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Check for Injuries</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            First, check yourself for injuries and get first aid if necessary before helping others. Assist those who need special help, like infants, elderly people, and people with disabilities.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Check for Hazards</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Look for and extinguish small fires. Check for gas leaks, water leaks, or electrical shorts. Turn off damaged utilities if safe to do so. Clean up spilled medications, bleach, gasoline, or other flammable liquids.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Inspect your Home</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Check for cracks in the ceiling or foundation. Look for damage to utilities. Check for sewage and water line damage. Evacuate if your home is unsafe.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Be Prepared for Aftershocks</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Be ready for potentially strong aftershocks, especially in the first hours and days after the main quake. Each time you feel one, drop, cover, and hold on.
+                          </p>
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-techtoniq-teal" />
+                        <div>
+                          <h3 className="font-medium text-techtoniq-earth-dark">Stay Informed</h3>
+                          <p className="mt-1 text-sm text-techtoniq-earth">
+                            Listen to a battery-operated radio or television for the latest emergency information. Follow instructions from emergency officials. Use phones only for emergency calls.
+                          </p>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
 
             {/* FAQ Section */}
             <div className="mt-12">
@@ -282,9 +309,11 @@ const SafetyGuidelines = () => {
             </div>
 
             <div className="flex justify-center">
-              <Button className="flex items-center gap-2 bg-techtoniq-blue hover:bg-techtoniq-blue-dark">
-                <Download className="h-4 w-4" />
-                <span>Download Complete Safety Guide</span>
+              <Button className="flex items-center gap-2 bg-techtoniq-blue hover:bg-techtoniq-blue-dark" asChild>
+                <a href="/safety-guide.pdf" download="Earthquake_Safety_Guide.pdf">
+                  <Download className="h-4 w-4" />
+                  <span>Download Complete Safety Guide</span>
+                </a>
               </Button>
             </div>
           </div>
