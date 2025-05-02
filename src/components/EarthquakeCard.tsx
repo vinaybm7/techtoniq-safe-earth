@@ -1,3 +1,4 @@
+
 import { Activity, Calendar, MapPin } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -9,9 +10,10 @@ interface EarthquakeCardProps {
   date: string;
   depth: number;
   url?: string;
+  coordinates?: [number, number]; // Longitude, Latitude
 }
 
-const EarthquakeCard = ({ magnitude, location, date, depth, url }: EarthquakeCardProps) => {
+const EarthquakeCard = ({ magnitude, location, date, depth, url, coordinates }: EarthquakeCardProps) => {
   // Determine color based on magnitude
   const getMagnitudeColor = (mag: number) => {
     if (mag >= 7) return "bg-red-600 hover:bg-red-700";
@@ -19,6 +21,44 @@ const EarthquakeCard = ({ magnitude, location, date, depth, url }: EarthquakeCar
     if (mag >= 3) return "bg-techtoniq-warning hover:bg-techtoniq-warning-dark";
     return "bg-techtoniq-teal hover:bg-techtoniq-teal-dark";
   };
+
+  // Format date in IST
+  const formatDateInIST = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleString('en-US', { 
+        timeZone: 'Asia/Kolkata',
+        dateStyle: 'short',
+        timeStyle: 'short'
+      });
+    } catch (error) {
+      return dateStr;
+    }
+  };
+
+  // Format the local time based on earthquake coordinates
+  const getLocalTime = () => {
+    try {
+      if (!coordinates) return null;
+      
+      // Convert coordinates to timezone estimation
+      // This is a simplified approach - in a full implementation, we'd use a timezone API
+      // based on lat/long coordinates, but for now we'll estimate based on longitude
+      const [longitude] = coordinates;
+      const hours = Math.round(longitude / 15); // Each 15 degrees is roughly 1 hour time difference
+      
+      const date = new Date();
+      const utcHours = date.getUTCHours();
+      const localHour = (utcHours + hours + 24) % 24; // Add 24 and mod 24 to handle negative values
+      
+      return `~${localHour}:${date.getUTCMinutes().toString().padStart(2, '0')} local time`;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Get local time string
+  const localTime = getLocalTime();
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
@@ -30,13 +70,18 @@ const EarthquakeCard = ({ magnitude, location, date, depth, url }: EarthquakeCar
               <div className="flex flex-wrap items-center gap-3 text-sm text-techtoniq-earth">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  <span>{date}</span>
+                  <span>{formatDateInIST(date)} IST</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
                   <span>{depth} km depth</span>
                 </div>
               </div>
+              {localTime && (
+                <div className="mt-1 text-xs text-techtoniq-teal-dark">
+                  {localTime}
+                </div>
+              )}
             </div>
             <Badge className={`flex h-10 w-10 items-center justify-center rounded-full text-lg ${getMagnitudeColor(magnitude)}`}>
               {magnitude.toFixed(1)}

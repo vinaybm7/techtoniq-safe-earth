@@ -12,7 +12,7 @@ interface EarthquakeFeature {
     depth: number;
   };
   geometry: {
-    coordinates: [number, number, number];
+    coordinates: [number, number, number]; // [longitude, latitude, depth]
   };
 }
 
@@ -40,11 +40,11 @@ export const fetchRecentEarthquakes = async () => {
       location: feature.properties.place,
       date: new Date(feature.properties.time).toLocaleString(),
       depth: Math.round(feature.geometry.coordinates[2]),
-      url: feature.properties.url
+      url: feature.properties.url,
+      coordinates: [feature.geometry.coordinates[0], feature.geometry.coordinates[1]] as [number, number],
     }));
   } catch (error) {
     console.error("Error fetching earthquake data:", error);
     throw error;
   }
 };
-

@@ -12,12 +12,13 @@ import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 const RealTimeData = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [displayLimit, setDisplayLimit] = useState(10);
   const { toast } = useToast();
 
   const { data: earthquakes, isLoading, error } = useQuery({
     queryKey: ['earthquakes'],
     queryFn: fetchRecentEarthquakes,
-    refetchInterval: 300000,
+    refetchInterval: 300000, // Refresh every 5 minutes
     meta: {
       onError: () => {
         toast({
@@ -29,9 +30,23 @@ const RealTimeData = () => {
     },
   });
 
+  // Filter earthquakes based on search term
   const filteredEarthquakes = earthquakes?.filter((quake) =>
     quake.location.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  // Limit the number of displayed earthquakes
+  const limitedEarthquakes = filteredEarthquakes.slice(0, displayLimit);
+
+  // Format the current time in IST
+  const getCurrentISTTime = () => {
+    const now = new Date();
+    return now.toLocaleString('en-US', { 
+      timeZone: 'Asia/Kolkata',
+      dateStyle: 'full',
+      timeStyle: 'long'
+    });
+  };
 
   const intenseRegions = [
     { region: "Pacific Ring of Fire", activity: 85 },
@@ -77,10 +92,21 @@ const RealTimeData = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  <span>Filter</span>
-                </Button>
+                <div className="flex gap-2">
+                  <select 
+                    className="rounded-md border border-gray-300 px-3 py-1 text-sm"
+                    value={displayLimit}
+                    onChange={(e) => setDisplayLimit(Number(e.target.value))}
+                  >
+                    <option value={10}>Show 10</option>
+                    <option value={15}>Show 15</option>
+                    <option value={20}>Show 20</option>
+                  </select>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    <span>Filter</span>
+                  </Button>
+                </div>
               </div>
 
               {isLoading ? (
@@ -93,9 +119,9 @@ const RealTimeData = () => {
                   <Info className="mb-2 h-10 w-10 text-techtoniq-alert" />
                   <p className="text-techtoniq-earth">Failed to load earthquake data</p>
                 </div>
-              ) : filteredEarthquakes.length > 0 ? (
+              ) : limitedEarthquakes.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredEarthquakes.map((quake) => (
+                  {limitedEarthquakes.map((quake) => (
                     <EarthquakeCard key={quake.id} {...quake} />
                   ))}
                 </div>
@@ -112,7 +138,7 @@ const RealTimeData = () => {
                     Data is refreshed every 5 minutes
                   </p>
                   <p className="mt-1 text-techtoniq-earth">
-                    Last updated: {new Date().toLocaleString()}
+                    Current IST time: {getCurrentISTTime()}
                   </p>
                 </div>
               </div>
