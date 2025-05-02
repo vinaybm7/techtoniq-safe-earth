@@ -36,22 +36,23 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
       iframe.height = '100%';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '0.5rem'; // 8px rounded corners
+      iframe.allow = "fullscreen";
       
-      // Set URL based on filterType
+      // Set URL based on filterType - focus on Indian region when possible
       let baseUrl = 'https://earthquake.usgs.gov/earthquakes/map/';
       
       switch (filterType) {
         case 'continent':
-          // Default view (world view)
-          iframe.src = `${baseUrl}?extent=19.31114,-198.6914&extent=76.93037,-40.42969`;
+          // More focused on India and surrounding regions
+          iframe.src = `${baseUrl}?extent=8.7547,-9.0381&extent=40.1130,115.4932&list=false&listOnlyShown=true`;
           break;
         case 'magnitude':
-          // URL for focusing on magnitude (set to show significant earthquakes)
-          iframe.src = `${baseUrl}?extent=19.31114,-198.6914&extent=76.93037,-40.42969&list=false&map=false&search=false&settings=false&sort=newest&timeZone=utc&basemap=grayscale&feed=4.5_week`;
+          // URL for focusing on magnitude with India-centric view
+          iframe.src = `${baseUrl}?extent=8.7547,-9.0381&extent=40.1130,115.4932&list=false&listOnlyShown=true&search=false&sort=newest&basemap=grayscale&timeZone=utc&settings=false&feed=1.0_week_age_link`;
           break;
         case 'time':
-          // URL for recent earthquakes
-          iframe.src = `${baseUrl}?extent=19.31114,-198.6914&extent=76.93037,-40.42969&list=false&map=false&search=false&settings=false&sort=newest&timeZone=utc&feed=1.0_day`;
+          // URL for recent earthquakes with India-centric view
+          iframe.src = `${baseUrl}?extent=8.7547,-9.0381&extent=40.1130,115.4932&list=false&listOnlyShown=true&search=false&timeZone=utc&settings=false&sort=newest&feed=1.0_day_age_link`;
           break;
         default:
           iframe.src = baseUrl;
@@ -76,6 +77,11 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
     const iframe = mapContainer.current.querySelector('iframe');
     if (iframe) {
       iframe.onerror = handleError;
+      
+      // Add a load event listener to confirm successful loading
+      iframe.onload = () => {
+        console.log("USGS Earthquake Map loaded successfully");
+      };
     }
 
     // Cleanup
@@ -83,6 +89,7 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
       const iframe = mapContainer.current?.querySelector('iframe');
       if (iframe) {
         iframe.onerror = null;
+        iframe.onload = null;
       }
     };
   }, [filterType, toast]);
@@ -92,7 +99,6 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
       <div 
         ref={mapContainer} 
         className="w-full h-full min-h-[500px] rounded-lg"
-        style={{ width: '100%', height: '100%' }}
       />
     </div>
   );

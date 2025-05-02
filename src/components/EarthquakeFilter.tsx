@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
 import { Calendar, Filter, MapPin, BarChart, Clock } from 'lucide-react';
@@ -44,10 +44,27 @@ const EarthquakeFilter = ({
   });
   
   const [isOpen, setIsOpen] = useState(false);
+  const [magnitudeRange, setMagnitudeRange] = useState<number[]>([0, 10]);
+
+  // Effect to sync magnitude range with filter values
+  useEffect(() => {
+    setMagnitudeRange([filterValues.minMagnitude, filterValues.maxMagnitude]);
+  }, [filterValues.minMagnitude, filterValues.maxMagnitude]);
 
   const handleFilterValueChange = (key: keyof FilterValues, value: any) => {
     const newFilterValues = { ...filterValues, [key]: value };
     setFilterValues(newFilterValues as FilterValues);
+  };
+
+  const handleMagnitudeRangeChange = (values: number[]) => {
+    if (values.length === 2) {
+      setMagnitudeRange(values);
+      setFilterValues(prev => ({
+        ...prev,
+        minMagnitude: values[0],
+        maxMagnitude: values[1]
+      }));
+    }
   };
 
   const handleApplyFilters = () => {
@@ -63,6 +80,7 @@ const EarthquakeFilter = ({
       region: 'all',
     };
     setFilterValues(resetValues);
+    setMagnitudeRange([0, 10]);
     onFilterChange(resetValues);
     setIsOpen(false);
   };
@@ -76,6 +94,7 @@ const EarthquakeFilter = ({
     { value: 'africa', label: 'Africa' },
     { value: 'oceania', label: 'Oceania' },
     { value: 'antarctica', label: 'Antarctica' },
+    { value: 'india', label: 'India' },  // Added specific option for India
   ];
 
   return (
@@ -114,19 +133,17 @@ const EarthquakeFilter = ({
               <div className="grid gap-2">
                 <Label htmlFor="magnitude">Magnitude Range</Label>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{filterValues.minMagnitude}</span>
+                  <span className="text-sm">{magnitudeRange[0].toFixed(1)}</span>
                   <Slider 
                     id="magnitude"
                     min={0} 
                     max={10} 
                     step={0.1} 
-                    value={[filterValues.minMagnitude, filterValues.maxMagnitude]}
-                    onValueChange={(values) => {
-                      handleFilterValueChange('minMagnitude', values[0]);
-                      handleFilterValueChange('maxMagnitude', values[1]);
-                    }}
+                    value={magnitudeRange}
+                    onValueChange={handleMagnitudeRangeChange}
+                    className="flex-1"
                   />
-                  <span className="text-sm">{filterValues.maxMagnitude}</span>
+                  <span className="text-sm">{magnitudeRange[1].toFixed(1)}</span>
                 </div>
               </div>
 
@@ -138,6 +155,7 @@ const EarthquakeFilter = ({
                   onValueChange={(value: 'all' | 'today' | 'week' | 'month' | null) => {
                     if (value) handleFilterValueChange('timeframe', value);
                   }}
+                  className="justify-start"
                 >
                   <ToggleGroupItem value="all" aria-label="All time">
                     <Calendar className="h-4 w-4 mr-1" /> All
