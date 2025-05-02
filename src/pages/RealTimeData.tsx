@@ -1,46 +1,60 @@
 
 import { Activity, Info, MapPin, Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import PageLayout from "@/components/PageLayout";
 import EarthquakeCard from "@/components/EarthquakeCard";
-import { fetchRecentEarthquakes } from "@/services/earthquakeService";
+import { fetchRecentEarthquakes, fetchEarthquakesByTimeframe, Earthquake } from "@/services/earthquakeService";
 import { useToast } from "@/hooks/use-toast";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import EarthquakeMap from "@/components/EarthquakeMap";
 import EarthquakeFilter from "@/components/EarthquakeFilter";
+import { FilterValues } from "@/components/EarthquakeFilter";
 
 const RealTimeData = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [displayLimit, setDisplayLimit] = useState(10);
   const [mapFilterType, setMapFilterType] = useState<'continent' | 'magnitude' | 'time'>('continent');
   const { toast } = useToast();
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FilterValues>({
     minMagnitude: 0,
     maxMagnitude: 10,
     timeframe: 'all',
     region: 'all',
   });
 
+  // Determine which API call to use based on the timeframe filter
+  const queryKey = ['earthquakes', filters.timeframe];
+  
   const { data: earthquakes, isLoading, error } = useQuery({
-    queryKey: ['earthquakes'],
-    queryFn: fetchRecentEarthquakes,
+    queryKey,
+    queryFn: async () => {
+      if (filters.timeframe === 'all' || filters.timeframe === 'today') {
+        return fetchRecentEarthquakes();
+      } else {
+        // For 'week' and 'month', use the specific API endpoints
+        const timeframe = filters.timeframe as 'week' | 'month';
+        return fetchEarthquakesByTimeframe(timeframe);
+      }
+    },
     refetchInterval: 300000, // Refresh every 5 minutes
     meta: {
-      onError: () => {
-        toast({
-          title: "Error",
-          description: "Failed to fetch earthquake data. Please try again later.",
-          variant: "destructive",
-        });
+      onSettled: (data, error) => {
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to fetch earthquake data. Please try again later.",
+            variant: "destructive",
+          });
+        }
       },
     },
   });
 
   // Apply filters to earthquakes
-  const filteredEarthquakes = earthquakes?.filter((quake) => {
+  const filteredEarthquakes = earthquakes?.filter((quake: Earthquake) => {
     // Apply magnitude filter
     if (quake.magnitude < filters.minMagnitude || quake.magnitude > filters.maxMagnitude) {
       return false;
@@ -69,33 +83,7 @@ const RealTimeData = () => {
         return false;
       }
     }
-
-    // Apply time filter
-    if (filters.timeframe !== 'all') {
-      const quakeDate = new Date(quake.date);
-      const now = new Date();
-      
-      if (filters.timeframe === 'today') {
-        if (now.getDate() !== quakeDate.getDate() || 
-            now.getMonth() !== quakeDate.getMonth() || 
-            now.getFullYear() !== quakeDate.getFullYear()) {
-          return false;
-        }
-      } else if (filters.timeframe === 'week') {
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        if (quakeDate < oneWeekAgo) {
-          return false;
-        }
-      } else if (filters.timeframe === 'month') {
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-        if (quakeDate < oneMonthAgo) {
-          return false;
-        }
-      }
-    }
-
+    
     return true;
   }) || [];
 
@@ -111,6 +99,18 @@ const RealTimeData = () => {
       timeStyle: 'long'
     });
   };
+
+  // State for current IST time
+  const [currentTime, setCurrentTime] = useState(getCurrentISTTime());
+  
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(getCurrentISTTime());
+    }, 60000);
+    
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <PageLayout>
@@ -186,7 +186,7 @@ const RealTimeData = () => {
                       Data is refreshed every 5 minutes
                     </p>
                     <p className="mt-1 text-techtoniq-earth">
-                      Current IST time: {getCurrentISTTime()}
+                      Current IST time: {currentTime}
                     </p>
                   </div>
                 </div>

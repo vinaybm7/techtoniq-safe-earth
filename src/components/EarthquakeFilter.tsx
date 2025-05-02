@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
-import { Calendar, CircleDollarSign, Filter, MapPin, BarChart, Clock } from 'lucide-react';
+import { Calendar, Filter, MapPin, BarChart, Clock } from 'lucide-react';
 import { 
   Popover,
   PopoverContent,
@@ -18,7 +18,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 
-interface FilterValues {
+export interface FilterValues {
   minMagnitude: number;
   maxMagnitude: number;
   timeframe: 'all' | 'today' | 'week' | 'month';
@@ -47,7 +47,7 @@ const EarthquakeFilter = ({
 
   const handleFilterValueChange = (key: keyof FilterValues, value: any) => {
     const newFilterValues = { ...filterValues, [key]: value };
-    setFilterValues(newFilterValues);
+    setFilterValues(newFilterValues as FilterValues);
   };
 
   const handleApplyFilters = () => {
@@ -56,7 +56,7 @@ const EarthquakeFilter = ({
   };
 
   const handleResetFilters = () => {
-    const resetValues = {
+    const resetValues: FilterValues = {
       minMagnitude: 0,
       maxMagnitude: 10,
       timeframe: 'all',
@@ -121,9 +121,9 @@ const EarthquakeFilter = ({
                     max={10} 
                     step={0.1} 
                     value={[filterValues.minMagnitude, filterValues.maxMagnitude]}
-                    onValueChange={([min, max]) => {
-                      handleFilterValueChange('minMagnitude', min);
-                      handleFilterValueChange('maxMagnitude', max);
+                    onValueChange={(values) => {
+                      handleFilterValueChange('minMagnitude', values[0]);
+                      handleFilterValueChange('maxMagnitude', values[1]);
                     }}
                   />
                   <span className="text-sm">{filterValues.maxMagnitude}</span>
@@ -135,7 +135,7 @@ const EarthquakeFilter = ({
                 <ToggleGroup 
                   type="single" 
                   value={filterValues.timeframe}
-                  onValueChange={(value) => {
+                  onValueChange={(value: 'all' | 'today' | 'week' | 'month' | null) => {
                     if (value) handleFilterValueChange('timeframe', value);
                   }}
                 >

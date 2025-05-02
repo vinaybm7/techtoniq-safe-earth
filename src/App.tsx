@@ -12,6 +12,7 @@ import EarthquakeByRegion from "./pages/EarthquakeByRegion";
 import EmergencyResources from "./pages/EmergencyResources";
 import EducationalMaterials from "./pages/EducationalMaterials";
 import LatestNews from "./pages/LatestNews";
+import ContactUs from "./pages/ContactUs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/emergency-resources" element={<EmergencyResources />} />
           <Route path="/educational-materials" element={<EducationalMaterials />} />
           <Route path="/latest-news" element={<LatestNews />} />
+          <Route path="/contact-us" element={<ContactUs />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
