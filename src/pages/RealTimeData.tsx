@@ -1,3 +1,4 @@
+
 import { Activity, Info, MapPin, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ const RealTimeData = () => {
     maxMagnitude: 10,
     timeframe: 'all',
     region: 'all',
+    sortBy: 'latest',
   });
 
   // Determine which API call to use based on the timeframe filter
@@ -64,17 +66,20 @@ const RealTimeData = () => {
       return false;
     }
 
-    // Apply region filter (simplified)
+    // Apply region filter (improved)
     if (filters.region !== 'all') {
       const regionMapping: { [key: string]: string[] } = {
-        'asia': ['japan', 'china', 'indonesia', 'philippines', 'india', 'malaysia', 'thailand'],
+        'asia': ['japan', 'china', 'indonesia', 'philippines', 'thailand', 'malaysia'],
         'europe': ['italy', 'greece', 'turkey', 'iceland', 'spain', 'portugal'],
         'northamerica': ['alaska', 'california', 'mexico', 'nevada', 'washington', 'oregon', 'canada'],
         'southamerica': ['chile', 'peru', 'ecuador', 'colombia', 'argentina', 'bolivia'],
         'africa': ['kenya', 'ethiopia', 'south africa', 'morocco', 'algeria'],
         'oceania': ['new zealand', 'australia', 'papua', 'fiji', 'solomon', 'vanuatu'],
         'antarctica': ['antarctica'],
-        'india': ['india', 'delhi', 'mumbai', 'kolkata', 'chennai', 'bangalore', 'hyderabad', 'pune']
+        'india': ['india', 'delhi', 'mumbai', 'kolkata', 'chennai', 'bangalore', 'hyderabad', 'pune', 
+                 'gujarat', 'rajasthan', 'uttarakhand', 'himachal', 'kashmir', 'ladakh', 
+                 'assam', 'meghalaya', 'bihar', 'jharkhand', 'odisha', 'karnataka', 
+                 'kerala', 'tamil nadu', 'andhra', 'telangana', 'uttar pradesh']
       };
       
       // Check if the region exists in our mapping before using .some()
@@ -82,6 +87,15 @@ const RealTimeData = () => {
       if (!regionsToCheck) {
         console.error(`Unknown region filter: ${filters.region}`);
         return true; // Don't filter if region is unknown
+      }
+      
+      // For India, explicitly exclude "Indian Springs" and similar locations outside India
+      if (filters.region === 'india') {
+        const locationLower = quake.location.toLowerCase();
+        if (locationLower.includes('indian springs') || 
+            (locationLower.includes('indian') && !locationLower.includes('india'))) {
+          return false;
+        }
       }
       
       if (!regionsToCheck.some(
@@ -94,8 +108,25 @@ const RealTimeData = () => {
     return true;
   }) || [];
 
+  // Sort earthquakes based on filter
+  const sortedEarthquakes = [...filteredEarthquakes].sort((a, b) => {
+    switch (filters.sortBy) {
+      case 'latest':
+        // Sort by date (newest first)
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      case 'magnitude':
+        // Sort by magnitude (highest first)
+        return b.magnitude - a.magnitude;
+      case 'location':
+        // Sort alphabetically by location
+        return a.location.localeCompare(b.location);
+      default:
+        return 0;
+    }
+  });
+
   // Limit the number of displayed earthquakes
-  const limitedEarthquakes = filteredEarthquakes.slice(0, displayLimit);
+  const limitedEarthquakes = sortedEarthquakes.slice(0, displayLimit);
 
   // Format the current time in IST
   const getCurrentISTTime = () => {

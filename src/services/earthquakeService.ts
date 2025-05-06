@@ -57,6 +57,11 @@ export interface Earthquake {
 const isInIndia = (feature: EarthquakeFeature): boolean => {
   const locationLower = feature.properties.place.toLowerCase();
   
+  // Explicitly exclude "indian springs" and similar locations outside India
+  if (locationLower.includes('indian springs')) {
+    return false;
+  }
+  
   // Check if the location text contains India or nearby regions
   if (locationLower.includes('india') || 
       locationLower.includes('gujarat') ||

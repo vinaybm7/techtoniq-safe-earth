@@ -23,6 +23,7 @@ export interface FilterValues {
   maxMagnitude: number;
   timeframe: 'all' | 'today' | 'week' | 'month';
   region: string;
+  sortBy: 'latest' | 'magnitude' | 'location';
 }
 
 interface EarthquakeFilterProps {
@@ -41,28 +42,29 @@ const EarthquakeFilter = ({
     maxMagnitude: 10,
     timeframe: 'all',
     region: 'all',
+    sortBy: 'latest',
   });
   
   const [isOpen, setIsOpen] = useState(false);
-  const [magnitudeRange, setMagnitudeRange] = useState<number[]>([0, 10]);
+  const [magnitudeValue, setMagnitudeValue] = useState<number>(filterValues.maxMagnitude);
 
-  // Effect to sync magnitude range with filter values
+  // Effect to apply filter changes when sort option changes
   useEffect(() => {
-    setMagnitudeRange([filterValues.minMagnitude, filterValues.maxMagnitude]);
-  }, [filterValues.minMagnitude, filterValues.maxMagnitude]);
+    onFilterChange(filterValues);
+  }, [filterValues.sortBy, onFilterChange]);
 
   const handleFilterValueChange = (key: keyof FilterValues, value: any) => {
     const newFilterValues = { ...filterValues, [key]: value };
-    setFilterValues(newFilterValues as FilterValues);
+    setFilterValues(newFilterValues);
   };
 
-  const handleMagnitudeRangeChange = (values: number[]) => {
-    if (values.length === 2) {
-      setMagnitudeRange(values);
+  const handleMagnitudeChange = (values: number[]) => {
+    if (values.length === 1) {
+      setMagnitudeValue(values[0]);
       setFilterValues(prev => ({
         ...prev,
-        minMagnitude: values[0],
-        maxMagnitude: values[1]
+        minMagnitude: 0,
+        maxMagnitude: values[0]
       }));
     }
   };
@@ -78,11 +80,18 @@ const EarthquakeFilter = ({
       maxMagnitude: 10,
       timeframe: 'all',
       region: 'all',
+      sortBy: filterValues.sortBy, // Keep current sort option
     };
     setFilterValues(resetValues);
-    setMagnitudeRange([0, 10]);
+    setMagnitudeValue(10);
     onFilterChange(resetValues);
     setIsOpen(false);
+  };
+
+  const handleSortChange = (value: 'latest' | 'magnitude' | 'location' | null) => {
+    if (value) {
+      handleFilterValueChange('sortBy', value);
+    }
   };
 
   const regions = [
@@ -131,19 +140,19 @@ const EarthquakeFilter = ({
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="magnitude">Magnitude Range</Label>
+                <Label htmlFor="magnitude">Maximum Magnitude: {magnitudeValue.toFixed(1)}</Label>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{magnitudeRange[0].toFixed(1)}</span>
+                  <span className="text-sm">0.0</span>
                   <Slider 
                     id="magnitude"
                     min={0} 
                     max={10} 
                     step={0.1} 
-                    value={magnitudeRange}
-                    onValueChange={handleMagnitudeRangeChange}
+                    value={[magnitudeValue]}
+                    onValueChange={handleMagnitudeChange}
                     className="flex-1"
                   />
-                  <span className="text-sm">{magnitudeRange[1].toFixed(1)}</span>
+                  <span className="text-sm">10.0</span>
                 </div>
               </div>
 
@@ -205,7 +214,11 @@ const EarthquakeFilter = ({
       </div>
 
       <div className="flex gap-2">
-        <ToggleGroup type="single" defaultValue="latest">
+        <ToggleGroup 
+          type="single" 
+          value={filterValues.sortBy}
+          onValueChange={handleSortChange}
+        >
           <ToggleGroupItem value="latest" aria-label="Show latest">
             <Clock className="h-4 w-4 mr-1" /> Latest
           </ToggleGroupItem>
