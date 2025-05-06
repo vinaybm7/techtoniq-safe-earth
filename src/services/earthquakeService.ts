@@ -1,4 +1,3 @@
-
 interface EarthquakeFeature {
   id: string;
   properties: {
@@ -57,12 +56,16 @@ export interface Earthquake {
 const isInIndia = (feature: EarthquakeFeature): boolean => {
   const locationLower = feature.properties.place.toLowerCase();
   
-  // Explicitly exclude "indian springs" and similar locations outside India
-  if (locationLower.includes('indian springs')) {
+  // Explicitly exclude locations that have "indian" but are not in India
+  if (locationLower.includes('indian springs') || 
+      locationLower.includes('indian wells') || 
+      locationLower.includes('indianapolis') ||
+      (locationLower.includes('indian') && locationLower.includes('california')) ||
+      (locationLower.includes('indian') && locationLower.includes('nevada'))) {
     return false;
   }
   
-  // Check if the location text contains India or nearby regions
+  // Include specific Indian locations and regions
   if (locationLower.includes('india') || 
       locationLower.includes('gujarat') ||
       locationLower.includes('delhi') ||
@@ -74,15 +77,37 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
       locationLower.includes('kashmir') ||
       locationLower.includes('assam') ||
       locationLower.includes('bihar') ||
-      locationLower.includes('sikkim')) {
+      locationLower.includes('sikkim') ||
+      locationLower.includes('gyalshing') ||
+      locationLower.includes('moirang') ||
+      locationLower.includes('padam') ||
+      locationLower.includes('tibet') ||
+      locationLower.includes('uttarakhand') ||
+      locationLower.includes('arunachal') ||
+      locationLower.includes('manipur') ||
+      locationLower.includes('meghalaya') ||
+      locationLower.includes('mizoram') ||
+      locationLower.includes('nagaland') ||
+      locationLower.includes('tripura') ||
+      locationLower.includes('odisha') ||
+      locationLower.includes('jharkhand') ||
+      locationLower.includes('chhattisgarh') ||
+      locationLower.includes('madhya pradesh') ||
+      locationLower.includes('uttar pradesh') ||
+      locationLower.includes('rajasthan') ||
+      locationLower.includes('haryana') ||
+      locationLower.includes('punjab') ||
+      locationLower.includes('jammu') ||
+      locationLower.includes('himalayas')) {
     return true;
   }
   
-  // Check coordinates - India is roughly between 8°N-37°N latitude and 68°E-97°E longitude
+  // Check coordinates - India is roughly between 6°N-37°N latitude and 68°E-97°E longitude
   const latitude = feature.geometry.coordinates[1];
   const longitude = feature.geometry.coordinates[0];
   
-  if ((latitude >= 8 && latitude <= 37) && (longitude >= 68 && longitude <= 97)) {
+  // More precise bounding box for India
+  if ((latitude >= 6 && latitude <= 37) && (longitude >= 68 && longitude <= 97)) {
     return true;
   }
   

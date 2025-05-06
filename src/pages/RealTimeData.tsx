@@ -1,4 +1,3 @@
-
 import { Activity, Info, MapPin, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -66,36 +65,71 @@ const RealTimeData = () => {
       return false;
     }
 
-    // Apply region filter (improved)
+    // Apply region filter
     if (filters.region !== 'all') {
+      // Special handling for India to ensure accuracy
+      if (filters.region === 'india') {
+        const locationLower = quake.location.toLowerCase();
+        
+        // Exclude known false positives
+        if (locationLower.includes('indian springs') || 
+            locationLower.includes('indian wells') || 
+            locationLower.includes('indianapolis') ||
+            (locationLower.includes('indian') && locationLower.includes('california')) ||
+            (locationLower.includes('indian') && locationLower.includes('nevada'))) {
+          return false;
+        }
+        
+        // Include specific Indian locations
+        return locationLower.includes('india') || 
+               locationLower.includes('gujarat') ||
+               locationLower.includes('delhi') ||
+               locationLower.includes('mumbai') ||
+               locationLower.includes('chennai') ||
+               locationLower.includes('kolkata') ||
+               locationLower.includes('himachal') ||
+               locationLower.includes('ladakh') ||
+               locationLower.includes('kashmir') ||
+               locationLower.includes('assam') ||
+               locationLower.includes('bihar') ||
+               locationLower.includes('sikkim') ||
+               locationLower.includes('gyalshing') ||
+               locationLower.includes('moirang') ||
+               locationLower.includes('padam') ||
+               locationLower.includes('uttarakhand') ||
+               locationLower.includes('arunachal') ||
+               locationLower.includes('manipur') ||
+               locationLower.includes('meghalaya') ||
+               locationLower.includes('mizoram') ||
+               locationLower.includes('nagaland') ||
+               locationLower.includes('tripura') ||
+               locationLower.includes('odisha') ||
+               locationLower.includes('jharkhand') ||
+               locationLower.includes('chhattisgarh') ||
+               locationLower.includes('madhya pradesh') ||
+               locationLower.includes('uttar pradesh') ||
+               locationLower.includes('rajasthan') ||
+               locationLower.includes('haryana') ||
+               locationLower.includes('punjab') ||
+               locationLower.includes('jammu') ||
+               locationLower.includes('himalayas');
+      }
+
       const regionMapping: { [key: string]: string[] } = {
-        'asia': ['japan', 'china', 'indonesia', 'philippines', 'thailand', 'malaysia'],
-        'europe': ['italy', 'greece', 'turkey', 'iceland', 'spain', 'portugal'],
-        'northamerica': ['alaska', 'california', 'mexico', 'nevada', 'washington', 'oregon', 'canada'],
-        'southamerica': ['chile', 'peru', 'ecuador', 'colombia', 'argentina', 'bolivia'],
-        'africa': ['kenya', 'ethiopia', 'south africa', 'morocco', 'algeria'],
-        'oceania': ['new zealand', 'australia', 'papua', 'fiji', 'solomon', 'vanuatu'],
-        'antarctica': ['antarctica'],
-        'india': ['india', 'delhi', 'mumbai', 'kolkata', 'chennai', 'bangalore', 'hyderabad', 'pune', 
-                 'gujarat', 'rajasthan', 'uttarakhand', 'himachal', 'kashmir', 'ladakh', 
-                 'assam', 'meghalaya', 'bihar', 'jharkhand', 'odisha', 'karnataka', 
-                 'kerala', 'tamil nadu', 'andhra', 'telangana', 'uttar pradesh']
+        'asia': ['japan', 'china', 'indonesia', 'philippines', 'thailand', 'malaysia', 'vietnam', 'nepal', 'bhutan', 'bangladesh', 'pakistan', 'sri lanka', 'myanmar'],
+        'europe': ['italy', 'greece', 'turkey', 'iceland', 'spain', 'portugal', 'france', 'germany', 'uk', 'ireland', 'norway', 'sweden', 'finland', 'russia', 'ukraine'],
+        'northamerica': ['alaska', 'california', 'mexico', 'nevada', 'washington', 'oregon', 'canada', 'united states', 'guatemala', 'honduras', 'costa rica', 'panama'],
+        'southamerica': ['chile', 'peru', 'ecuador', 'colombia', 'argentina', 'bolivia', 'brazil', 'venezuela', 'guyana', 'suriname', 'paraguay', 'uruguay'],
+        'africa': ['kenya', 'ethiopia', 'south africa', 'morocco', 'algeria', 'egypt', 'tanzania', 'zambia', 'zimbabwe', 'mozambique', 'nigeria', 'ghana'],
+        'oceania': ['new zealand', 'australia', 'papua', 'fiji', 'solomon', 'vanuatu', 'tonga', 'samoa', 'micronesia'],
+        'antarctica': ['antarctica']
       };
       
       // Check if the region exists in our mapping before using .some()
       const regionsToCheck = regionMapping[filters.region];
       if (!regionsToCheck) {
-        console.error(`Unknown region filter: ${filters.region}`);
+        console.warn(`Unknown region filter: ${filters.region}`);
         return true; // Don't filter if region is unknown
-      }
-      
-      // For India, explicitly exclude "Indian Springs" and similar locations outside India
-      if (filters.region === 'india') {
-        const locationLower = quake.location.toLowerCase();
-        if (locationLower.includes('indian springs') || 
-            (locationLower.includes('indian') && !locationLower.includes('india'))) {
-          return false;
-        }
       }
       
       if (!regionsToCheck.some(
