@@ -120,6 +120,8 @@ const EarthquakeFilter = ({
             <SelectItem value="10">Show 10</SelectItem>
             <SelectItem value="15">Show 15</SelectItem>
             <SelectItem value="20">Show 20</SelectItem>
+            <SelectItem value="50">Show 50</SelectItem>
+            <SelectItem value="100">Show 100</SelectItem>
           </SelectContent>
         </Select>
 
@@ -198,6 +200,12 @@ const EarthquakeFilter = ({
                     ))}
                   </SelectContent>
                 </Select>
+                
+                {filterValues.region === 'india' && (
+                  <p className="text-xs text-blue-600">
+                    Selecting India will fetch comprehensive historical earthquake data
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-between">

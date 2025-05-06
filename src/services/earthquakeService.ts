@@ -1,4 +1,3 @@
-
 interface EarthquakeFeature {
   id: string;
   properties: {
@@ -319,6 +318,43 @@ export const fetchEarthquakesByTimeframe = async (timeframe: 'hour' | 'day' | 'w
     return prioritizedFeatures.map(featureToEarthquake);
   } catch (error) {
     console.error(`Error fetching ${timeframe} earthquake data:`, error);
+    throw error;
+  }
+};
+
+// New function to fetch historical earthquakes in India
+export const fetchHistoricalIndianEarthquakes = async (): Promise<Earthquake[]> => {
+  try {
+    // USGS API supports starttime and endtime parameters for historical data
+    // We'll fetch data for the last 5 years (which should give us a comprehensive dataset)
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setFullYear(endDate.getFullYear() - 5); // 5 years back
+
+    const startTimeStr = startDate.toISOString();
+    const endTimeStr = endDate.toISOString();
+    
+    // Use the USGS query API with parameters for India's bounding box
+    // India is roughly between 6°N-37°N latitude and 68°E-97°E longitude
+    const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${startTimeStr}&endtime=${endTimeStr}&minlatitude=6&maxlatitude=37&minlongitude=68&maxlongitude=97&minmagnitude=1`;
+    
+    console.log("Fetching historical Indian earthquakes with URL:", url);
+    const response = await fetch(url);
+    const data: USGSResponse = await response.json();
+    
+    // Further filter the results to ensure we only get earthquakes in India
+    // (since the bounding box might include neighboring countries)
+    const indianEarthquakes = data.features.filter(isInIndia);
+    
+    console.log(`Found ${indianEarthquakes.length} historical Indian earthquakes`);
+    
+    // Sort by time (newest first)
+    indianEarthquakes.sort((a, b) => b.properties.time - a.properties.time);
+    
+    // Map to our format
+    return indianEarthquakes.map(featureToEarthquake);
+  } catch (error) {
+    console.error("Error fetching historical Indian earthquake data:", error);
     throw error;
   }
 };

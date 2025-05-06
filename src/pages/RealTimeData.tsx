@@ -1,4 +1,3 @@
-
 import { Activity, Info, MapPin, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import PageLayout from "@/components/PageLayout";
 import EarthquakeCard from "@/components/EarthquakeCard";
-import { fetchRecentEarthquakes, fetchEarthquakesByTimeframe, Earthquake } from "@/services/earthquakeService";
+import { 
+  fetchRecentEarthquakes, 
+  fetchEarthquakesByTimeframe, 
+  fetchHistoricalIndianEarthquakes, 
+  Earthquake 
+} from "@/services/earthquakeService";
 import { useToast } from "@/hooks/use-toast";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import EarthquakeMap from "@/components/EarthquakeMap";
@@ -27,12 +31,16 @@ const RealTimeData = () => {
   });
 
   // Determine which API call to use based on the timeframe filter
-  const queryKey = ['earthquakes', filters.timeframe];
+  const queryKey = ['earthquakes', filters.timeframe, filters.region];
   
   const { data: earthquakes, isLoading, error } = useQuery({
     queryKey,
     queryFn: async () => {
-      if (filters.timeframe === 'all' || filters.timeframe === 'today') {
+      // Special case: If region is India, use the historical Indian earthquakes endpoint
+      if (filters.region === 'india') {
+        console.log("Fetching historical Indian earthquakes");
+        return fetchHistoricalIndianEarthquakes();
+      } else if (filters.timeframe === 'all' || filters.timeframe === 'today') {
         return fetchRecentEarthquakes();
       } else {
         // For 'week' and 'month', use the specific API endpoints
@@ -67,60 +75,8 @@ const RealTimeData = () => {
     }
 
     // Apply region filter
-    if (filters.region !== 'all') {
-      // Special handling for India to ensure accuracy
-      if (filters.region === 'india') {
-        const locationLower = quake.location.toLowerCase();
-        
-        // Exclude known false positives
-        if (locationLower.includes('indian springs') || 
-            locationLower.includes('indian wells') || 
-            locationLower.includes('indianapolis') ||
-            locationLower.includes('southeast indian ridge') ||
-            locationLower.includes('southwest indian ridge') ||
-            locationLower.includes('central indian ridge') ||
-            (locationLower.includes('indian') && locationLower.includes('california')) ||
-            (locationLower.includes('indian') && locationLower.includes('nevada')) ||
-            (locationLower.includes('indian') && locationLower.includes('ridge')) ||
-            (locationLower.includes('indian') && locationLower.includes('ocean'))) {
-          return false;
-        }
-        
-        // Include specific Indian locations
-        return locationLower.includes('india') || 
-               locationLower.includes('gujarat') ||
-               locationLower.includes('delhi') ||
-               locationLower.includes('mumbai') ||
-               locationLower.includes('chennai') ||
-               locationLower.includes('kolkata') ||
-               locationLower.includes('himachal') ||
-               locationLower.includes('ladakh') ||
-               locationLower.includes('kashmir') ||
-               locationLower.includes('assam') ||
-               locationLower.includes('bihar') ||
-               locationLower.includes('sikkim') ||
-               locationLower.includes('gyalshing') ||
-               locationLower.includes('moirang') ||
-               locationLower.includes('padam') ||
-               locationLower.includes('uttarakhand') ||
-               locationLower.includes('arunachal') ||
-               locationLower.includes('manipur') ||
-               locationLower.includes('meghalaya') ||
-               locationLower.includes('mizoram') ||
-               locationLower.includes('nagaland') ||
-               locationLower.includes('tripura') ||
-               locationLower.includes('odisha') ||
-               locationLower.includes('jharkhand') ||
-               locationLower.includes('chhattisgarh') ||
-               locationLower.includes('madhya pradesh') ||
-               locationLower.includes('uttar pradesh') ||
-               locationLower.includes('rajasthan') ||
-               locationLower.includes('haryana') ||
-               locationLower.includes('punjab') ||
-               locationLower.includes('jammu') ||
-               locationLower.includes('himalayas');
-      }
-
+    if (filters.region !== 'all' && filters.region !== 'india') {
+      // The India case is now handled by the API directly for better performance
       const regionMapping: { [key: string]: string[] } = {
         'asia': ['japan', 'china', 'indonesia', 'philippines', 'thailand', 'malaysia', 'vietnam', 'nepal', 'bhutan', 'bangladesh', 'pakistan', 'sri lanka', 'myanmar'],
         'europe': ['italy', 'greece', 'turkey', 'iceland', 'spain', 'portugal', 'france', 'germany', 'uk', 'ireland', 'norway', 'sweden', 'finland', 'russia', 'ukraine'],
@@ -255,6 +211,13 @@ const RealTimeData = () => {
                   <div className="flex h-60 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50">
                     <Info className="mb-2 h-10 w-10 text-gray-400" />
                     <p className="text-techtoniq-earth">No earthquakes found matching your search</p>
+                  </div>
+                )}
+
+                {filters.region === 'india' && limitedEarthquakes.length > 0 && (
+                  <div className="mt-6 rounded-md bg-blue-50 p-4 text-blue-800">
+                    <p className="font-medium">Showing historical earthquake data for India</p>
+                    <p className="text-sm">Displaying data from the last 5 years.</p>
                   </div>
                 )}
 
