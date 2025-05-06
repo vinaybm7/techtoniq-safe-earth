@@ -1,3 +1,4 @@
+
 interface EarthquakeFeature {
   id: string;
   properties: {
@@ -60,8 +61,13 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
   if (locationLower.includes('indian springs') || 
       locationLower.includes('indian wells') || 
       locationLower.includes('indianapolis') ||
+      locationLower.includes('southeast indian ridge') ||
+      locationLower.includes('southwest indian ridge') ||
+      locationLower.includes('central indian ridge') ||
       (locationLower.includes('indian') && locationLower.includes('california')) ||
-      (locationLower.includes('indian') && locationLower.includes('nevada'))) {
+      (locationLower.includes('indian') && locationLower.includes('nevada')) ||
+      (locationLower.includes('indian') && locationLower.includes('ridge')) ||
+      (locationLower.includes('indian') && locationLower.includes('ocean'))) {
     return false;
   }
   
