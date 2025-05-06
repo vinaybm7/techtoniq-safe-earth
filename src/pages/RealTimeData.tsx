@@ -1,4 +1,3 @@
-
 import { Activity, Info, MapPin, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -74,10 +73,18 @@ const RealTimeData = () => {
         'southamerica': ['chile', 'peru', 'ecuador', 'colombia', 'argentina', 'bolivia'],
         'africa': ['kenya', 'ethiopia', 'south africa', 'morocco', 'algeria'],
         'oceania': ['new zealand', 'australia', 'papua', 'fiji', 'solomon', 'vanuatu'],
-        'antarctica': ['antarctica']
+        'antarctica': ['antarctica'],
+        'india': ['india', 'delhi', 'mumbai', 'kolkata', 'chennai', 'bangalore', 'hyderabad', 'pune']
       };
       
-      if (!regionMapping[filters.region].some(
+      // Check if the region exists in our mapping before using .some()
+      const regionsToCheck = regionMapping[filters.region];
+      if (!regionsToCheck) {
+        console.error(`Unknown region filter: ${filters.region}`);
+        return true; // Don't filter if region is unknown
+      }
+      
+      if (!regionsToCheck.some(
         region => quake.location.toLowerCase().includes(region)
       )) {
         return false;

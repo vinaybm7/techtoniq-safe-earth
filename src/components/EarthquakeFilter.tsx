@@ -87,6 +87,7 @@ const EarthquakeFilter = ({
 
   const regions = [
     { value: 'all', label: 'All Regions' },
+    { value: 'india', label: 'India' },  // Added India as first specific option for emphasis
     { value: 'asia', label: 'Asia' },
     { value: 'europe', label: 'Europe' },
     { value: 'northamerica', label: 'North America' },
@@ -94,7 +95,6 @@ const EarthquakeFilter = ({
     { value: 'africa', label: 'Africa' },
     { value: 'oceania', label: 'Oceania' },
     { value: 'antarctica', label: 'Antarctica' },
-    { value: 'india', label: 'India' },  // Added specific option for India
   ];
 
   return (
