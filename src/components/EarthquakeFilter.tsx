@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
@@ -96,8 +95,8 @@ const EarthquakeFilter = ({
 
   const regions = [
     { value: 'all', label: 'All Regions' },
-    { value: 'india', label: 'India' },  // Added India as first specific option for emphasis
-    { value: 'asia', label: 'Asia' },
+    { value: 'india', label: 'India' },
+    { value: 'asia', label: 'Asia (excluding India)' },
     { value: 'europe', label: 'Europe' },
     { value: 'northamerica', label: 'North America' },
     { value: 'southamerica', label: 'South America' },

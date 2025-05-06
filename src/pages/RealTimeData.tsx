@@ -75,8 +75,12 @@ const RealTimeData = () => {
     }
 
     // Apply region filter
-    if (filters.region !== 'all' && filters.region !== 'india') {
-      // The India case is now handled by the API directly for better performance
+    if (filters.region !== 'all') {
+      // Skip this check for India as it's already handled at the API level with enhanced filtering
+      if (filters.region === 'india') {
+        return true;
+      }
+      
       const regionMapping: { [key: string]: string[] } = {
         'asia': ['japan', 'china', 'indonesia', 'philippines', 'thailand', 'malaysia', 'vietnam', 'nepal', 'bhutan', 'bangladesh', 'pakistan', 'sri lanka', 'myanmar'],
         'europe': ['italy', 'greece', 'turkey', 'iceland', 'spain', 'portugal', 'france', 'germany', 'uk', 'ireland', 'norway', 'sweden', 'finland', 'russia', 'ukraine'],

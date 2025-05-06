@@ -52,21 +52,33 @@ export interface Earthquake {
   localTime?: string;
 }
 
-// Function to check if an earthquake is in or near India based on location name or coordinates
+// Updated function to check if an earthquake is in or near India based on location name or coordinates
 const isInIndia = (feature: EarthquakeFeature): boolean => {
   const locationLower = feature.properties.place.toLowerCase();
   
-  // Explicitly exclude locations that have "indian" but are not in India
+  // First, explicitly exclude locations that clearly aren't in India but might match partial text
   if (locationLower.includes('indian springs') || 
       locationLower.includes('indian wells') || 
       locationLower.includes('indianapolis') ||
       locationLower.includes('southeast indian ridge') ||
       locationLower.includes('southwest indian ridge') ||
       locationLower.includes('central indian ridge') ||
+      locationLower.includes('indian ocean') ||
+      locationLower.includes('indian ridge') ||
       (locationLower.includes('indian') && locationLower.includes('california')) ||
       (locationLower.includes('indian') && locationLower.includes('nevada')) ||
       (locationLower.includes('indian') && locationLower.includes('ridge')) ||
-      (locationLower.includes('indian') && locationLower.includes('ocean'))) {
+      (locationLower.includes('indian') && locationLower.includes('ocean')) ||
+      locationLower.includes('china') ||
+      locationLower.includes('afghanistan') ||
+      locationLower.includes('burma') ||
+      locationLower.includes('myanmar') ||
+      locationLower.includes('tibet') || // Tibet typically falls under China
+      locationLower.includes('pakistan') || // Separate country
+      locationLower.includes('bangladesh') || // Separate country
+      locationLower.includes('nepal') || // Separate country
+      locationLower.includes('bhutan')) // Separate country
+  {
     return false;
   }
   
@@ -77,7 +89,8 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
       locationLower.includes('mumbai') ||
       locationLower.includes('chennai') ||
       locationLower.includes('kolkata') ||
-      locationLower.includes('himachal') ||
+      locationLower.includes('himachal pradesh') ||
+      locationLower.includes('jammu and kashmir') ||
       locationLower.includes('ladakh') ||
       locationLower.includes('kashmir') ||
       locationLower.includes('assam') ||
@@ -86,9 +99,8 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
       locationLower.includes('gyalshing') ||
       locationLower.includes('moirang') ||
       locationLower.includes('padam') ||
-      locationLower.includes('tibet') ||
       locationLower.includes('uttarakhand') ||
-      locationLower.includes('arunachal') ||
+      locationLower.includes('arunachal pradesh') ||
       locationLower.includes('manipur') ||
       locationLower.includes('meghalaya') ||
       locationLower.includes('mizoram') ||
@@ -102,17 +114,40 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
       locationLower.includes('rajasthan') ||
       locationLower.includes('haryana') ||
       locationLower.includes('punjab') ||
-      locationLower.includes('jammu') ||
-      locationLower.includes('himalayas')) {
+      locationLower.includes('goa') ||
+      locationLower.includes('kerala') ||
+      locationLower.includes('tamil nadu') ||
+      locationLower.includes('andhra pradesh') ||
+      locationLower.includes('telangana') ||
+      locationLower.includes('karnataka') ||
+      locationLower.includes('maharashtra') ||
+      locationLower.includes('west bengal')) {
     return true;
   }
   
   // Check coordinates - India is roughly between 6°N-37°N latitude and 68°E-97°E longitude
+  // But we need to be more precise to exclude neighboring countries
   const latitude = feature.geometry.coordinates[1];
   const longitude = feature.geometry.coordinates[0];
   
-  // More precise bounding box for India
+  // More precise bounding box for India (excluding parts that overlap with neighboring countries)
   if ((latitude >= 6 && latitude <= 37) && (longitude >= 68 && longitude <= 97)) {
+    // Additional checks to exclude neighboring countries when using coordinates
+    // Exclude Pakistan (west)
+    if (longitude < 72 && latitude > 23) return false;
+    
+    // Exclude China/Tibet (north)
+    if (latitude > 32 && longitude > 78 && longitude < 88) return false;
+    
+    // Exclude Nepal/Bhutan area
+    if (latitude > 26.5 && latitude < 29 && longitude > 80 && longitude < 92) return false;
+    
+    // Exclude Bangladesh (east)
+    if (latitude > 21 && latitude < 26 && longitude > 88 && longitude < 92) return false;
+    
+    // Exclude Myanmar (further east)
+    if (latitude > 20 && longitude > 92) return false;
+    
     return true;
   }
   
@@ -334,16 +369,16 @@ export const fetchHistoricalIndianEarthquakes = async (): Promise<Earthquake[]> 
     const startTimeStr = startDate.toISOString();
     const endTimeStr = endDate.toISOString();
     
-    // Use the USGS query API with parameters for India's bounding box
-    // India is roughly between 6°N-37°N latitude and 68°E-97°E longitude
-    const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${startTimeStr}&endtime=${endTimeStr}&minlatitude=6&maxlatitude=37&minlongitude=68&maxlongitude=97&minmagnitude=1`;
+    // Use the USGS query API with parameters for India's more precise bounding box
+    // This is a more conservative bounding box to avoid getting too many non-Indian earthquakes
+    const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${startTimeStr}&endtime=${endTimeStr}&minlatitude=8&maxlatitude=35&minlongitude=70&maxlongitude=95&minmagnitude=1`;
     
     console.log("Fetching historical Indian earthquakes with URL:", url);
     const response = await fetch(url);
     const data: USGSResponse = await response.json();
     
     // Further filter the results to ensure we only get earthquakes in India
-    // (since the bounding box might include neighboring countries)
+    // using our improved isInIndia function
     const indianEarthquakes = data.features.filter(isInIndia);
     
     console.log(`Found ${indianEarthquakes.length} historical Indian earthquakes`);
