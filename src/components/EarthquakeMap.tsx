@@ -20,6 +20,7 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [iframeInitialized, setIframeInitialized] = useState(false);
   
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -66,6 +67,7 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
       }
       
       iframe.src = baseUrl + queryParams;
+      console.log("Creating USGS Earthquake Map iframe with src:", iframe.src);
 
       // Add event handlers
       iframe.onerror = () => {
@@ -81,14 +83,12 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
       iframe.onload = () => {
         setIsLoading(false);
         setMapError(null);
+        setIframeInitialized(true);
         console.log("USGS Earthquake Map loaded successfully");
       };
 
       // Add the iframe to the container
       mapContainer.current?.appendChild(iframe);
-      
-      // Log map creation
-      console.log("Creating USGS Earthquake Map iframe with src:", iframe.src);
     };
 
     // Create the initial iframe
