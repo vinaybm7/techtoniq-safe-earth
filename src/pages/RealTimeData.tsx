@@ -221,7 +221,7 @@ const RealTimeData = () => {
                 {filters.region === 'india' && limitedEarthquakes.length > 0 && (
                   <div className="mt-6 rounded-md bg-blue-50 p-4 text-blue-800">
                     <p className="font-medium">Showing historical earthquake data for India</p>
-                    <p className="text-sm">Displaying data from the last 5 years.</p>
+                    <p className="text-sm">Displaying data from the last 10 years plus significant earthquakes (M4.5+) from earlier periods.</p>
                   </div>
                 )}
 

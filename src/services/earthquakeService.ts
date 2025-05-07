@@ -66,6 +66,26 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
       locationLower.includes('indian ocean') ||
       locationLower.includes('indian ridge') ||
       (locationLower.includes('indian') && locationLower.includes('california')) ||
+      locationLower.includes('indonesia') ||
+      locationLower.includes('sumatera') ||
+      locationLower.includes('sumatra') ||
+      locationLower.includes('simeulue') ||
+      locationLower.includes('nias') ||
+      locationLower.includes('mentawai') ||
+      locationLower.includes('java') ||
+      locationLower.includes('kalimantan') ||
+      locationLower.includes('minahasa') ||
+      locationLower.includes('sulawesi') ||
+      locationLower.includes('kalimanta') ||
+      locationLower.includes('lombok') ||
+      locationLower.includes('bali') ||
+      locationLower.includes('flores') ||
+      locationLower.includes('sumba') ||
+      locationLower.includes('timor') ||
+      locationLower.includes('molucca') ||
+      locationLower.includes('irian') ||
+      locationLower.includes('maluku') ||
+      locationLower.includes('papua') ||
       (locationLower.includes('indian') && locationLower.includes('nevada')) ||
       (locationLower.includes('indian') && locationLower.includes('ridge')) ||
       (locationLower.includes('indian') && locationLower.includes('ocean')) ||
@@ -443,37 +463,56 @@ export const fetchEarthquakesByTimeframe = async (timeframe: 'hour' | 'day' | 'w
   }
 };
 
-// New function to fetch historical earthquakes in India with expanded search
+// Updated function to fetch historical earthquakes in India with expanded search
 export const fetchHistoricalIndianEarthquakes = async (): Promise<Earthquake[]> => {
   try {
-    // USGS API supports starttime and endtime parameters for historical data
-    // We'll fetch data for the last 10 years to get more comprehensive historical data
+    // First, fetch the last 10 years of data
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setFullYear(endDate.getFullYear() - 10); // 10 years back for more historical data
+    startDate.setFullYear(endDate.getFullYear() - 10); // 10 years back
 
     const startTimeStr = startDate.toISOString();
     const endTimeStr = endDate.toISOString();
     
-    // Use a more comprehensive bounding box to ensure we capture all Indian earthquakes
-    // This includes Andaman and Nicobar Islands
+    // Use a bounding box to capture all Indian earthquakes
     const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${startTimeStr}&endtime=${endTimeStr}&minlatitude=6&maxlatitude=37&minlongitude=68&maxlongitude=97&minmagnitude=1`;
     
     console.log("Fetching historical Indian earthquakes with URL:", url);
     const response = await fetch(url);
     const data: USGSResponse = await response.json();
     
-    // Further filter the results to ensure we only get earthquakes in India
-    // using our enhanced isInIndia function with the specific locations
-    const indianEarthquakes = data.features.filter(isInIndia);
+    // Filter to ensure we only get earthquakes in India
+    const recentIndianEarthquakes = data.features.filter(isInIndia);
     
-    console.log(`Found ${indianEarthquakes.length} historical Indian earthquakes`);
+    console.log(`Found ${recentIndianEarthquakes.length} historical Indian earthquakes from last 10 years`);
+    
+    // Now fetch older significant earthquakes (magnitude > 4.5)
+    // Going back 30 years for significant earthquakes
+    const oldStartDate = new Date();
+    oldStartDate.setFullYear(startDate.getFullYear() - 20); // 30 years total from today
+    
+    const oldStartTimeStr = oldStartDate.toISOString();
+    
+    // Fetch only significant earthquakes (magnitude 4.5+) for the older period
+    const significantUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${oldStartTimeStr}&endtime=${startTimeStr}&minlatitude=6&maxlatitude=37&minlongitude=68&maxlongitude=97&minmagnitude=4.5`;
+    
+    console.log("Fetching older significant Indian earthquakes with URL:", significantUrl);
+    const significantResponse = await fetch(significantUrl);
+    const significantData: USGSResponse = await significantResponse.json();
+    
+    // Filter significant earthquakes for India
+    const olderSignificantEarthquakes = significantData.features.filter(isInIndia);
+    
+    console.log(`Found ${olderSignificantEarthquakes.length} older significant Indian earthquakes`);
+    
+    // Combine both datasets
+    const combinedEarthquakes = [...recentIndianEarthquakes, ...olderSignificantEarthquakes];
     
     // Sort by time (newest first)
-    indianEarthquakes.sort((a, b) => b.properties.time - a.properties.time);
+    combinedEarthquakes.sort((a, b) => b.properties.time - a.properties.time);
     
     // Map to our format
-    return indianEarthquakes.map(featureToEarthquake);
+    return combinedEarthquakes.map(featureToEarthquake);
   } catch (error) {
     console.error("Error fetching historical Indian earthquake data:", error);
     throw error;

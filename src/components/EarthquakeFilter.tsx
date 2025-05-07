@@ -96,7 +96,7 @@ const EarthquakeFilter = ({
 
   const regions = [
     { value: 'all', label: 'All Regions' },
-    { value: 'india', label: 'India (Comprehensive Data)' },
+    { value: 'india', label: 'India (Enhanced Historical Data)' },
     { value: 'asia', label: 'Asia (excluding India)' },
     { value: 'europe', label: 'Europe' },
     { value: 'northamerica', label: 'North America' },
@@ -203,7 +203,7 @@ const EarthquakeFilter = ({
                 
                 {filterValues.region === 'india' && (
                   <p className="text-xs text-blue-600">
-                    Selecting India will fetch comprehensive historical earthquake data for all Indian states, union territories, and specific locations
+                    Shows 10 years of regular data plus older significant earthquakes (M4.5+) from all Indian states and territories
                   </p>
                 )}
               </div>
