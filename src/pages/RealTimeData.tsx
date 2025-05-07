@@ -242,14 +242,14 @@ const RealTimeData = () => {
               <div className="rounded-lg border bg-white p-6">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
                   <h3 className="text-xl font-medium text-techtoniq-earth-dark">
-                    Global Earthquake Map
+                    USGS Earthquake Map
                   </h3>
                   <div className="flex gap-2">
                     <button 
                       className={`rounded-md px-3 py-1.5 text-sm font-medium ${mapFilterType === 'continent' ? 'bg-techtoniq-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                       onClick={() => setMapFilterType('continent')}
                     >
-                      View by Continent
+                      View by Region
                     </button>
                     <button 
                       className={`rounded-md px-3 py-1.5 text-sm font-medium ${mapFilterType === 'magnitude' ? 'bg-techtoniq-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
@@ -267,25 +267,7 @@ const RealTimeData = () => {
                 </div>
                 
                 <div className="h-[600px] rounded-lg border overflow-hidden">
-                  {earthquakes && earthquakes.length > 0 ? (
-                    <EarthquakeMap earthquakes={earthquakes} filterType={mapFilterType} />
-                  ) : (
-                    <div className="flex h-full items-center justify-center bg-gray-100">
-                      {isLoading ? (
-                        <div className="text-center">
-                          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-techtoniq-blue border-t-transparent"></div>
-                          <p className="mt-4 text-techtoniq-earth">Loading map data...</p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <MapPin className="mx-auto h-12 w-12 text-gray-400" />
-                          <p className="mt-2 text-techtoniq-earth">
-                            No earthquake data available
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <EarthquakeMap earthquakes={earthquakes || []} filterType={mapFilterType} />
                 </div>
                 
                 <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -301,6 +283,15 @@ const RealTimeData = () => {
                     <p className="text-xs text-techtoniq-earth">Alert Areas</p>
                     <p className="text-xl font-semibold text-techtoniq-earth-dark">5</p>
                   </div>
+                </div>
+                
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg text-sm">
+                  <p className="text-techtoniq-blue-dark font-medium">About USGS Earthquake Map</p>
+                  <p className="mt-1 text-techtoniq-earth">
+                    This interactive map shows earthquakes from the United States Geological Survey (USGS) 
+                    with magnitude 2.5+ from the past day. You can interact with the map by zooming, 
+                    panning, and clicking on earthquake markers for more details.
+                  </p>
                 </div>
               </div>
             </TabsContent>
