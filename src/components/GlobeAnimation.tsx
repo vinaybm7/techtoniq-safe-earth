@@ -16,26 +16,28 @@ const EarthGlobe = () => {
   return (
     <group>
       {/* Earth sphere */}
-      <Sphere ref={meshRef} args={[1, 64, 64]}>
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[1, 64, 64]} />
         <meshStandardMaterial
           color="#2D7FF9"
           roughness={0.7}
           metalness={0.1}
+          transparent
           opacity={0.8}
-          transparent={true}
         />
-      </Sphere>
+      </mesh>
       
       {/* Atmosphere effect */}
-      <Sphere args={[1.08, 64, 64]}>
+      <mesh>
+        <sphereGeometry args={[1.08, 64, 64]} />
         <meshStandardMaterial
           color="#E6F2FF"
           roughness={1}
           metalness={0}
+          transparent
           opacity={0.2}
-          transparent={true}
         />
-      </Sphere>
+      </mesh>
     </group>
   );
 };
@@ -89,29 +91,71 @@ const AnimatedPoints = () => {
         size={0.03} 
         color="#3BBFBA" 
         transparent 
-        opacity={0.8} 
         depthWrite={false}
+        opacity={0.8}
       />
     </points>
   );
 };
 
 const GlobeAnimation = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  // Add an effect to simulate loading and handle potential errors
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="globe-container w-full h-[500px] md:h-[600px]">
-      <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <EarthGlobe />
-        <AnimatedPoints />
-        <OrbitControls 
-          enableZoom={false}
-          enablePan={false}
-          autoRotate
-          autoRotateSpeed={0.5}
-          rotateSpeed={0.5}
-        />
-      </Canvas>
+    <div className="globe-container relative w-full h-[500px] md:h-[600px] bg-transparent">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-techtoniq-blue border-t-transparent"></div>
+          <p className="ml-2 text-techtoniq-earth">Loading globe...</p>
+        </div>
+      )}
+      
+      {hasError ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
+          <div className="text-center p-4">
+            <p className="text-techtoniq-earth-dark">Failed to load globe animation.</p>
+            <button 
+              className="mt-2 px-4 py-2 bg-techtoniq-blue text-white rounded hover:bg-techtoniq-blue-dark transition-colors"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      ) : (
+        <Canvas 
+          camera={{ position: [0, 0, 3], fov: 50 }}
+          onCreated={() => {
+            console.log("Canvas created successfully");
+          }}
+          onError={(error) => {
+            console.error("Canvas error:", error);
+            setHasError(true);
+          }}
+        >
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={1} />
+          <EarthGlobe />
+          <AnimatedPoints />
+          <OrbitControls 
+            enableZoom={false}
+            enablePan={false}
+            autoRotate
+            autoRotateSpeed={0.5}
+            rotateSpeed={0.5}
+          />
+        </Canvas>
+      )}
     </div>
   );
 };
