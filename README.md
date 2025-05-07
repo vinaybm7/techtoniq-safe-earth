@@ -1,73 +1,102 @@
-# Welcome to your Lovable project
+# Techtoniq - Earthquake Preparedness & Safety
 
-## Project info
+Techtoniq is a comprehensive web application designed to help users prepare for, respond to, and recover from earthquakes.
+By combining real-time earthquake data, educational resources, and interactive safety tools, Techtoniq empowers communities to build resilience against seismic events.
 
-**URL**: https://lovable.dev/projects/56992c61-a0bd-41db-bdba-3eb6648aa099
+## 🌟 Features
 
-## How can I edit this code?
+- **Real-time Earthquake Monitoring**: Access up-to-date information on recent seismic activity worldwide
+- **Interactive Safety Guides**: Step-by-step instructions for before, during, and after an earthquake
+- **Emergency Preparedness Tools**: Customizable checklists and supply recommendations
+- **Educational Resources**: Learn about earthquake science, building safety, and risk assessment
+- **Location-based Alerts**: Receive notifications about seismic activity in your area
 
-There are several ways of editing your application.
+## 🚀 Getting Started
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/56992c61-a0bd-41db-bdba-3eb6648aa099) and start prompting.
+- Node.js (v16 or higher)
+- npm or yarn
 
-Changes made via Lovable will be committed automatically to this repo.
+### Installation
 
-**Use your preferred IDE**
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/your-username/techtoniq.git
+   cd techtoniq
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. Install dependencies:
+   ```sh
+   npm install
+   # or
+   yarn install
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+3. Start the development server:
+   ```sh
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-Follow these steps:
+4. Open your browser and navigate to `http://localhost:8080`
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🛠️ Tech Stack
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+This project is built with modern technologies to ensure a responsive, accessible, and performant user experience:
 
-# Step 3: Install the necessary dependencies.
-npm i
+- **Frontend Framework**: React 18
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS with custom theme
+- **UI Components**: shadcn/ui
+- **Type Safety**: TypeScript
+- **Routing**: React Router
+- **Data Visualization**: Recharts
+- **3D Visualizations**: Three.js with React Three Fiber
+- **Maps**: Mapbox GL
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## 📂 Project Structure
+
+```
+techtoniq/
+├── public/              # Static assets and resources
+│   ├── safety-guide.pdf # Downloadable safety resources
+│   └── ...
+├── src/
+│   ├── components/      # Reusable UI components
+│   ├── hooks/           # Custom React hooks
+│   ├── lib/             # Utility functions and shared code
+│   ├── pages/           # Page components
+│   ├── App.tsx          # Main application component
+│   └── main.tsx         # Application entry point
+└── ...
 ```
 
-**Edit a file directly in GitHub**
+## 🌐 Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
 
-**Use GitHub Codespaces**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🤝 Contributing
 
-## What technologies are used for this project?
+Contributions are welcome! Please feel free to submit a Pull Request or create an Issue to improve this project.
 
-This project is built with:
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 📄 License
 
-## How can I deploy this project?
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-Simply open [Lovable](https://lovable.dev/projects/56992c61-a0bd-41db-bdba-3eb6648aa099) and click on Share -> Publish.
+## 🙏 Acknowledgments
 
-## Can I connect a custom domain to my Lovable project?
+- USGS for earthquake data
+- Emergency preparedness organizations for safety guidelines
+- Lovable for development platform services
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 📱 Contact
