@@ -1,115 +1,124 @@
 
-import { useRef, useState, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Sphere, OrbitControls } from '@react-three/drei';
-import * as THREE from 'three';
+import { useEffect, useRef, useState } from "react";
+import createGlobe, { COBEOptions } from "cobe";
+import { cn } from "@/lib/utils";
 
-const EarthGlobe = () => {
-  const meshRef = useRef<THREE.Mesh>(null!);
-  
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.002;
-    }
-  });
-
-  return (
-    <group>
-      {/* Earth sphere */}
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[1, 64, 64]} />
-        <meshStandardMaterial
-          color="#2D7FF9"
-          roughness={0.7}
-          metalness={0.1}
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
-      
-      {/* Atmosphere effect */}
-      <mesh>
-        <sphereGeometry args={[1.08, 64, 64]} />
-        <meshStandardMaterial
-          color="#E6F2FF"
-          roughness={1}
-          metalness={0}
-          transparent
-          opacity={0.2}
-        />
-      </mesh>
-    </group>
-  );
-};
-
-const AnimatedPoints = () => {
-  const pointsRef = useRef<THREE.Points>(null!);
-  const [positions, setPositions] = useState<Float32Array | null>(null);
-  
-  useEffect(() => {
-    // Create random points that will represent earthquake points or markers
-    const particleCount = 200;
-    const posArray = new Float32Array(particleCount * 3);
+// Configure the globe with colors that match the website's theme
+const GLOBE_CONFIG: COBEOptions = {
+  width: 800,
+  height: 800,
+  onRender: () => {},
+  devicePixelRatio: 2,
+  phi: 0,
+  theta: 0.3,
+  dark: 0,
+  diffuse: 0.4,
+  mapSamples: 16000,
+  mapBrightness: 1.2,
+  baseColor: [45/255, 127/255, 249/255], // techtoniq-blue
+  markerColor: [59/255, 191/255, 186/255], // techtoniq-teal
+  glowColor: [230/255, 242/255, 255/255], // Light blue glow similar to previous globe
+  markers: [
+    // India
+    { location: [20.5937, 78.9629], size: 0.1 }, // India
+    { location: [28.7041, 77.1025], size: 0.05 }, // Delhi
+    { location: [19.0760, 72.8777], size: 0.08 }, // Mumbai
+    { location: [22.5726, 88.3639], size: 0.06 }, // Kolkata
+    { location: [13.0827, 80.2707], size: 0.05 }, // Chennai
     
-    for (let i = 0; i < particleCount; i++) {
-      // Create points distributed on a sphere
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos((Math.random() * 2) - 1);
-      const radius = 1 + (Math.random() * 0.1); // Slightly outside the globe
-      
-      const x = radius * Math.sin(phi) * Math.cos(theta);
-      const y = radius * Math.sin(phi) * Math.sin(theta);
-      const z = radius * Math.cos(phi);
-      
-      posArray[i * 3] = x;
-      posArray[i * 3 + 1] = y;
-      posArray[i * 3 + 2] = z;
-    }
+    // Major earthquake zones globally
+    { location: [36.2048, 138.2529], size: 0.08 }, // Japan
+    { location: [37.0902, -95.7129], size: 0.08 }, // USA
+    { location: [35.8617, 104.1954], size: 0.07 }, // China
+    { location: [-33.8688, 151.2093], size: 0.05 }, // Australia
+    { location: [-14.2350, -51.9253], size: 0.07 }, // Brazil
+    { location: [41.8719, 12.5674], size: 0.04 }, // Italy
+    { location: [61.5240, 105.3188], size: 0.06 }, // Russia
+    { location: [56.1304, -106.3468], size: 0.05 }, // Canada
+    { location: [-35.6751, -71.5430], size: 0.09 }, // Chile - Pacific Ring of Fire
+    { location: [-18.7669, -52.9202], size: 0.05 }, // Peru - Pacific Ring of Fire
+    { location: [-0.7893, 113.9213], size: 0.08 }, // Indonesia - Pacific Ring of Fire
     
-    setPositions(posArray);
-  }, []);
-  
-  useFrame((state) => {
-    if (pointsRef.current) {
-      pointsRef.current.rotation.y += 0.001;
-    }
-  });
-  
-  if (!positions) return null;
-  
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={positions.length / 3}
-          array={positions}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial 
-        size={0.03} 
-        color="#3BBFBA" 
-        transparent 
-        depthWrite={false}
-        opacity={0.8}
-      />
-    </points>
-  );
+    // Recent major earthquake locations
+    { location: [39.7837, 143.0820], size: 0.09 }, // Fukushima 2011
+    { location: [30.4680, 103.2471], size: 0.07 }, // Sichuan 2008
+    { location: [3.3165, 95.8541], size: 0.09 }, // Sumatra 2004
+  ],
 };
 
 const GlobeAnimation = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pointerInteracting = useRef<number | null>(null);
+  const pointerInteractionMovement = useRef(0);
+  const [r, setR] = useState(0);
+  let phi = 0;
+  let width = 0;
 
-  // Add an effect to simulate loading and handle potential errors
+  const updatePointerInteraction = (value: number | null) => {
+    pointerInteracting.current = value;
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = value !== null ? "grabbing" : "grab";
+    }
+  };
+
+  const updateMovement = (clientX: number) => {
+    if (pointerInteracting.current !== null) {
+      const delta = clientX - pointerInteracting.current;
+      pointerInteractionMovement.current = delta;
+      setR(delta / 200);
+    }
+  };
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    try {
+      if (!canvasRef.current) return;
+      
+      const onResize = () => {
+        if (canvasRef.current) {
+          width = canvasRef.current.offsetWidth;
+        }
+      };
+      
+      window.addEventListener("resize", onResize);
+      onResize();
+      
+      const onRender = (state: Record<string, any>) => {
+        if (pointerInteracting.current === null) {
+          phi += 0.005;
+        }
+        state.phi = phi + r;
+        state.width = width * 2;
+        state.height = width * 2;
+      };
+      
+      const globeConfig: COBEOptions = {
+        ...GLOBE_CONFIG,
+        width: width * 2,
+        height: width * 2,
+        onRender,
+      };
+      
+      const globe = createGlobe(canvasRef.current, globeConfig);
+      
+      setTimeout(() => {
+        if (canvasRef.current) {
+          canvasRef.current.style.opacity = "1";
+          setIsLoading(false);
+        }
+      }, 800);
+      
+      return () => {
+        window.removeEventListener("resize", onResize);
+        globe.destroy();
+      };
+    } catch (error) {
+      console.error("Globe initialization error:", error);
+      setHasError(true);
       setIsLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [r]);
 
   return (
     <div className="globe-container relative w-full h-[500px] md:h-[600px] bg-transparent">
@@ -133,28 +142,19 @@ const GlobeAnimation = () => {
           </div>
         </div>
       ) : (
-        <Canvas 
-          camera={{ position: [0, 0, 3], fov: 50 }}
-          onCreated={() => {
-            console.log("Canvas created successfully");
-          }}
-          onError={(error) => {
-            console.error("Canvas error:", error);
-            setHasError(true);
-          }}
-        >
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
-          <EarthGlobe />
-          <AnimatedPoints />
-          <OrbitControls 
-            enableZoom={false}
-            enablePan={false}
-            autoRotate
-            autoRotateSpeed={0.5}
-            rotateSpeed={0.5}
+        <div className={cn("absolute inset-0 mx-auto aspect-[1/1] w-full max-w-[600px]")}>
+          <canvas
+            className={cn("size-full opacity-0 transition-opacity duration-500 [contain:layout_paint_size]")}
+            ref={canvasRef}
+            onPointerDown={(e) =>
+              updatePointerInteraction(e.clientX - pointerInteractionMovement.current)
+            }
+            onPointerUp={() => updatePointerInteraction(null)}
+            onPointerOut={() => updatePointerInteraction(null)}
+            onMouseMove={(e) => updateMovement(e.clientX)}
+            onTouchMove={(e) => e.touches[0] && updateMovement(e.touches[0].clientX)}
           />
-        </Canvas>
+        </div>
       )}
     </div>
   );

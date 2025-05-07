@@ -2,6 +2,7 @@
 import { Activity, Calendar, MapPin } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
+import { format, parseISO } from "date-fns";
 
 interface EarthquakeCardProps {
   id: string;
@@ -25,14 +26,40 @@ const EarthquakeCard = ({ magnitude, location, date, depth, url, coordinates }: 
   // Format date in IST
   const formatDateInIST = (dateStr: string) => {
     try {
-      const date = new Date(dateStr);
-      return date.toLocaleString('en-US', { 
+      // Try to parse the date string
+      let date;
+      
+      // Check if it's already a properly formatted date
+      if (dateStr.includes('GMT+5:30') || dateStr.includes('IST')) {
+        return dateStr;
+      }
+      
+      try {
+        // Try parsing as ISO date first
+        date = parseISO(dateStr);
+      } catch (e) {
+        // If that fails, try as regular date
+        date = new Date(dateStr);
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        throw new Error("Invalid date");
+      }
+      
+      // Format to Indian Standard Time
+      return new Intl.DateTimeFormat('en-US', { 
         timeZone: 'Asia/Kolkata',
-        dateStyle: 'short',
-        timeStyle: 'short'
-      });
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).format(date) + ' IST';
     } catch (error) {
-      return dateStr;
+      console.error("Date formatting error:", error, "for date:", dateStr);
+      return dateStr; // Return original string if formatting fails
     }
   };
 
@@ -70,7 +97,7 @@ const EarthquakeCard = ({ magnitude, location, date, depth, url, coordinates }: 
               <div className="flex flex-wrap items-center gap-3 text-sm text-techtoniq-earth">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  <span>{formatDateInIST(date)} IST</span>
+                  <span>{formatDateInIST(date)}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
