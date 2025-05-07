@@ -1,3 +1,4 @@
+
 import { AlertTriangle, ArrowRight, Book, ChevronLeft, ChevronRight, Clock, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -5,6 +6,7 @@ import { Link } from "react-router-dom";
 import PageLayout from "@/components/PageLayout";
 import DataOverview from "@/components/DataOverview";
 import EarthquakeCard from "@/components/EarthquakeCard";
+import GlobeAnimation from "@/components/GlobeAnimation";
 
 const Index = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -66,29 +68,34 @@ const Index = () => {
     <PageLayout>
       <section className="relative overflow-hidden bg-gradient-to-b from-techtoniq-blue-light to-white py-16">
         <div className="container relative z-10 px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-6 inline-flex animate-pulse-slow items-center rounded-full bg-techtoniq-blue-light px-4 py-1.5">
-              <AlertTriangle className="mr-2 h-4 w-4 text-techtoniq-blue" />
-              <span className="text-sm font-medium text-techtoniq-blue">Earthquake Preparedness & Safety</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="mx-auto max-w-xl text-center md:text-left">
+              <div className="mb-6 inline-flex animate-pulse-slow items-center rounded-full bg-techtoniq-blue-light px-4 py-1.5">
+                <AlertTriangle className="mr-2 h-4 w-4 text-techtoniq-blue" />
+                <span className="text-sm font-medium text-techtoniq-blue">Earthquake Preparedness & Safety</span>
+              </div>
+              <h1 className="mb-6 text-4xl font-bold tracking-tight text-techtoniq-earth-dark sm:text-5xl md:text-6xl">
+                Be Prepared, Stay <span className="text-techtoniq-blue">Safe</span>
+              </h1>
+              <p className="mx-auto mb-8 max-w-2xl text-xl text-techtoniq-earth">
+                Techtoniq provides you with the tools and knowledge to prepare for earthquakes,
+                stay informed during seismic events, and safely recover afterward.
+              </p>
+              <div className="flex flex-col items-center md:items-start justify-center gap-4 sm:flex-row">
+                <Button asChild className="bg-techtoniq-blue hover:bg-techtoniq-blue-dark">
+                  <Link to="/real-time-data">
+                    View Real-Time Data
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/safety-guidelines">
+                    Safety Guidelines
+                  </Link>
+                </Button>
+              </div>
             </div>
-            <h1 className="mb-6 text-4xl font-bold tracking-tight text-techtoniq-earth-dark sm:text-5xl md:text-6xl">
-              Be Prepared, Stay <span className="text-techtoniq-blue">Safe</span>
-            </h1>
-            <p className="mx-auto mb-8 max-w-2xl text-xl text-techtoniq-earth">
-              Techtoniq provides you with the tools and knowledge to prepare for earthquakes,
-              stay informed during seismic events, and safely recover afterward.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button asChild className="bg-techtoniq-blue hover:bg-techtoniq-blue-dark">
-                <Link to="/real-time-data">
-                  View Real-Time Data
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/safety-guidelines">
-                  Safety Guidelines
-                </Link>
-              </Button>
+            <div className="hidden md:block relative w-full h-full max-h-[500px] mt-8 md:mt-0">
+              <GlobeAnimation />
             </div>
           </div>
         </div>
