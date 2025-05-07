@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
@@ -95,7 +96,7 @@ const EarthquakeFilter = ({
 
   const regions = [
     { value: 'all', label: 'All Regions' },
-    { value: 'india', label: 'India' },
+    { value: 'india', label: 'India (Comprehensive Data)' },
     { value: 'asia', label: 'Asia (excluding India)' },
     { value: 'europe', label: 'Europe' },
     { value: 'northamerica', label: 'North America' },
@@ -202,7 +203,7 @@ const EarthquakeFilter = ({
                 
                 {filterValues.region === 'india' && (
                   <p className="text-xs text-blue-600">
-                    Selecting India will fetch comprehensive historical earthquake data
+                    Selecting India will fetch comprehensive historical earthquake data for all Indian states, union territories, and specific locations
                   </p>
                 )}
               </div>
