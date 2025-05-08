@@ -69,7 +69,7 @@ const Index = () => {
       <section className="relative overflow-hidden bg-gradient-to-b from-techtoniq-blue-light to-white py-16">
         <div className="container relative z-10 px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="mx-auto max-w-xl text-center md:text-left">
+            <div className="mx-auto max-w-xl md:mx-0 text-center md:text-left">
               <div className="mb-6 inline-flex animate-pulse-slow items-center rounded-full bg-techtoniq-blue-light px-4 py-1.5">
                 <AlertTriangle className="mr-2 h-4 w-4 text-techtoniq-blue" />
                 <span className="text-sm font-medium text-techtoniq-blue">Earthquake Preparedness & Safety</span>
@@ -77,11 +77,11 @@ const Index = () => {
               <h1 className="mb-6 text-4xl font-bold tracking-tight text-techtoniq-earth-dark sm:text-5xl md:text-6xl">
                 Be Prepared, Stay <span className="text-techtoniq-blue">Safe</span>
               </h1>
-              <p className="mx-auto mb-8 max-w-2xl text-xl text-techtoniq-earth">
+              <p className="mb-8 text-xl text-techtoniq-earth">
                 Techtoniq provides you with the tools and knowledge to prepare for earthquakes,
                 stay informed during seismic events, and safely recover afterward.
               </p>
-              <div className="flex flex-col items-center md:items-start justify-center gap-4 sm:flex-row">
+              <div className="flex flex-col items-center md:items-start justify-start gap-4 sm:flex-row">
                 <Button asChild className="bg-techtoniq-blue hover:bg-techtoniq-blue-dark">
                   <Link to="/real-time-data">
                     View Real-Time Data
@@ -132,6 +132,118 @@ const Index = () => {
                 <EarthquakeCard key={index} {...quake} />
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Educational resources section with Ghibli-style images */}
+      <section className="bg-techtoniq-blue-light/20 py-12 md:py-16">
+        <div className="container px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold text-techtoniq-earth-dark md:text-3xl">
+              Educational Resources
+            </h2>
+            <p className="mt-2 text-techtoniq-earth">
+              Learn about earthquakes and how they impact our world
+            </p>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
+            {/* What is an Earthquake? */}
+            <a 
+              href="https://medium.com/@vnyone7/what-is-an-earthquake-understanding-earths-powerful-tremors-08ae3bb9de79" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group block overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg"
+            >
+              <div className="relative h-48 overflow-hidden">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                  style={{ 
+                    backgroundImage: `url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80')`,
+                    filter: 'brightness(0.9)'
+                  }}
+                >
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-techtoniq-earth-dark/80 to-transparent"></div>
+                <div className="absolute bottom-0 p-4 text-white">
+                  <h3 className="text-xl font-bold">What is an Earthquake?</h3>
+                  <p className="mt-2 text-sm text-gray-100">Understanding Earth's powerful tremors</p>
+                </div>
+              </div>
+              <div className="p-4">
+                <p className="text-techtoniq-earth">
+                  Learn about the causes of earthquakes, plate tectonics, and how the Earth's movement creates seismic activity.
+                </p>
+                <div className="mt-4 flex items-center text-sm font-medium text-techtoniq-blue">
+                  Read article <ArrowRight className="ml-1 h-4 w-4" />
+                </div>
+              </div>
+            </a>
+
+            {/* Measuring Earthquakes */}
+            <a 
+              href="https://medium.com/@vnyone7/what-is-an-earthquake-understanding-earths-powerful-tremors-08ae3bb9de79" 
+              target="_blank"
+              rel="noopener noreferrer" 
+              className="group block overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg"
+            >
+              <div className="relative h-48 overflow-hidden">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                  style={{ 
+                    backgroundImage: `url('https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80')`,
+                    filter: 'brightness(0.85)'
+                  }}
+                >
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-techtoniq-earth-dark/80 to-transparent"></div>
+                <div className="absolute bottom-0 p-4 text-white">
+                  <h3 className="text-xl font-bold">Measuring Earthquakes</h3>
+                  <p className="mt-2 text-sm text-gray-100">Scales and monitoring techniques</p>
+                </div>
+              </div>
+              <div className="p-4">
+                <p className="text-techtoniq-earth">
+                  Discover how scientists measure earthquake magnitude and intensity, and the technology used to monitor seismic activity.
+                </p>
+                <div className="mt-4 flex items-center text-sm font-medium text-techtoniq-blue">
+                  Read article <ArrowRight className="ml-1 h-4 w-4" />
+                </div>
+              </div>
+            </a>
+
+            {/* Understanding Seismic Waves */}
+            <a 
+              href="https://medium.com/@vnyone7/understanding-seismic-waves-earths-hidden-messengers-d58072c7a5b2" 
+              target="_blank"
+              rel="noopener noreferrer" 
+              className="group block overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg"
+            >
+              <div className="relative h-48 overflow-hidden">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                  style={{ 
+                    backgroundImage: `url('https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80')`,
+                    filter: 'brightness(0.85)'
+                  }}
+                >
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-techtoniq-earth-dark/80 to-transparent"></div>
+                <div className="absolute bottom-0 p-4 text-white">
+                  <h3 className="text-xl font-bold">Understanding Seismic Waves</h3>
+                  <p className="mt-2 text-sm text-gray-100">Earth's hidden messengers</p>
+                </div>
+              </div>
+              <div className="p-4">
+                <p className="text-techtoniq-earth">
+                  Learn about P-waves, S-waves, and surface waves, and how they travel through the Earth during an earthquake.
+                </p>
+                <div className="mt-4 flex items-center text-sm font-medium text-techtoniq-blue">
+                  Read article <ArrowRight className="ml-1 h-4 w-4" />
+                </div>
+              </div>
+            </a>
           </div>
         </div>
       </section>
