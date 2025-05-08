@@ -29,7 +29,25 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
     }
     
     const data: NewsResponse = await response.json();
-    return data.articles;
+    
+    // Prioritize India earthquake news by sorting
+    const prioritizedArticles = data.articles.sort((a, b) => {
+      const aContainsIndia = 
+        a.title.toLowerCase().includes('india') || 
+        a.description.toLowerCase().includes('india') || 
+        a.content.toLowerCase().includes('india');
+      
+      const bContainsIndia = 
+        b.title.toLowerCase().includes('india') || 
+        b.description.toLowerCase().includes('india') || 
+        b.content.toLowerCase().includes('india');
+      
+      if (aContainsIndia && !bContainsIndia) return -1;
+      if (!aContainsIndia && bContainsIndia) return 1;
+      return 0;
+    });
+    
+    return prioritizedArticles;
   } catch (error) {
     console.error("Error fetching earthquake news:", error);
     return [];

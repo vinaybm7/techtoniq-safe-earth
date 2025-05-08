@@ -100,10 +100,14 @@ const EducationalMaterials = () => {
                   <PlayCircle className="h-5 w-5 text-techtoniq-teal" />
                   <h2 className="text-xl font-semibold text-techtoniq-earth-dark">How Earthquakes Occur</h2>
                 </div>
-                <div className="mb-6 aspect-video rounded-lg bg-gray-100">
-                  <div className="flex h-full items-center justify-center">
-                    <PlayCircle className="h-16 w-16 text-gray-400" />
-                  </div>
+                <div className="mb-6 aspect-video rounded-lg bg-gray-100 overflow-hidden">
+                  <iframe 
+                    src="https://www.youtube.com/embed/RqqqSnaTfQo?si=Sr_lf4VgQarzBS0q" 
+                    className="w-full h-full"
+                    title="How Earthquakes Occur"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
                 </div>
                 <div className="space-y-4">
                   <div className="rounded-lg bg-gray-50 p-4">

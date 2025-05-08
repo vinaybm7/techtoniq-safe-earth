@@ -89,8 +89,8 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
         });
       };
 
-      // Set sandbox attribute to allow necessary permissions while maintaining security
-      iframe.sandbox = "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox";
+      // Instead of directly setting the sandbox attribute, use setAttribute
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox');
       
       // Add the iframe to the container
       mapContainer.current?.appendChild(iframe);
