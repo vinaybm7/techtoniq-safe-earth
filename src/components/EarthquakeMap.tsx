@@ -66,11 +66,20 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
           queryParams = '?magnitude=2.5';
       }
       
+      // Explicitly set the source URL with full parameters
       iframe.src = baseUrl + queryParams;
       console.log("Creating USGS Earthquake Map iframe with src:", iframe.src);
 
       // Add event handlers
+      iframe.onload = () => {
+        console.log("Map iframe loaded successfully");
+        setIsLoading(false);
+        setMapError(null);
+        setIframeInitialized(true);
+      };
+      
       iframe.onerror = () => {
+        console.error("Failed to load USGS earthquake map");
         setMapError("Failed to load USGS earthquake map");
         setIsLoading(false);
         toast({
@@ -79,16 +88,19 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
           variant: "destructive",
         });
       };
-      
-      iframe.onload = () => {
-        setIsLoading(false);
-        setMapError(null);
-        setIframeInitialized(true);
-        console.log("USGS Earthquake Map loaded successfully");
-      };
 
+      // Set sandbox attribute to allow necessary permissions while maintaining security
+      iframe.sandbox = "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox";
+      
       // Add the iframe to the container
       mapContainer.current?.appendChild(iframe);
+      
+      // Backup loading timeout - in case onload doesn't fire
+      setTimeout(() => {
+        if (isLoading) {
+          setIsLoading(false);
+        }
+      }, 5000);
     };
 
     // Create the initial iframe
@@ -96,13 +108,29 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
 
     // Cleanup
     return () => {
-      const iframe = mapContainer.current?.querySelector('iframe');
-      if (iframe) {
-        iframe.onerror = null;
-        iframe.onload = null;
+      if (mapContainer.current) {
+        const iframe = mapContainer.current.querySelector('iframe');
+        if (iframe) {
+          iframe.onload = null;
+          iframe.onerror = null;
+        }
       }
     };
-  }, [filterType, toast]);
+  }, [filterType, toast, isLoading]);
+
+  // Create a function to reload the iframe
+  const reloadMap = () => {
+    setIsLoading(true);
+    setMapError(null);
+    
+    if (mapContainer.current) {
+      const iframe = mapContainer.current.querySelector('iframe');
+      if (iframe) {
+        // Refresh the iframe by reloading its source
+        iframe.src = iframe.src;
+      }
+    }
+  };
 
   return (
     <div className="relative w-full h-full">
@@ -126,15 +154,7 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
             <p className="text-red-800 font-medium">{mapError}</p>
             <button 
               className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-              onClick={() => {
-                if (mapContainer.current) {
-                  setIsLoading(true);
-                  const iframe = mapContainer.current.querySelector('iframe');
-                  if (iframe) {
-                    iframe.src = iframe.src;
-                  }
-                }
-              }}
+              onClick={reloadMap}
             >
               Retry
             </button>
@@ -188,12 +208,7 @@ const EarthquakeMap = ({ earthquakes, filterType }: EarthquakeMapProps) => {
           <button 
             className="p-1 hover:bg-gray-100 rounded" 
             title="Reset View"
-            onClick={() => {
-              const iframe = mapContainer.current?.querySelector('iframe');
-              if (iframe) {
-                iframe.src = iframe.src;
-              }
-            }}
+            onClick={reloadMap}
           >
             <Crosshair className="h-5 w-5 text-gray-600" />
           </button>

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Phone, Mail, MapPin, Send } from "lucide-react";
+import { Phone, Mail, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,29 +147,27 @@ const ContactUs = () => {
                   Contact Information
                 </h2>
                 
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-techtoniq-blue-light p-2">
-                      <MapPin className="h-5 w-5 text-techtoniq-blue" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-techtoniq-earth-dark">Main Office</h3>
-                      <p className="text-techtoniq-earth">
-                        123 Earthquake Monitoring St.<br />
-                        San Francisco, CA 94107<br />
-                        United States
-                      </p>
-                    </div>
-                  </div>
-                  
+                <div className="space-y-6">
                   <div className="flex items-start gap-3">
                     <div className="rounded-full bg-techtoniq-blue-light p-2">
                       <Phone className="h-5 w-5 text-techtoniq-blue" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-techtoniq-earth-dark">Phone</h3>
-                      <p className="text-techtoniq-earth">+1 (555) 123-4567</p>
-                      <p className="text-techtoniq-earth">Emergency: +1 (555) 987-6543</p>
+                      <h3 className="font-medium text-techtoniq-earth-dark">Emergency Contact Numbers</h3>
+                      <ul className="mt-2 space-y-2 text-techtoniq-earth">
+                        <li className="flex items-center gap-2">
+                          <span className="text-sm font-medium">National Emergency Number:</span>
+                          <span className="text-sm">112</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-sm font-medium">Earthquake Helpline Service:</span>
+                          <span className="text-sm">1092</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-sm font-medium">NDRF Helpline:</span>
+                          <span className="text-sm">011-24363260, 9711077372</span>
+                        </li>
+                      </ul>
                     </div>
                   </div>
                   
@@ -178,35 +176,16 @@ const ContactUs = () => {
                       <Mail className="h-5 w-5 text-techtoniq-blue" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-techtoniq-earth-dark">Email</h3>
-                      <p className="text-techtoniq-earth">info@earthquakemonitor.org</p>
-                      <p className="text-techtoniq-earth">support@earthquakemonitor.org</p>
+                      <h3 className="font-medium text-techtoniq-earth-dark">Official Email Addresses</h3>
+                      <ul className="mt-2 space-y-2 text-techtoniq-earth">
+                        <li className="text-sm">dresponse-nerc@gov.in</li>
+                        <li className="text-sm">controlroom@ndma.gov.in</li>
+                        <li className="text-sm">sdma-assam@gov.in</li>
+                        <li className="text-sm">revsecy-hp@nic.in</li>
+                      </ul>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="rounded-lg border bg-white p-6 shadow-sm">
-                <h2 className="mb-4 text-xl font-semibold text-techtoniq-earth-dark">
-                  Operating Hours
-                </h2>
-                <p className="mb-2 text-techtoniq-earth">
-                  Our monitoring center is open 24/7. Office hours:
-                </p>
-                <ul className="space-y-2 text-techtoniq-earth">
-                  <li className="flex justify-between">
-                    <span>Monday - Friday:</span>
-                    <span>9:00 AM - 5:00 PM</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>Saturday:</span>
-                    <span>10:00 AM - 2:00 PM</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>Sunday:</span>
-                    <span>Closed</span>
-                  </li>
-                </ul>
               </div>
             </div>
           </div>

@@ -1,3 +1,4 @@
+
 import { Activity, Info, MapPin, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import {
 } from "@/services/earthquakeService";
 import { useToast } from "@/hooks/use-toast";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
-import EarthquakeMap from "@/components/EarthquakeMap";
+import USGSEarthquakeMap from "@/components/USGSEarthquakeMap";
 import EarthquakeFilter from "@/components/EarthquakeFilter";
 import { FilterValues } from "@/components/EarthquakeFilter";
 
@@ -150,6 +151,15 @@ const RealTimeData = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Determine map timeRange based on filter selection
+  const getMapTimeRange = (): 'day' | 'week' | 'month' => {
+    switch (filters.timeframe) {
+      case 'today': return 'day';
+      case 'month': return 'month';
+      default: return 'week';
+    }
+  };
+
   return (
     <PageLayout>
       <PageBreadcrumbs
@@ -267,7 +277,11 @@ const RealTimeData = () => {
                 </div>
                 
                 <div className="h-[600px] rounded-lg border overflow-hidden">
-                  <EarthquakeMap earthquakes={earthquakes || []} filterType={mapFilterType} />
+                  <USGSEarthquakeMap
+                    height="600px"
+                    timeRange={getMapTimeRange()}
+                    minMagnitude={2.5}
+                  />
                 </div>
                 
                 <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

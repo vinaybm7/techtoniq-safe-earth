@@ -1,3 +1,4 @@
+
 import { BookOpen, PlayCircle, ScrollText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageLayout from "@/components/PageLayout";
@@ -38,31 +39,55 @@ const EducationalMaterials = () => {
                 </div>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                   <div className="overflow-hidden rounded-md border">
-                    <div className="aspect-video bg-gray-100"></div>
-                    <div className="p-4">
-                      <h3 className="mb-1 font-medium text-techtoniq-earth-dark">What is an Earthquake?</h3>
-                      <p className="text-sm text-techtoniq-earth">
-                        An introduction to the basics of seismic activity and its impact.
-                      </p>
-                    </div>
+                    <a href="https://medium.com/@vnyone7/what-is-an-earthquake-understanding-earths-powerful-tremors-08ae3bb9de79" target="_blank" rel="noopener noreferrer" className="block">
+                      <div className="aspect-video bg-gray-100 overflow-hidden">
+                        <img 
+                          src="/lovable-uploads/bf80de60-d79c-420f-b661-12d312539c86.png" 
+                          alt="What is an Earthquake?" 
+                          className="w-full h-full object-cover transition-transform hover:scale-105"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="mb-1 font-medium text-techtoniq-earth-dark">What is an Earthquake?</h3>
+                        <p className="text-sm text-techtoniq-earth">
+                          An introduction to the basics of seismic activity and its impact.
+                        </p>
+                      </div>
+                    </a>
                   </div>
                   <div className="overflow-hidden rounded-md border">
-                    <div className="aspect-video bg-gray-100"></div>
-                    <div className="p-4">
-                      <h3 className="mb-1 font-medium text-techtoniq-earth-dark">Measuring Earthquakes</h3>
-                      <p className="text-sm text-techtoniq-earth">
-                        Learn how scientists measure and classify earthquake intensity.
-                      </p>
-                    </div>
+                    <a href="https://medium.com/@vnyone7/what-is-an-earthquake-understanding-earths-powerful-tremors-08ae3bb9de79" target="_blank" rel="noopener noreferrer" className="block">
+                      <div className="aspect-video bg-gray-100 overflow-hidden">
+                        <img 
+                          src="/lovable-uploads/3b831d98-c9de-4126-8474-12863aa56995.png" 
+                          alt="Measuring Earthquakes" 
+                          className="w-full h-full object-cover transition-transform hover:scale-105"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="mb-1 font-medium text-techtoniq-earth-dark">Measuring Earthquakes</h3>
+                        <p className="text-sm text-techtoniq-earth">
+                          Learn how scientists measure and classify earthquake intensity.
+                        </p>
+                      </div>
+                    </a>
                   </div>
                   <div className="overflow-hidden rounded-md border">
-                    <div className="aspect-video bg-gray-100"></div>
-                    <div className="p-4">
-                      <h3 className="mb-1 font-medium text-techtoniq-earth-dark">Understanding Seismic Waves</h3>
-                      <p className="text-sm text-techtoniq-earth">
-                        Exploring the types of waves that travel through the Earth during an earthquake.
-                      </p>
-                    </div>
+                    <a href="https://medium.com/@vnyone7/understanding-seismic-waves-earths-hidden-messengers-d58072c7a5b2" target="_blank" rel="noopener noreferrer" className="block">
+                      <div className="aspect-video bg-gray-100 overflow-hidden">
+                        <img 
+                          src="/lovable-uploads/5b120487-1512-4bca-8fc3-0f4a43fefa1c.png" 
+                          alt="Understanding Seismic Waves" 
+                          className="w-full h-full object-cover transition-transform hover:scale-105"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="mb-1 font-medium text-techtoniq-earth-dark">Understanding Seismic Waves</h3>
+                        <p className="text-sm text-techtoniq-earth">
+                          Exploring the types of waves that travel through the Earth during an earthquake.
+                        </p>
+                      </div>
+                    </a>
                   </div>
                 </div>
               </div>
