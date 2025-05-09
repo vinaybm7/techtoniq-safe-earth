@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Dispatch, SetStateAction } from 'react';
 
 export interface FilterValues {
   minMagnitude: number;
@@ -26,19 +27,28 @@ export interface FilterValues {
   sortBy: 'latest' | 'magnitude' | 'location';
 }
 
+// Original props
 interface EarthquakeFilterProps {
   onFilterChange: (filters: FilterValues) => void;
   displayLimit: number;
   onDisplayLimitChange: (limit: number) => void;
 }
 
-const EarthquakeFilter = ({ 
-  onFilterChange, 
-  displayLimit, 
-  onDisplayLimitChange 
-}: EarthquakeFilterProps) => {
+// New props for simpler filtering use case
+interface SimpleFilterProps {
+  minMagnitude: number;
+  setMinMagnitude: Dispatch<SetStateAction<number>>;
+}
+
+// Union type to accept either set of props
+type FilterProps = EarthquakeFilterProps | SimpleFilterProps;
+
+const EarthquakeFilter = (props: FilterProps) => {
+  // Check if we're using the simple or complex filter interface
+  const isSimpleFilter = 'minMagnitude' in props && 'setMinMagnitude' in props;
+  
   const [filterValues, setFilterValues] = useState<FilterValues>({
-    minMagnitude: 0,
+    minMagnitude: isSimpleFilter ? props.minMagnitude : 0,
     maxMagnitude: 10,
     timeframe: 'all',
     region: 'all',
@@ -48,10 +58,39 @@ const EarthquakeFilter = ({
   const [isOpen, setIsOpen] = useState(false);
   const [magnitudeValue, setMagnitudeValue] = useState<number>(filterValues.maxMagnitude);
 
+  // For simple filter, we don't need most of these features
+  if (isSimpleFilter) {
+    return (
+      <div className="p-4 bg-gray-50 rounded-lg">
+        <Label htmlFor="simple-magnitude">Minimum Magnitude: {props.minMagnitude.toFixed(1)}</Label>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-sm">0.0</span>
+          <Slider 
+            id="simple-magnitude"
+            min={0} 
+            max={10} 
+            step={0.1} 
+            value={[props.minMagnitude]}
+            onValueChange={(values) => {
+              if (values.length === 1) {
+                props.setMinMagnitude(values[0]);
+              }
+            }}
+            className="flex-1"
+          />
+          <span className="text-sm">10.0</span>
+        </div>
+      </div>
+    );
+  }
+
+  // The original complex filter component
   // Effect to apply filter changes when sort option changes
   useEffect(() => {
-    onFilterChange(filterValues);
-  }, [filterValues.sortBy, onFilterChange]);
+    if ('onFilterChange' in props) {
+      props.onFilterChange(filterValues);
+    }
+  }, [filterValues.sortBy, props]);
 
   const handleFilterValueChange = (key: keyof FilterValues, value: any) => {
     const newFilterValues = { ...filterValues, [key]: value };
@@ -70,7 +109,9 @@ const EarthquakeFilter = ({
   };
 
   const handleApplyFilters = () => {
-    onFilterChange(filterValues);
+    if ('onFilterChange' in props) {
+      props.onFilterChange(filterValues);
+    }
     setIsOpen(false);
   };
 
@@ -84,7 +125,9 @@ const EarthquakeFilter = ({
     };
     setFilterValues(resetValues);
     setMagnitudeValue(10);
-    onFilterChange(resetValues);
+    if ('onFilterChange' in props) {
+      props.onFilterChange(resetValues);
+    }
     setIsOpen(false);
   };
 
@@ -105,6 +148,9 @@ const EarthquakeFilter = ({
     { value: 'oceania', label: 'Oceania' },
     { value: 'antarctica', label: 'Antarctica' },
   ];
+
+  const displayLimit = 'displayLimit' in props ? props.displayLimit : 10;
+  const onDisplayLimitChange = 'onDisplayLimitChange' in props ? props.onDisplayLimitChange : () => {};
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">

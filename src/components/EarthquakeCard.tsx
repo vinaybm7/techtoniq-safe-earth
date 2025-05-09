@@ -4,7 +4,7 @@ import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { format, parseISO } from "date-fns";
 
-interface EarthquakeCardProps {
+export interface EarthquakeCardProps {
   id: string;
   magnitude: number;
   location: string;
@@ -14,7 +14,27 @@ interface EarthquakeCardProps {
   coordinates?: [number, number]; // Longitude, Latitude
 }
 
-const EarthquakeCard = ({ magnitude, location, date, depth, url, coordinates }: EarthquakeCardProps) => {
+// We can also accept an earthquake object for convenience
+interface EarthquakeCardWithObjectProps {
+  earthquake: EarthquakeCardProps;
+}
+
+// Union type to accept either individual properties or an earthquake object
+type EarthquakeProps = EarthquakeCardProps | EarthquakeCardWithObjectProps;
+
+const EarthquakeCard = (props: EarthquakeProps) => {
+  // If the props contain an 'earthquake' object, extract the properties from it
+  const { 
+    magnitude, 
+    location, 
+    date, 
+    depth, 
+    url, 
+    coordinates 
+  } = 'earthquake' in props 
+    ? props.earthquake 
+    : props;
+
   // Determine color based on magnitude
   const getMagnitudeColor = (mag: number) => {
     if (mag >= 7) return "bg-red-600 hover:bg-red-700";
