@@ -327,7 +327,7 @@ const SafetyGuidelines = () => {
               </div>
             </div>
             <Button asChild>
-              <a href="/emergency-contacts">View Emergency Contacts</a>
+              <a href="/emergency-resources">View Emergency Contacts</a>
             </Button>
           </div>
         </div>
