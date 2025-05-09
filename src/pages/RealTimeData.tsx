@@ -14,6 +14,7 @@ import {
 } from "@/services/earthquakeService";
 import { useToast } from "@/hooks/use-toast";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
+import EarthquakeMap from "@/components/EarthquakeMap";
 import USGSEarthquakeMap from "@/components/USGSEarthquakeMap";
 import EarthquakeFilter from "@/components/EarthquakeFilter";
 import { FilterValues } from "@/components/EarthquakeFilter";
