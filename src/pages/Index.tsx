@@ -1,4 +1,3 @@
-
 import { AlertTriangle, ArrowRight, Book, ChevronLeft, ChevronRight, Clock, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -136,7 +135,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Educational resources section with Ghibli-style images */}
+      {/* Educational resources section with updated images */}
       <section className="bg-techtoniq-blue-light/20 py-12 md:py-16">
         <div className="container px-4 sm:px-6 lg:px-8">
           <div className="mb-8 text-center">
@@ -149,7 +148,7 @@ const Index = () => {
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
-            {/* What is an Earthquake? */}
+            {/* What is an Earthquake? - Using the same image as Educational Materials page */}
             <a 
               href="https://medium.com/@vnyone7/what-is-an-earthquake-understanding-earths-powerful-tremors-08ae3bb9de79" 
               target="_blank" 
@@ -160,12 +159,10 @@ const Index = () => {
                 <div 
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
                   style={{ 
-                    backgroundImage: `url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80')`,
-                    filter: 'brightness(0.9)'
+                    backgroundImage: `url('/lovable-uploads/bf80de60-d79c-420f-b661-12d312539c86.png')`,
                   }}
                 >
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-techtoniq-earth-dark/80 to-transparent"></div>
                 <div className="absolute bottom-0 p-4 text-white">
                   <h3 className="text-xl font-bold">What is an Earthquake?</h3>
                   <p className="mt-2 text-sm text-gray-100">Understanding Earth's powerful tremors</p>
@@ -181,7 +178,7 @@ const Index = () => {
               </div>
             </a>
 
-            {/* Measuring Earthquakes */}
+            {/* Measuring Earthquakes - Using the same image as Educational Materials page */}
             <a 
               href="https://medium.com/@vnyone7/what-is-an-earthquake-understanding-earths-powerful-tremors-08ae3bb9de79" 
               target="_blank"
@@ -192,12 +189,10 @@ const Index = () => {
                 <div 
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
                   style={{ 
-                    backgroundImage: `url('https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80')`,
-                    filter: 'brightness(0.85)'
+                    backgroundImage: `url('/lovable-uploads/3b831d98-c9de-4126-8474-12863aa56995.png')`,
                   }}
                 >
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-techtoniq-earth-dark/80 to-transparent"></div>
                 <div className="absolute bottom-0 p-4 text-white">
                   <h3 className="text-xl font-bold">Measuring Earthquakes</h3>
                   <p className="mt-2 text-sm text-gray-100">Scales and monitoring techniques</p>
@@ -213,7 +208,7 @@ const Index = () => {
               </div>
             </a>
 
-            {/* Understanding Seismic Waves */}
+            {/* Understanding Seismic Waves - Using the same image as Educational Materials page */}
             <a 
               href="https://medium.com/@vnyone7/understanding-seismic-waves-earths-hidden-messengers-d58072c7a5b2" 
               target="_blank"
@@ -224,12 +219,10 @@ const Index = () => {
                 <div 
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
                   style={{ 
-                    backgroundImage: `url('https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80')`,
-                    filter: 'brightness(0.85)'
+                    backgroundImage: `url('/lovable-uploads/5b120487-1512-4bca-8fc3-0f4a43fefa1c.png')`,
                   }}
                 >
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-techtoniq-earth-dark/80 to-transparent"></div>
                 <div className="absolute bottom-0 p-4 text-white">
                   <h3 className="text-xl font-bold">Understanding Seismic Waves</h3>
                   <p className="mt-2 text-sm text-gray-100">Earth's hidden messengers</p>

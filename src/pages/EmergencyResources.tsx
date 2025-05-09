@@ -1,4 +1,5 @@
-import { Phone, Landmark, MapPin } from "lucide-react";
+
+import { Phone, Landmark, MapPin, Mail } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
@@ -24,24 +25,65 @@ const EmergencyResources = () => {
           <div className="mb-12 rounded-lg border bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
               <Phone className="h-5 w-5 text-techtoniq-blue" />
-              <h2 className="text-xl font-semibold text-techtoniq-earth-dark">Phone Numbers</h2>
+              <h2 className="text-xl font-semibold text-techtoniq-earth-dark">Emergency Contact Numbers</h2>
             </div>
             <div className="space-y-4">
               <div className="rounded-lg border border-dashed border-gray-200 p-4">
-                <h3 className="font-medium text-techtoniq-earth-dark">Emergency Services</h3>
-                <p className="mt-1 text-sm text-techtoniq-earth">Call 911 for immediate emergency assistance</p>
+                <h3 className="font-medium text-techtoniq-earth-dark">National Emergency Number (India)</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">112</p>
               </div>
               <div className="rounded-lg border border-dashed border-gray-200 p-4">
-                <h3 className="font-medium text-techtoniq-earth-dark">FEMA Helpline</h3>
-                <p className="mt-1 text-sm text-techtoniq-earth">1-800-621-3362</p>
+                <h3 className="font-medium text-techtoniq-earth-dark">Earthquake Helpline Service</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">1092</p>
               </div>
               <div className="rounded-lg border border-dashed border-gray-200 p-4">
-                <h3 className="font-medium text-techtoniq-earth-dark">Disaster Distress Helpline</h3>
-                <p className="mt-1 text-sm text-techtoniq-earth">1-800-985-5990</p>
+                <h3 className="font-medium text-techtoniq-earth-dark">NDRF Helpline (National Disaster Response Force)</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">011-24363260, 9711077372</p>
               </div>
               <div className="rounded-lg border border-dashed border-gray-200 p-4">
-                <h3 className="font-medium text-techtoniq-earth-dark">Red Cross</h3>
-                <p className="mt-1 text-sm text-techtoniq-earth">1-800-733-2767</p>
+                <h3 className="font-medium text-techtoniq-earth-dark">Police Control Room</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">100</p>
+              </div>
+              <div className="rounded-lg border border-dashed border-gray-200 p-4">
+                <h3 className="font-medium text-techtoniq-earth-dark">Medical Emergency</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">108</p>
+              </div>
+              <div className="rounded-lg border border-dashed border-gray-200 p-4">
+                <h3 className="font-medium text-techtoniq-earth-dark">Fire Emergency</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">101</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-12 rounded-lg border bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center gap-2">
+              <Mail className="h-5 w-5 text-techtoniq-blue" />
+              <h2 className="text-xl font-semibold text-techtoniq-earth-dark">Official Email Addresses</h2>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-lg border border-dashed border-gray-200 p-4">
+                <h3 className="font-medium text-techtoniq-earth-dark">National Emergency Response Center</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">dresponse-nerc@gov.in</p>
+              </div>
+              <div className="rounded-lg border border-dashed border-gray-200 p-4">
+                <h3 className="font-medium text-techtoniq-earth-dark">NDMA Control Room</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">controlroom@ndma.gov.in</p>
+              </div>
+              <div className="rounded-lg border border-dashed border-gray-200 p-4">
+                <h3 className="font-medium text-techtoniq-earth-dark">Assam State Disaster Management Authority</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">sdma-assam@gov.in</p>
+              </div>
+              <div className="rounded-lg border border-dashed border-gray-200 p-4">
+                <h3 className="font-medium text-techtoniq-earth-dark">Himachal Pradesh Revenue Secretary</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">revsecy-hp@nic.in</p>
+              </div>
+              <div className="rounded-lg border border-dashed border-gray-200 p-4">
+                <h3 className="font-medium text-techtoniq-earth-dark">Gujarat State Disaster Management Authority</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">gsdma@gujarat.gov.in</p>
+              </div>
+              <div className="rounded-lg border border-dashed border-gray-200 p-4">
+                <h3 className="font-medium text-techtoniq-earth-dark">Maharashtra Relief and Rehabilitation</h3>
+                <p className="mt-1 text-sm text-techtoniq-earth">maha.relief@maharashtra.gov.in</p>
               </div>
             </div>
           </div>
@@ -55,7 +97,7 @@ const EmergencyResources = () => {
               <div className="rounded-lg bg-gray-50 p-4">
                 <h3 className="font-medium text-techtoniq-earth-dark">Immediate Emergency</h3>
                 <p className="mt-1 text-sm text-techtoniq-earth">
-                  If you're in immediate danger, call 911. Give your location and clearly describe your situation.
+                  If you're in immediate danger, call 112. Give your location and clearly describe your situation.
                 </p>
               </div>
               <div className="rounded-lg bg-gray-50 p-4">
@@ -67,7 +109,7 @@ const EmergencyResources = () => {
               <div className="rounded-lg bg-gray-50 p-4">
                 <h3 className="font-medium text-techtoniq-earth-dark">Disaster Relief</h3>
                 <p className="mt-1 text-sm text-techtoniq-earth">
-                  Apply for FEMA assistance online at DisasterAssistance.gov or through the FEMA mobile app after a declared disaster.
+                  Contact your local district collector's office or state disaster management authority for assistance after a disaster event.
                 </p>
               </div>
             </div>
