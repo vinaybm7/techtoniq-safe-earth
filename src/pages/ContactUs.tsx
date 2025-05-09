@@ -1,51 +1,10 @@
 
-import React, { useState } from "react";
-import { Phone, Mail, Send } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import React from "react";
+import { Phone, Mail } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 const ContactUs = () => {
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    toast({
-      title: "Message Sent",
-      description: "Thank you for your message. We'll get back to you soon!",
-    });
-    
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      subject: "",
-      message: "",
-    });
-    setIsSubmitting(false);
-  };
-
   return (
     <PageLayout>
       <PageBreadcrumbs items={[{ label: "Contact Us" }]} />
@@ -62,81 +21,25 @@ const ContactUs = () => {
       <section className="py-12">
         <div className="container">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            {/* Contact Form */}
+            {/* Google Form */}
             <div>
               <div className="rounded-lg border bg-white p-6 shadow-sm">
                 <h2 className="mb-6 text-xl font-semibold text-techtoniq-earth-dark">
                   Send us a Message
                 </h2>
                 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Your Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      placeholder="Enter your name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="subject">Subject</Label>
-                    <Input
-                      id="subject"
-                      name="subject"
-                      placeholder="What is this regarding?"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="message">Message</Label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      placeholder="Your message here..."
-                      rows={5}
-                      value={formData.message}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-techtoniq-blue hover:bg-techtoniq-blue-dark"
-                    disabled={isSubmitting}
+                <div className="w-full">
+                  <iframe 
+                    src="https://docs.google.com/forms/d/e/1FAIpQLSeacbJtB1A--tPqc4T7lxZQd6FsakQ4VCmTDniF2atx9HTPmw/viewform?embedded=true" 
+                    width="100%" 
+                    height="800px"
+                    className="border-0 shadow-none rounded overflow-hidden"
+                    title="Contact Form"
+                    aria-label="Google Form: Contact Us"
                   >
-                    {isSubmitting ? (
-                      <>
-                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" /> Send Message
-                      </>
-                    )}
-                  </Button>
-                </form>
+                    Loading form...
+                  </iframe>
+                </div>
               </div>
             </div>
             

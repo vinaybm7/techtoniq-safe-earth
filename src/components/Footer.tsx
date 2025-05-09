@@ -53,7 +53,7 @@ const Footer = () => {
             <h3 className="mb-4 text-sm font-semibold uppercase text-techtoniq-earth-dark">Help & Support</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/emergency-contacts" className="text-techtoniq-earth hover:text-techtoniq-blue">Emergency Contacts</Link>
+                <Link to="/emergency-resources" className="text-techtoniq-earth hover:text-techtoniq-blue">Emergency Contacts</Link>
               </li>
               <li>
                 <Link to="/emergency-resources" className="text-techtoniq-earth hover:text-techtoniq-blue">Emergency Resources</Link>
