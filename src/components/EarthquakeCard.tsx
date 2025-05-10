@@ -3,6 +3,7 @@ import { Activity, Calendar, MapPin } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { format, parseISO } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface EarthquakeCardProps {
   id: string;
@@ -26,37 +27,33 @@ const EarthquakeCard = ({ magnitude, location, date, depth, url, coordinates }: 
   // Format date in IST
   const formatDateInIST = (dateStr: string) => {
     try {
-      // Try to parse the date string
-      let date;
-      
       // Check if it's already a properly formatted date
       if (dateStr.includes('GMT+5:30') || dateStr.includes('IST')) {
         return dateStr;
       }
       
+      // Parse the date string
+      let parsedDate;
+      
       try {
         // Try parsing as ISO date first
-        date = parseISO(dateStr);
+        parsedDate = parseISO(dateStr);
       } catch (e) {
         // If that fails, try as regular date
-        date = new Date(dateStr);
+        parsedDate = new Date(dateStr);
       }
       
       // Check if date is valid
-      if (isNaN(date.getTime())) {
+      if (isNaN(parsedDate.getTime())) {
         throw new Error("Invalid date");
       }
       
-      // Format to Indian Standard Time
-      return new Intl.DateTimeFormat('en-US', { 
-        timeZone: 'Asia/Kolkata',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }).format(date) + ' IST';
+      // Format to Indian Standard Time using date-fns-tz
+      return formatInTimeZone(
+        parsedDate,
+        'Asia/Kolkata',
+        'MMM d, yyyy, hh:mm a \'IST\''
+      );
     } catch (error) {
       console.error("Date formatting error:", error, "for date:", dateStr);
       return dateStr; // Return original string if formatting fails
@@ -69,8 +66,6 @@ const EarthquakeCard = ({ magnitude, location, date, depth, url, coordinates }: 
       if (!coordinates) return null;
       
       // Convert coordinates to timezone estimation
-      // This is a simplified approach - in a full implementation, we'd use a timezone API
-      // based on lat/long coordinates, but for now we'll estimate based on longitude
       const [longitude] = coordinates;
       const hours = Math.round(longitude / 15); // Each 15 degrees is roughly 1 hour time difference
       
@@ -80,6 +75,7 @@ const EarthquakeCard = ({ magnitude, location, date, depth, url, coordinates }: 
       
       return `~${localHour}:${date.getUTCMinutes().toString().padStart(2, '0')} local time`;
     } catch (error) {
+      console.error("Local time calculation error:", error);
       return null;
     }
   };
