@@ -135,7 +135,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Educational resources section with updated images */}
+      {/* Educational resources section with updated images and overlay */}
       <section className="bg-techtoniq-blue-light/20 py-12 md:py-16">
         <div className="container px-4 sm:px-6 lg:px-8">
           <div className="mb-8 text-center">
@@ -162,10 +162,12 @@ const Index = () => {
                     backgroundImage: `url('/lovable-uploads/bf80de60-d79c-420f-b661-12d312539c86.png')`,
                   }}
                 >
+                  {/* Add semi-transparent black overlay */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50"></div>
                 </div>
                 <div className="absolute bottom-0 p-4 text-white">
-                  <h3 className="text-xl font-bold">What is an Earthquake?</h3>
-                  <p className="mt-2 text-sm text-gray-100">Understanding Earth's powerful tremors</p>
+                  <h3 className="text-xl font-bold drop-shadow-md">What is an Earthquake?</h3>
+                  <p className="mt-2 text-sm text-gray-100 drop-shadow-md">Understanding Earth's powerful tremors</p>
                 </div>
               </div>
               <div className="p-4">
@@ -192,10 +194,12 @@ const Index = () => {
                     backgroundImage: `url('/lovable-uploads/3b831d98-c9de-4126-8474-12863aa56995.png')`,
                   }}
                 >
+                  {/* Add semi-transparent black overlay */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50"></div>
                 </div>
                 <div className="absolute bottom-0 p-4 text-white">
-                  <h3 className="text-xl font-bold">Measuring Earthquakes</h3>
-                  <p className="mt-2 text-sm text-gray-100">Scales and monitoring techniques</p>
+                  <h3 className="text-xl font-bold drop-shadow-md">Measuring Earthquakes</h3>
+                  <p className="mt-2 text-sm text-gray-100 drop-shadow-md">Scales and monitoring techniques</p>
                 </div>
               </div>
               <div className="p-4">
@@ -222,10 +226,12 @@ const Index = () => {
                     backgroundImage: `url('/lovable-uploads/5b120487-1512-4bca-8fc3-0f4a43fefa1c.png')`,
                   }}
                 >
+                  {/* Add semi-transparent black overlay */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50"></div>
                 </div>
                 <div className="absolute bottom-0 p-4 text-white">
-                  <h3 className="text-xl font-bold">Understanding Seismic Waves</h3>
-                  <p className="mt-2 text-sm text-gray-100">Earth's hidden messengers</p>
+                  <h3 className="text-xl font-bold drop-shadow-md">Understanding Seismic Waves</h3>
+                  <p className="mt-2 text-sm text-gray-100 drop-shadow-md">Earth's hidden messengers</p>
                 </div>
               </div>
               <div className="p-4">
