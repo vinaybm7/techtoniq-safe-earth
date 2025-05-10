@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import EarthquakeMap from "@/components/EarthquakeMap";
 import USGSEarthquakeMap from "@/components/USGSEarthquakeMap";
+import USGSShakeAlert from "@/components/USGSShakeAlert";
 import EarthquakeFilter from "@/components/EarthquakeFilter";
 import { FilterValues } from "@/components/EarthquakeFilter";
 
@@ -187,7 +188,8 @@ const RealTimeData = () => {
             </TabsList>
 
             <TabsContent value="latest" className="animate-fade-in">
-              <div className="mb-6">
+              <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
                 <div className="mb-4 flex flex-col gap-4">
                   <div className="relative max-w-md">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -245,6 +247,17 @@ const RealTimeData = () => {
                       Current IST time: {currentTime}
                     </p>
                   </div>
+                </div>
+                </div>
+                
+                {/* ShakeAlert Component */}
+                <div className="lg:col-span-1">
+                  <USGSShakeAlert 
+                    onAlertReceived={(alert) => {
+                      console.log('ShakeAlert received:', alert);
+                      // You could add additional handling here if needed
+                    }}
+                  />
                 </div>
               </div>
             </TabsContent>
