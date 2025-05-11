@@ -107,7 +107,7 @@ const Header = () => {
               className="rounded-md px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue"
               onClick={() => setIsMenuOpen(false)}
             >
-              AI Analysis - Gemini Powered
+              Education
             </Link>
             <Link
               to="/latest-news"
