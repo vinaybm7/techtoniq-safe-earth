@@ -165,8 +165,9 @@ const USGSShakeAlert = ({ className = '', onAlertReceived }: USGSShakeAlertProps
                 localStorage.setItem('soundEnabled', JSON.stringify(checked));
               }}
               />
-              <Label htmlFor="sound-mode" className="text-sm">
+              <Label htmlFor="sound-mode" className="text-sm flex items-center gap-1">
                 {soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                <span className="ml-1">Sound Alerts</span>
               </Label>
             </div>
             <Switch
