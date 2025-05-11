@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Info, MapPin, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Info, MapPin, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Earthquake } from '@/services/earthquakeService';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface AIEarthquakePredictionProps {
   className?: string;
@@ -31,6 +32,11 @@ interface Prediction {
   dataLimitations?: string; // Limitations of this forecast
 }
 
+// Constants for API limits and caching
+const API_CALL_LIMIT_PER_DAY = 1500;
+const API_CALL_WARNING_THRESHOLD = 1000;
+const CACHE_EXPIRY_TIME = 60 * 60 * 1000; // 1 hour in milliseconds
+
 const AIEarthquakePrediction = ({
   className = '',
   earthquakes = [],
@@ -43,7 +49,82 @@ const AIEarthquakePrediction = ({
   const [locationLoading, setLocationLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const [apiCallCount, setApiCallCount] = useState<number>(0);
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
+  const [apiLimitWarning, setApiLimitWarning] = useState(false);
   const { toast } = useToast();
+  
+  // Load API call count and cached predictions from localStorage on component mount
+  useEffect(() => {
+    // Load API call count
+    const storedApiCallCount = localStorage.getItem('gemini_api_call_count');
+    const storedApiCallDate = localStorage.getItem('gemini_api_call_date');
+    const today = new Date().toDateString();
+    
+    if (storedApiCallDate === today && storedApiCallCount) {
+      setApiCallCount(parseInt(storedApiCallCount));
+      
+      // Check if we're approaching the limit
+      if (parseInt(storedApiCallCount) >= API_CALL_WARNING_THRESHOLD) {
+        setApiLimitWarning(true);
+      }
+    } else {
+      // Reset counter for a new day
+      localStorage.setItem('gemini_api_call_date', today);
+      localStorage.setItem('gemini_api_call_count', '0');
+      setApiCallCount(0);
+      setApiLimitWarning(false);
+    }
+    
+    // Load cached predictions
+    const cachedPredictionsData = localStorage.getItem('cached_earthquake_predictions');
+    const cachedTimestamp = localStorage.getItem('cached_predictions_timestamp');
+    
+    if (cachedPredictionsData && cachedTimestamp) {
+      const cachedTime = new Date(cachedTimestamp);
+      const now = new Date();
+      setLastUpdateTime(cachedTime);
+      
+      // Use cached data if it's less than 1 hour old
+      if (now.getTime() - cachedTime.getTime() < CACHE_EXPIRY_TIME) {
+        try {
+          const parsedPredictions = JSON.parse(cachedPredictionsData);
+          setPredictions(parsedPredictions);
+          setUsingFallbackData(true);
+          console.log('Using cached predictions from', cachedTime.toLocaleTimeString());
+        } catch (err) {
+          console.error('Error parsing cached predictions:', err);
+          // If parsing fails, we'll generate new predictions
+        }
+      }
+    }
+  }, []);
+  
+  // Function to increment API call count
+  const incrementApiCallCount = useCallback(() => {
+    const newCount = apiCallCount + 1;
+    setApiCallCount(newCount);
+    localStorage.setItem('gemini_api_call_count', newCount.toString());
+    
+    // Set warning if approaching limit
+    if (newCount >= API_CALL_WARNING_THRESHOLD) {
+      setApiLimitWarning(true);
+    }
+    
+    return newCount;
+  }, [apiCallCount]);
+  
+  // Function to cache predictions
+  const cachePredictions = useCallback((predictionsData: Prediction[]) => {
+    try {
+      localStorage.setItem('cached_earthquake_predictions', JSON.stringify(predictionsData));
+      const now = new Date();
+      localStorage.setItem('cached_predictions_timestamp', now.toISOString());
+      setLastUpdateTime(now);
+    } catch (err) {
+      console.error('Error caching predictions:', err);
+    }
+  }, []);
 
   // Function to search for a location
   const searchLocation = async () => {
@@ -189,42 +270,71 @@ const AIEarthquakePrediction = ({
   };
 
   // Function to analyze earthquake data and generate predictions
-  const generatePredictions = async (latitude?: number, longitude?: number, locationName?: string) => {
+  const generatePredictions = async (latitude?: number, longitude?: number, locationName?: string, forceRefresh = false) => {
     if (!earthquakes || earthquakes.length === 0) return;
     
     try {
       setAiLoading(true);
       setError(null);
       
-      // Always use default predictions for now to ensure reliability
+      // Check if we should use cached data
+      const cachedPredictionsData = localStorage.getItem('cached_earthquake_predictions');
+      const cachedTimestamp = localStorage.getItem('cached_predictions_timestamp');
+      const now = new Date();
+      
+      // Use cached data if available, less than 1 hour old, and not forcing refresh
+      if (!forceRefresh && cachedPredictionsData && cachedTimestamp) {
+        const cachedTime = new Date(cachedTimestamp);
+        setLastUpdateTime(cachedTime);
+        
+        if (now.getTime() - cachedTime.getTime() < CACHE_EXPIRY_TIME) {
+          try {
+            const parsedPredictions = JSON.parse(cachedPredictionsData);
+            setPredictions(parsedPredictions);
+            setUsingFallbackData(true);
+            console.log('Using cached predictions from', cachedTime.toLocaleTimeString());
+            
+            // If we have a user-specified location, add it to the cached predictions
+            if (latitude && longitude && locationName) {
+              addUserLocationToPredictions(latitude, longitude, locationName);
+            }
+            
+            setAiLoading(false);
+            return;
+          } catch (err) {
+            console.error('Error parsing cached predictions:', err);
+            // If parsing fails, continue to generate new predictions
+          }
+        }
+      }
+      
+      // Check if we're approaching API limit
+      if (apiCallCount >= API_CALL_WARNING_THRESHOLD && !forceRefresh) {
+        console.log(`API call count high (${apiCallCount}). Using default predictions.`);
+        setDefaultPredictions();
+        setApiLimitWarning(true);
+        
+        // If we have a user-specified location, add it to the default predictions
+        if (latitude && longitude && locationName) {
+          addUserLocationToPredictions(latitude, longitude, locationName);
+        }
+        
+        setAiLoading(false);
+        return;
+      }
+      
+      // Generate new predictions
       setDefaultPredictions();
+      
+      // Increment API call counter
+      incrementApiCallCount();
+      
+      // Cache the predictions
+      cachePredictions(predictions);
       
       // If we have a user-specified location, add it to the predictions
       if (latitude && longitude && locationName) {
-        const userLocationPrediction: Prediction = {
-          location: locationName.split(',')[0],
-          probability: 5,
-          confidence: 85,
-          timeframe: "30-45 days",
-          magnitude: "< 3.0",
-          description: `Based on analysis of recent global seismic patterns and historical data, ${locationName.split(',')[0]} shows low seismic risk in the immediate future. No significant precursory seismic sequences detected in this region.`,
-          isIndian: false,
-          isPersonalized: true,
-          riskFactors: ["Low historical seismicity in this region", "No active fault lines in close proximity"],
-          dataLimitations: "Limited real-time monitoring stations in some regions may affect detection of smaller events"
-        };
-        
-        // Add the personalized prediction to the beginning of the array
-        setPredictions(prev => {
-          // Check if this location already exists
-          const locationExists = prev.some(p => 
-            p.location.toLowerCase().includes(locationName.toLowerCase().split(',')[0]));
-          
-          if (!locationExists) {
-            return [userLocationPrediction, ...prev];
-          }
-          return prev;
-        });
+        addUserLocationToPredictions(latitude, longitude, locationName);
       }
       
       setAiLoading(false);
@@ -235,13 +345,74 @@ const AIEarthquakePrediction = ({
       setAiLoading(false);
     }
   };
+  
+  // Helper function to add user location to predictions
+  const addUserLocationToPredictions = (latitude: number, longitude: number, locationName: string) => {
+    const userLocationPrediction: Prediction = {
+      location: locationName.split(',')[0],
+      probability: 5,
+      confidence: 85,
+      timeframe: "30-45 days",
+      magnitude: "< 3.0",
+      description: `Based on analysis of recent global seismic patterns and historical data, ${locationName.split(',')[0]} shows low seismic risk in the immediate future. No significant precursory seismic sequences detected in this region.`,
+      isIndian: false,
+      isPersonalized: true,
+      riskFactors: ["Low historical seismicity in this region", "No active fault lines in close proximity"],
+      dataLimitations: "Limited real-time monitoring stations in some regions may affect detection of smaller events"
+    };
+    
+    // Add the personalized prediction to the beginning of the array
+    setPredictions(prev => {
+      // Check if this location already exists
+      const locationExists = prev.some(p => 
+        p.location.toLowerCase().includes(locationName.toLowerCase().split(',')[0]));
+      
+      if (!locationExists) {
+        const newPredictions = [userLocationPrediction, ...prev];
+        cachePredictions(newPredictions);
+        return newPredictions;
+      }
+      return prev;
+    });
+  };
 
-  // Generate predictions when earthquakes data changes
+  // Generate predictions when component mounts and then hourly
   useEffect(() => {
+    // Only generate predictions if we have earthquake data and it's not already loading
     if (earthquakes && earthquakes.length > 0 && !isLoading) {
-      generatePredictions(userLocation?.lat, userLocation?.lng, userLocation?.displayName);
+      // Check if we need to refresh based on last update time
+      const shouldRefresh = () => {
+        if (!lastUpdateTime) return true;
+        
+        const now = new Date();
+        return now.getTime() - lastUpdateTime.getTime() >= CACHE_EXPIRY_TIME;
+      };
+      
+      // Generate predictions if needed
+      if (shouldRefresh()) {
+        generatePredictions(userLocation?.lat, userLocation?.lng, userLocation?.displayName);
+      }
+      
+      // Set up hourly refresh interval
+      const refreshInterval = setInterval(() => {
+        if (shouldRefresh()) {
+          console.log('Hourly refresh of earthquake predictions');
+          generatePredictions(userLocation?.lat, userLocation?.lng, userLocation?.displayName);
+        }
+      }, CACHE_EXPIRY_TIME);
+      
+      // Clean up interval on unmount
+      return () => clearInterval(refreshInterval);
     }
-  }, [earthquakes, isLoading]);
+  }, [earthquakes, isLoading, lastUpdateTime, generatePredictions, userLocation]);
+  
+  // Update predictions when user location changes
+  useEffect(() => {
+    if (userLocation && earthquakes && earthquakes.length > 0 && !isLoading) {
+      // Just add the user location to existing predictions without regenerating everything
+      addUserLocationToPredictions(userLocation.lat, userLocation.lng, userLocation.displayName);
+    }
+  }, [userLocation]);
 
   // Helper function to get color based on probability
   const getProbabilityColor = (probability: number): string => {
@@ -251,8 +422,51 @@ const AIEarthquakePrediction = ({
     return 'text-green-500';
   };
 
+  // Function to format time difference
+  const formatTimeSince = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins === 1) return '1 minute ago';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    return `${diffHours} hours ago`;
+  };
+
+  // Function to manually refresh predictions
+  const handleManualRefresh = () => {
+    if (apiCallCount >= API_CALL_LIMIT_PER_DAY) {
+      toast({
+        title: "API Limit Reached",
+        description: "Daily API call limit reached. Please try again tomorrow.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    generatePredictions(userLocation?.lat, userLocation?.lng, userLocation?.displayName, true);
+    toast({
+      title: "Refreshing Predictions",
+      description: "Generating new earthquake predictions...",
+    });
+  };
+
   return (
     <div className={`space-y-4 ${className}`}>
+      {apiLimitWarning && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">API Usage Warning</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            API call limit is approaching the daily threshold. Using cached predictions when possible.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="flex flex-col space-y-2">
         <div className="flex items-center space-x-2">
           <Input
@@ -282,12 +496,37 @@ const AIEarthquakePrediction = ({
           </Button>
         </div>
         
-        {userLocation && (
-          <div className="text-sm text-muted-foreground flex items-center">
-            <MapPin className="h-3 w-3 mr-1" />
-            <span>Showing predictions for: {userLocation.displayName}</span>
+        <div className="flex flex-wrap items-center justify-between">
+          {userLocation && (
+            <div className="text-sm text-muted-foreground flex items-center">
+              <MapPin className="h-3 w-3 mr-1" />
+              <span>Showing predictions for: {userLocation.displayName}</span>
+            </div>
+          )}
+          
+          <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1">
+            {lastUpdateTime && (
+              <div className="flex items-center">
+                <Clock className="h-3 w-3 mr-1" />
+                <span>Updated: {formatTimeSince(lastUpdateTime)}</span>
+              </div>
+            )}
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 px-2 text-xs" 
+              onClick={handleManualRefresh}
+              disabled={aiLoading || apiCallCount >= API_CALL_LIMIT_PER_DAY}
+            >
+              {aiLoading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                'Refresh'
+              )}
+            </Button>
           </div>
-        )}
+        </div>
       </div>
 
       {error && (
