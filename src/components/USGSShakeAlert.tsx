@@ -17,8 +17,14 @@ const USGSShakeAlert = ({ className = '', onAlertReceived }: USGSShakeAlertProps
   const [alerts, setAlerts] = useState<ShakeAlertEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    const saved = localStorage.getItem('notificationsEnabled');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem('soundEnabled');
+    return saved ? JSON.parse(saved) : false;
+  });
   const alertAudioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   
@@ -106,6 +112,7 @@ const USGSShakeAlert = ({ className = '', onAlertReceived }: USGSShakeAlertProps
       
       if (permission === 'granted') {
         setNotificationsEnabled(true);
+        localStorage.setItem('notificationsEnabled', JSON.stringify(true));
         toast({
           title: 'Notifications Enabled',
           description: 'You will now receive ShakeAlert notifications.',
@@ -153,7 +160,10 @@ const USGSShakeAlert = ({ className = '', onAlertReceived }: USGSShakeAlertProps
               <Switch
                 id="sound-mode"
                 checked={soundEnabled}
-                onCheckedChange={setSoundEnabled}
+                onCheckedChange={(checked) => {
+                setSoundEnabled(checked);
+                localStorage.setItem('soundEnabled', JSON.stringify(checked));
+              }}
               />
               <Label htmlFor="sound-mode" className="text-sm">
                 {soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
