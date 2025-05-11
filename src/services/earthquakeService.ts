@@ -112,7 +112,17 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
       locationLower.includes('pakistan') ||
       locationLower.includes('bangladesh') ||
       locationLower.includes('nepal') ||
-      locationLower.includes('bhutan'))
+      locationLower.includes('bhutan') ||
+      locationLower.includes('alaska') ||
+      locationLower.includes('aleutian') ||
+      locationLower.includes('kodiak') ||
+      locationLower.includes('kenai') ||
+      locationLower.includes('anchorage') ||
+      locationLower.includes('fairbanks') ||
+      locationLower.includes('juneau') ||
+      locationLower.includes('bering sea') ||
+      locationLower.includes('chukchi sea') ||
+      locationLower.includes('beaufort sea'))
   {
     return false;
   }

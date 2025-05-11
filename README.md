@@ -14,7 +14,6 @@ By combining Google Gemini API for advanced analysis of real-time data with comp
 ## 🚀 Getting Started
 
 ### Prerequisites
-
 - Node.js (v16 or higher)
 - npm or yarn
 
