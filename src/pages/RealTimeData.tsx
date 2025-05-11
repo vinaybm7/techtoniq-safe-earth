@@ -252,15 +252,7 @@ const RealTimeData = () => {
                 </div>
               </div>
               
-              {/* ShakeAlert Component */}
-              <div className="lg:col-span-1">
-                <USGSShakeAlert 
-                  onAlertReceived={(alert) => {
-                    console.log('ShakeAlert received:', alert);
-                    // You could add additional handling here if needed
-                  }}
-                />
-              </div>
+              {/* ShakeAlert Component removed from here and moved to AI Prediction tab */}
             </TabsContent>
 
             <TabsContent value="map" className="animate-fade-in">
@@ -326,11 +318,21 @@ const RealTimeData = () => {
             </TabsContent>
 
             <TabsContent value="ai-prediction" className="animate-fade-in">
-              <div className="grid grid-cols-1 gap-6">
-                <AIEarthquakePrediction 
-                  earthquakes={earthquakes || []} 
-                  isLoading={isLoading} 
-                />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <AIEarthquakePrediction 
+                    earthquakes={earthquakes || []} 
+                    isLoading={isLoading} 
+                  />
+                </div>
+                <div className="lg:col-span-1">
+                  <USGSShakeAlert 
+                    onAlertReceived={(alert) => {
+                      console.log('ShakeAlert received:', alert);
+                      // You could add additional handling here if needed
+                    }}
+                  />
+                </div>
               </div>
             </TabsContent>
 
