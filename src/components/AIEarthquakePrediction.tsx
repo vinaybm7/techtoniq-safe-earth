@@ -24,6 +24,7 @@ interface Prediction {
   magnitude: string;
   description: string;
   isIndian: boolean;
+  isPersonalized?: boolean; // Flag for personalized location
   riskFactors?: string[]; // Specific risk factors for this forecast
   dataLimitations?: string; // Limitations of this forecast
 }
@@ -149,6 +150,7 @@ const AIEarthquakePrediction = ({
               magnitude: "< 3.0",
               description: `Based on analysis of recent global seismic patterns and historical data, ${locationName.split(',')[0]} shows low seismic risk in the immediate future. No significant precursory seismic sequences detected in this region.`,
               isIndian: false,
+              isPersonalized: true, // Mark as personalized location
               riskFactors: ["Low historical seismicity in this region", "No active fault lines in close proximity"],
               dataLimitations: "Limited real-time monitoring stations in some regions may affect detection of smaller events"
             };
@@ -394,7 +396,7 @@ const AIEarthquakePrediction = ({
           {predictions.map((prediction, index) => (
             <div 
               key={index} 
-              className={`rounded-lg border p-3 hover:bg-gray-50 ${prediction.isIndian ? 'border-2 border-blue-500 bg-blue-50' : ''}`}
+              className={`rounded-lg border p-3 hover:bg-gray-50 ${prediction.isIndian ? 'border-2 border-blue-500 bg-blue-50' : ''} ${prediction.isPersonalized ? 'border-2 border-purple-500 bg-purple-50' : ''}`}
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -404,6 +406,11 @@ const AIEarthquakePrediction = ({
                       {prediction.isIndian && (
                         <span className="ml-2 rounded-full bg-blue-500 px-2 py-0.5 text-xs text-white">
                           🇮🇳 India
+                        </span>
+                      )}
+                      {prediction.isPersonalized && (
+                        <span className="ml-2 rounded-full bg-purple-500 px-2 py-0.5 text-xs text-white">
+                          📍 Your Location
                         </span>
                       )}
                     </h4>
@@ -443,9 +450,12 @@ const AIEarthquakePrediction = ({
                   {prediction.riskFactors && prediction.riskFactors.length > 0 && (
                     <div className="mt-1">
                       <p className="text-xs font-medium text-techtoniq-earth-dark">Risk Factors:</p>
-                      <ul className="mt-0.5 text-xs text-techtoniq-earth list-disc list-inside">
+                      <ul className="mt-0.5 text-xs text-techtoniq-earth list-none">
                         {prediction.riskFactors.map((factor, i) => (
-                          <li key={i}>{factor}</li>
+                          <li key={i} className="mb-1 flex items-start">
+                            <span className={`inline-block w-2 h-2 mt-1 mr-2 rounded-full ${prediction.probability > 60 ? 'bg-red-500' : prediction.probability > 30 ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+                            <span className="flex-1">{factor}</span>
+                          </li>
                         ))}
                       </ul>
                     </div>
