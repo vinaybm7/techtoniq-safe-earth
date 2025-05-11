@@ -653,6 +653,13 @@ const AIEarthquakePrediction = ({
 
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* Gemini AI Tag/Badge */}
+      <div className="flex items-center gap-2">
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Google_Gemini_logo.svg/32px-Google_Gemini_logo.svg.png" alt="Gemini AI" className="h-4 w-4 mr-1" style={{display: 'inline'}} />
+          Gemini AI Powered Prediction
+        </span>
+      </div>
       {apiLimitWarning && (
         <Alert className="bg-amber-50 border-amber-200">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
