@@ -492,7 +492,16 @@ export const fetchNCSEarthquakeData = async (): Promise<ShakeAlertEvent[]> => {
       };
     });
   } catch (error) {
-    console.error('Error fetching NCS earthquake data:', error);
+    // Improved error logging for better diagnostics
+    if (error instanceof Error) {
+      console.error('Error fetching NCS earthquake data:', {
+        message: error.message,
+        stack: error.stack,
+        errorObj: error
+      });
+    } else {
+      console.error('Error fetching NCS earthquake data (non-Error object):', error);
+    }
     return []; // Return empty array on error, will fall back to USGS data
   }
 };
