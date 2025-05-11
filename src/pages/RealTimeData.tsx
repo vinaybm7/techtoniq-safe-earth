@@ -318,20 +318,44 @@ const RealTimeData = () => {
             </TabsContent>
 
             <TabsContent value="ai-prediction" className="animate-fade-in">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <AIEarthquakePrediction 
-                    earthquakes={earthquakes || []} 
-                    isLoading={isLoading} 
-                  />
+              <div className="grid grid-cols-1 gap-6">
+                {/* Top section: Map */}
+                <div className="rounded-lg border bg-white p-4">
+                  <h3 className="mb-4 text-xl font-medium text-techtoniq-earth-dark">
+                    Earthquake Activity Map
+                  </h3>
+                  <div className="h-[400px] rounded-lg border overflow-hidden">
+                    <USGSEarthquakeMapData
+                      height="400px"
+                      earthquakes={filteredEarthquakes}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg text-sm">
+                    <p className="text-techtoniq-blue-dark font-medium">Earthquake Activity Visualization</p>
+                    <p className="mt-1 text-techtoniq-earth">
+                      This map shows recent earthquake activity. Larger and darker markers indicate higher magnitude events.
+                      Click on any marker to view detailed information about the earthquake.
+                    </p>
+                  </div>
                 </div>
-                <div className="lg:col-span-1">
-                  <USGSShakeAlert 
-                    onAlertReceived={(alert) => {
-                      console.log('ShakeAlert received:', alert);
-                      // You could add additional handling here if needed
-                    }}
-                  />
+                
+                {/* Bottom section: AI Prediction and ShakeAlert */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2">
+                    <AIEarthquakePrediction 
+                      earthquakes={earthquakes || []} 
+                      isLoading={isLoading} 
+                    />
+                  </div>
+                  <div className="lg:col-span-1">
+                    <USGSShakeAlert 
+                      onAlertReceived={(alert) => {
+                        console.log('ShakeAlert received:', alert);
+                        // You could add additional handling here if needed
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </TabsContent>
