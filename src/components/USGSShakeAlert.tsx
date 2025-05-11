@@ -184,13 +184,13 @@ const USGSShakeAlert = ({ className = '', onAlertReceived }: USGSShakeAlertProps
         <div className="flex gap-2">
           <Info className="h-5 w-5 flex-shrink-0 text-blue-500" />
           <div>
-            <p className="font-medium text-blue-800">About ShakeAlert</p>
+            <p className="font-medium text-blue-800">AI-Powered Earthquake Prediction</p>
             <p className="mt-1 text-blue-700">
-              ShakeAlert® is an earthquake early warning system that detects significant earthquakes and issues alerts before shaking arrives. 
-              Currently available in California, Oregon, and Washington.
+              Our advanced system now integrates Google Gemini API to analyze seismic patterns and predict potential earthquake events before they happen.
+              Get personalized risk assessments and AI-generated safety recommendations based on your location.
             </p>
             <p className="mt-1 text-blue-700">
-              <span className="font-semibold text-blue-900">🇮🇳 Priority alerts for India are now available</span> through integration with the National Center for Seismology (NCS) real-time data.
+              <span className="font-semibold text-blue-900">🇮🇳 Priority alerts for India are now available</span> with enhanced prediction accuracy through AI analysis of National Center for Seismology (NCS) real-time data.
             </p>
           </div>
         </div>

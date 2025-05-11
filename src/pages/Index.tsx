@@ -12,22 +12,22 @@ const Index = () => {
 
   const slides = [
     {
-      title: "Real-Time Earthquake Data",
-      content: "Stay updated with the latest earthquake information from around the world.",
+      title: "AI-Powered Earthquake Prediction",
+      content: "Our advanced AI system analyzes seismic patterns to predict potential earthquake events before they happen.",
+      icon: <AlertTriangle className="h-6 w-6" />,
+      link: "/real-time-data",
+    },
+    {
+      title: "Real-Time Alerts & Notifications",
+      content: "Receive instant alerts about seismic activity in your area with personalized risk assessment powered by Google Gemini AI.",
       icon: <Clock className="h-6 w-6" />,
       link: "/real-time-data",
     },
     {
-      title: "Comprehensive Safety Guidelines",
-      content: "Learn what to do before, during, and after an earthquake to keep yourself and your loved ones safe.",
+      title: "Comprehensive Safety Protocols",
+      content: "Access customized safety plans and evacuation routes based on your location and the specific earthquake threat.",
       icon: <Shield className="h-6 w-6" />,
       link: "/safety-guidelines",
-    },
-    {
-      title: "Educational Resources",
-      content: "Access a wealth of information to better understand earthquakes and their impacts.",
-      icon: <Book className="h-6 w-6" />,
-      link: "/educational-materials",
     },
   ];
 
@@ -74,21 +74,21 @@ const Index = () => {
                 <span className="text-sm font-medium text-techtoniq-blue">Earthquake Preparedness & Safety</span>
               </div>
               <h1 className="mb-6 text-4xl font-bold tracking-tight text-techtoniq-earth-dark sm:text-5xl md:text-6xl">
-                Be Prepared, Stay <span className="text-techtoniq-blue">Safe</span>
+                <span className="text-techtoniq-blue">Predict</span>, Prepare, <span className="text-techtoniq-teal">Protect</span>
               </h1>
               <p className="mb-8 text-xl text-techtoniq-earth">
-                Techtoniq provides you with the tools and knowledge to prepare for earthquakes,
-                stay informed during seismic events, and safely recover afterward.
+                Techtoniq combines AI-powered prediction technology with real-time data to help you
+                anticipate earthquakes, prepare effectively, and protect what matters most.
               </p>
               <div className="flex flex-col items-center md:items-start justify-start gap-4 sm:flex-row">
                 <Button asChild className="bg-techtoniq-blue hover:bg-techtoniq-blue-dark">
                   <Link to="/real-time-data">
-                    View Real-Time Data
+                    Get Earthquake Predictions
                   </Link>
                 </Button>
                 <Button asChild variant="outline">
                   <Link to="/safety-guidelines">
-                    Safety Guidelines
+                    Set Up Alerts
                   </Link>
                 </Button>
               </div>

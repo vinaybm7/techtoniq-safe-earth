@@ -1,15 +1,15 @@
-# Techtoniq - Earthquake Preparedness & Safety
+# Techtoniq - Predict, Prepare, Protect
 
-Techtoniq is a comprehensive web application designed to help users prepare for, respond to, and recover from earthquakes.
-By combining real-time earthquake data, educational resources, and interactive safety tools, Techtoniq empowers communities to build resilience against seismic events.
+Techtoniq is an AI-powered earthquake prediction and safety platform that helps users anticipate seismic events, prepare effectively, and protect what matters most.
+By combining Google Gemini API for advanced analysis of real-time data with comprehensive safety resources, Techtoniq provides a complete earthquake safety solution.
 
 ## 🌟 Features
 
-- **Real-time Earthquake Monitoring**: Access up-to-date information on recent seismic activity worldwide
-- **Interactive Safety Guides**: Step-by-step instructions for before, during, and after an earthquake
-- **Emergency Preparedness Tools**: Customizable checklists and supply recommendations
-- **Educational Resources**: Learn about earthquake science, building safety, and risk assessment
-- **Location-based Alerts**: Receive notifications about seismic activity in your area
+- **AI-Powered Earthquake Prediction**: Advanced seismic pattern analysis using Google Gemini API to forecast potential events
+- **Personalized Risk Assessment**: Get customized risk evaluations based on your location and real-time data
+- **Intelligent Alert System**: Receive prioritized notifications with AI-analyzed threat levels and recommended actions
+- **Comprehensive Safety Protocols**: Access location-specific safety plans and evacuation routes
+- **Real-time Data Visualization**: Interactive maps and dashboards showing predicted and actual seismic activity
 
 ## 🚀 Getting Started
 
@@ -55,6 +55,8 @@ This project is built with modern technologies to ensure a responsive, accessibl
 - **Data Visualization**: Recharts
 - **3D Visualizations**: Three.js with React Three Fiber
 - **Maps**: Mapbox GL
+- **AI Integration**: Google Gemini API for earthquake prediction and analysis
+- **Real-time Alerts**: USGS ShakeAlert system with custom enhancements
 
 ## 📂 Project Structure
 

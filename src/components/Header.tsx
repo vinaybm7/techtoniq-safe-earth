@@ -28,25 +28,25 @@ const Header = () => {
             to="/real-time-data"
             className="text-sm font-medium text-techtoniq-earth-dark hover:text-techtoniq-blue"
           >
-            Real-Time Data
+            Predict
           </Link>
           <Link
             to="/safety-guidelines"
             className="text-sm font-medium text-techtoniq-earth-dark hover:text-techtoniq-blue"
           >
-            Safety
-          </Link>
-          <Link
-            to="/educational-materials"
-            className="text-sm font-medium text-techtoniq-earth-dark hover:text-techtoniq-blue"
-          >
-            Education
+            Prepare
           </Link>
           <Link
             to="/emergency-resources"
             className="text-sm font-medium text-techtoniq-earth-dark hover:text-techtoniq-blue"
           >
-            Resources
+            Protect
+          </Link>
+          <Link
+            to="/educational-materials"
+            className="text-sm font-medium text-techtoniq-earth-dark hover:text-techtoniq-teal"
+          >
+            AI Analysis
           </Link>
           <Link
             to="/latest-news"
@@ -86,28 +86,28 @@ const Header = () => {
               className="rounded-md px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue"
               onClick={() => setIsMenuOpen(false)}
             >
-              Real-Time Data
+              Predict - Earthquake Forecasting
             </Link>
             <Link
               to="/safety-guidelines"
               className="rounded-md px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue"
               onClick={() => setIsMenuOpen(false)}
             >
-              Safety
-            </Link>
-            <Link
-              to="/educational-materials"
-              className="rounded-md px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Education
+              Prepare - Safety Plans
             </Link>
             <Link
               to="/emergency-resources"
               className="rounded-md px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue"
               onClick={() => setIsMenuOpen(false)}
             >
-              Resources
+              Protect - Emergency Resources
+            </Link>
+            <Link
+              to="/educational-materials"
+              className="rounded-md px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              AI Analysis - Gemini Powered
             </Link>
             <Link
               to="/latest-news"

@@ -1,5 +1,6 @@
 
 import { Activity, Info, MapPin, Search } from "lucide-react";
+import { LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line } from "recharts";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,7 +16,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import EarthquakeMap from "@/components/EarthquakeMap";
-import USGSEarthquakeMap from "@/components/USGSEarthquakeMap";
+import USGSEarthquakeMapData from "@/components/USGSEarthquakeMapData";
+import AIEarthquakePrediction from "@/components/AIEarthquakePrediction";
 import USGSShakeAlert from "@/components/USGSShakeAlert";
 import EarthquakeFilter from "@/components/EarthquakeFilter";
 import { FilterValues } from "@/components/EarthquakeFilter";
@@ -180,8 +182,9 @@ const RealTimeData = () => {
 
       <section className="py-12">
         <div className="container">
-          <Tabs defaultValue="latest" className="w-full">
-            <TabsList className="mb-8 grid w-full grid-cols-3">
+          <Tabs defaultValue="ai-prediction" className="w-full">
+            <TabsList className="mb-8 grid w-full grid-cols-4">
+              <TabsTrigger value="ai-prediction">AI Earthquake Prediction</TabsTrigger>
               <TabsTrigger value="latest">Latest Events</TabsTrigger>
               <TabsTrigger value="map">Earthquake Map</TabsTrigger>
               <TabsTrigger value="intensity">Intensity Charts</TabsTrigger>
@@ -291,10 +294,10 @@ const RealTimeData = () => {
                 </div>
                 
                 <div className="h-[600px] rounded-lg border overflow-hidden">
-                  <USGSEarthquakeMap
+                  <USGSEarthquakeMapData
                     height="600px"
-                    timeRange={getMapTimeRange()}
-                    minMagnitude={2.5}
+                    earthquakes={filteredEarthquakes}
+                    isLoading={isLoading}
                   />
                 </div>
                 
@@ -324,32 +327,43 @@ const RealTimeData = () => {
               </div>
             </TabsContent>
 
+            <TabsContent value="ai-prediction" className="animate-fade-in">
+              <AIEarthquakePrediction 
+                earthquakes={earthquakes || []} 
+                isLoading={isLoading} 
+              />
+            </TabsContent>
+
             <TabsContent value="intensity" className="animate-fade-in">
               <div className="rounded-lg border bg-white p-6">
                 <h3 className="mb-6 text-xl font-medium text-techtoniq-earth-dark">
                   Global Earthquake Intensity
                 </h3>
                 <div className="mb-8 h-64 w-full rounded-lg bg-gray-50 p-4">
-                  <div className="flex h-full w-full flex-col justify-between">
-                    {[
-                      { region: "Pacific Ring of Fire", activity: 85 },
-                      { region: "Mediterranean-Himalayan Belt", activity: 62 },
-                      { region: "Mid-Atlantic Ridge", activity: 45 },
-                      { region: "East African Rift", activity: 38 },
-                      { region: "North American Plate", activity: 30 },
-                    ].map((region, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-sm text-techtoniq-earth">{region.region}</span>
-                        <div className="h-4 flex-1 overflow-hidden rounded-full bg-gray-200">
-                          <div
-                            className="h-full bg-techtoniq-blue"
-                            style={{ width: `${region.activity}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm font-medium">{region.activity}%</span>
-                      </div>
-                    ))}
-                  </div>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={[
+                        { name: 'Jan', "Pacific Ring of Fire": 78, "Mediterranean-Himalayan Belt": 55, "Mid-Atlantic Ridge": 40, "East African Rift": 35, "North American Plate": 28 },
+                        { name: 'Feb', "Pacific Ring of Fire": 82, "Mediterranean-Himalayan Belt": 58, "Mid-Atlantic Ridge": 42, "East African Rift": 36, "North American Plate": 29 },
+                        { name: 'Mar', "Pacific Ring of Fire": 80, "Mediterranean-Himalayan Belt": 60, "Mid-Atlantic Ridge": 43, "East African Rift": 37, "North American Plate": 30 },
+                        { name: 'Apr', "Pacific Ring of Fire": 85, "Mediterranean-Himalayan Belt": 62, "Mid-Atlantic Ridge": 45, "East African Rift": 38, "North American Plate": 30 },
+                        { name: 'May', "Pacific Ring of Fire": 83, "Mediterranean-Himalayan Belt": 61, "Mid-Atlantic Ridge": 44, "East African Rift": 37, "North American Plate": 31 },
+                        { name: 'Jun', "Pacific Ring of Fire": 87, "Mediterranean-Himalayan Belt": 64, "Mid-Atlantic Ridge": 46, "East African Rift": 39, "North American Plate": 32 },
+                      ]}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="name" stroke="#888888" fontSize={12} />
+                      <YAxis stroke="#888888" fontSize={12} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="Pacific Ring of Fire" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                      <Line type="monotone" dataKey="Mediterranean-Himalayan Belt" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                      <Line type="monotone" dataKey="Mid-Atlantic Ridge" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                      <Line type="monotone" dataKey="East African Rift" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                      <Line type="monotone" dataKey="North American Plate" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
                 <div className="rounded-lg bg-gray-50 p-4">
                   <div className="flex items-start gap-2">
