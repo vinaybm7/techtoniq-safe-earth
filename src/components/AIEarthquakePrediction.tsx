@@ -115,14 +115,18 @@ const AIEarthquakePrediction = ({
   }, [apiCallCount]);
   
   // Function to cache predictions
-  const cachePredictions = useCallback((predictionsData: Prediction[]) => {
+  const cachePredictions = useCallback((predictionsToCache: Prediction[]) => {
     try {
-      localStorage.setItem('cached_earthquake_predictions', JSON.stringify(predictionsData));
-      const now = new Date();
-      localStorage.setItem('cached_predictions_timestamp', now.toISOString());
-      setLastUpdateTime(now);
+      // Make sure we have valid predictions before caching
+      if (predictionsToCache && Array.isArray(predictionsToCache)) {
+        localStorage.setItem('cached_earthquake_predictions', JSON.stringify(predictionsToCache));
+        const now = new Date();
+        localStorage.setItem('cached_predictions_timestamp', now.toISOString());
+        setLastUpdateTime(now);
+      }
     } catch (err) {
       console.error('Error caching predictions:', err);
+      // If localStorage is not available, we can still continue without caching
     }
   }, []);
 
@@ -348,32 +352,41 @@ const AIEarthquakePrediction = ({
   
   // Helper function to add user location to predictions
   const addUserLocationToPredictions = (latitude: number, longitude: number, locationName: string) => {
-    const userLocationPrediction: Prediction = {
-      location: locationName.split(',')[0],
-      probability: 5,
-      confidence: 85,
-      timeframe: "30-45 days",
-      magnitude: "< 3.0",
-      description: `Based on analysis of recent global seismic patterns and historical data, ${locationName.split(',')[0]} shows low seismic risk in the immediate future. No significant precursory seismic sequences detected in this region.`,
-      isIndian: false,
-      isPersonalized: true,
-      riskFactors: ["Low historical seismicity in this region", "No active fault lines in close proximity"],
-      dataLimitations: "Limited real-time monitoring stations in some regions may affect detection of smaller events"
-    };
+    if (!locationName) return; // Guard against undefined locationName
     
-    // Add the personalized prediction to the beginning of the array
-    setPredictions(prev => {
-      // Check if this location already exists
-      const locationExists = prev.some(p => 
-        p.location.toLowerCase().includes(locationName.toLowerCase().split(',')[0]));
+    try {
+      const locationFirstPart = locationName.split(',')[0];
       
-      if (!locationExists) {
-        const newPredictions = [userLocationPrediction, ...prev];
-        cachePredictions(newPredictions);
-        return newPredictions;
-      }
-      return prev;
-    });
+      const userLocationPrediction: Prediction = {
+        location: locationFirstPart,
+        probability: 5,
+        confidence: 85,
+        timeframe: "30-45 days",
+        magnitude: "< 3.0",
+        description: `Based on analysis of recent global seismic patterns and historical data, ${locationFirstPart} shows low seismic risk in the immediate future. No significant precursory seismic sequences detected in this region.`,
+        isIndian: false,
+        isPersonalized: true,
+        riskFactors: ["Low historical seismicity in this region", "No active fault lines in close proximity"],
+        dataLimitations: "Limited real-time monitoring stations in some regions may affect detection of smaller events"
+      };
+      
+      // Add the personalized prediction to the beginning of the array
+      setPredictions(prev => {
+        // Check if this location already exists
+        const locationExists = prev.some(p => 
+          p.location.toLowerCase().includes(locationFirstPart.toLowerCase()));
+        
+        if (!locationExists) {
+          const newPredictions = [userLocationPrediction, ...prev];
+          cachePredictions(newPredictions);
+          return newPredictions;
+        }
+        return prev;
+      });
+    } catch (error) {
+      console.error("Error adding user location to predictions:", error);
+      // Don't break the app if there's an error with the location
+    }
   };
 
   // Generate predictions when component mounts and then hourly
@@ -424,17 +437,27 @@ const AIEarthquakePrediction = ({
 
   // Function to format time difference
   const formatTimeSince = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'just now';
-    if (diffMins === 1) return '1 minute ago';
-    if (diffMins < 60) return `${diffMins} minutes ago`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours === 1) return '1 hour ago';
-    return `${diffHours} hours ago`;
+    try {
+      // Ensure date is a valid Date object
+      if (!(date instanceof Date) || isNaN(date.getTime())) {
+        return 'unknown time';
+      }
+      
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      
+      if (diffMins < 1) return 'just now';
+      if (diffMins === 1) return '1 minute ago';
+      if (diffMins < 60) return `${diffMins} minutes ago`;
+      
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours === 1) return '1 hour ago';
+      return `${diffHours} hours ago`;
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return 'recently';
+    }
   };
 
   // Function to manually refresh predictions
@@ -511,21 +534,22 @@ const AIEarthquakePrediction = ({
                 <span>Updated: {formatTimeSince(lastUpdateTime)}</span>
               </div>
             )}
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-6 px-2 text-xs" 
-              onClick={handleManualRefresh}
-              disabled={aiLoading || apiCallCount >= API_CALL_LIMIT_PER_DAY}
-            >
-              {aiLoading ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                'Refresh'
-              )}
-            </Button>
           </div>
+          
+          {/* Always show refresh button, not conditionally rendered */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 px-2 text-xs mt-1" 
+            onClick={handleManualRefresh}
+            disabled={aiLoading || apiCallCount >= API_CALL_LIMIT_PER_DAY}
+          >
+            {aiLoading ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              'Refresh'
+            )}
+          </Button>
         </div>
       </div>
 
