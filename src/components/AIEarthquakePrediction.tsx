@@ -158,7 +158,8 @@ const AIEarthquakePrediction = ({
         }
         
         setPredictions(data.predictions);
-        setUsingFallbackData(data.note ? true : false);
+        // Only set fallback data flag if we're using default predictions and not user-requested location
+        setUsingFallbackData(data.note && !locationName ? true : false);
       } else {
         console.error("Invalid predictions format:", data);
         setDefaultPredictions();
@@ -330,7 +331,7 @@ const AIEarthquakePrediction = ({
         </div>
       </div>
       
-      {usingFallbackData && (
+      {usingFallbackData && !userLocation && (
         <div className="mb-4 rounded-lg bg-yellow-50 p-3 text-sm border border-yellow-300">
           <div className="flex gap-2 items-center">
             <AlertTriangle className="h-5 w-5 flex-shrink-0 text-yellow-500" />
