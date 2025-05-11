@@ -52,7 +52,22 @@ const USGSEarthquakeMapData = ({
           style: 'mapbox://styles/mapbox/dark-v11', // Dark style works well for earthquake visualization
           zoom: 1.5,
           center: [0, 20],
-          projection: 'globe'
+          projection: 'globe',
+          renderWorldCopies: true
+        });
+        
+        // Force the globe view to be visible
+        map.current.on('load', () => {
+          // Add 3D terrain
+          map.current?.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          
+          // Add the DEM source as a terrain layer with exaggerated height
+          map.current?.addSource('mapbox-dem', {
+            'type': 'raster-dem',
+            'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+            'tileSize': 512,
+            'maxzoom': 14
+          });
         });
 
         map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');

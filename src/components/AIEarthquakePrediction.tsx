@@ -153,53 +153,71 @@ const AIEarthquakePrediction = ({
   
   // Function to set default predictions when API fails
   const setDefaultPredictions = () => {
-    const hasIndianEarthquakes = earthquakes.some(quake => 
+    // Get Indian earthquakes if any
+    const indianEarthquakes = earthquakes.filter(quake => 
       quake.location.toLowerCase().includes('india') ||
       quake.location.toLowerCase().includes('delhi') ||
       quake.location.toLowerCase().includes('gujarat') ||
-      quake.location.toLowerCase().includes('assam')
+      quake.location.toLowerCase().includes('assam') ||
+      quake.location.toLowerCase().includes('himalaya')
     );
     
+    const hasIndianEarthquakes = indianEarthquakes.length > 0;
+    
+    // Get the last 5 earthquakes for analysis
+    const recentEarthquakes = earthquakes.slice(0, 5);
+    const recentIndianEarthquakes = indianEarthquakes.slice(0, 5);
+    
+    // Create default predictions with 5 locations, prioritizing India
     const defaultPredictions: Prediction[] = [
+      // India prediction (always included)
       {
-        location: hasIndianEarthquakes ? "Northern India Region" : "Pacific Ring of Fire",
-        probability: hasIndianEarthquakes ? 35 : 75,
-        timeframe: "7-10 days",
-        magnitude: hasIndianEarthquakes ? "3.5-4.2" : "5.0-6.2",
+        location: hasIndianEarthquakes ? "Northern India Region" : "India",
+        probability: hasIndianEarthquakes ? 35 : 5,
+        timeframe: hasIndianEarthquakes ? "7-10 days" : "30 days",
+        magnitude: hasIndianEarthquakes ? "3.5-4.2" : "< 3.0",
         description: hasIndianEarthquakes 
-          ? "Based on recent seismic activity in the Himalayan region, minor tremors possible."
-          : "Continued activity expected along tectonic boundaries in the Pacific.",
-        isIndian: hasIndianEarthquakes
+          ? `Based on recent seismic activity in the Himalayan region, minor tremors possible. Recent data: ${recentIndianEarthquakes.map(eq => `M${eq.magnitude.toFixed(1)} at ${eq.location.split(',')[0]}`).join(', ').substring(0, 100)}...`
+          : "You're safe! No significant seismic activity predicted for India in the near future.",
+        isIndian: true
       },
+      // Nepal/Himalayan region (geographically close to India)
+      {
+        location: "Nepal-Himalayan Region",
+        probability: 28,
+        timeframe: "10-14 days",
+        magnitude: "3.8-4.5",
+        description: "The Himalayan fault system shows moderate activity patterns. This region affects Northern India and should be monitored closely.",
+        isIndian: false
+      },
+      // Indonesia (major seismic zone in Asia)
       {
         location: "Indonesia",
         probability: 65,
         timeframe: "3-5 days",
         magnitude: "4.8-5.5",
-        description: "Recent pattern of seismic activity suggests potential for moderate earthquake.",
+        description: `Recent pattern of seismic activity suggests potential for moderate earthquake. Recent data: ${recentEarthquakes.filter(eq => eq.location.toLowerCase().includes('indonesia')).map(eq => `M${eq.magnitude.toFixed(1)}`).join(', ') || 'Limited data available'}.`,
         isIndian: false
       },
+      // Japan (major seismic zone)
+      {
+        location: "Japan",
+        probability: 52,
+        timeframe: "5-8 days",
+        magnitude: "4.0-5.2",
+        description: "The Pacific Ring of Fire continues to show significant activity near Japan, with potential for moderate earthquakes.",
+        isIndian: false
+      },
+      // California (different continent for global coverage)
       {
         location: "Southern California",
         probability: 40,
         timeframe: "14-21 days",
         magnitude: "3.0-4.5",
-        description: "Minor to moderate seismic activity possible along the San Andreas fault system.",
+        description: `Minor to moderate seismic activity possible along the San Andreas fault system. Recent data: ${recentEarthquakes.filter(eq => eq.location.toLowerCase().includes('california')).map(eq => `M${eq.magnitude.toFixed(1)}`).join(', ') || 'Limited data available'}.`,
         isIndian: false
       }
     ];
-    
-    // If no Indian earthquakes, add a safety message for India
-    if (!hasIndianEarthquakes) {
-      defaultPredictions.unshift({
-        location: "India",
-        probability: 5,
-        timeframe: "30 days",
-        magnitude: "< 3.0",
-        description: "You're safe! No significant seismic activity predicted for India in the near future.",
-        isIndian: true
-      });
-    }
     
     setPredictions(defaultPredictions);
   };
