@@ -25,7 +25,6 @@ import { FilterValues } from "@/components/EarthquakeFilter";
 const RealTimeData = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [displayLimit, setDisplayLimit] = useState(10);
-  const [mapFilterType, setMapFilterType] = useState<'continent' | 'magnitude' | 'time'>('continent');
   const { toast } = useToast();
   const [filters, setFilters] = useState<FilterValues>({
     minMagnitude: 0,
@@ -155,14 +154,7 @@ const RealTimeData = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Determine map timeRange based on filter selection
-  const getMapTimeRange = (): 'day' | 'week' | 'month' => {
-    switch (filters.timeframe) {
-      case 'today': return 'day';
-      case 'month': return 'month';
-      default: return 'week';
-    }
-  };
+  // Map-related functions removed
 
   return (
     <PageLayout>
@@ -183,10 +175,9 @@ const RealTimeData = () => {
       <section className="py-12">
         <div className="container">
           <Tabs defaultValue="ai-prediction" className="w-full">
-            <TabsList className="mb-8 grid w-full grid-cols-4">
+            <TabsList className="mb-8 grid w-full grid-cols-3">
               <TabsTrigger value="ai-prediction">AI Earthquake Prediction</TabsTrigger>
               <TabsTrigger value="latest">Latest Events</TabsTrigger>
-              <TabsTrigger value="map">Earthquake Map</TabsTrigger>
               <TabsTrigger value="intensity">Intensity Charts</TabsTrigger>
             </TabsList>
 
@@ -255,107 +246,23 @@ const RealTimeData = () => {
               {/* ShakeAlert Component removed from here and moved to AI Prediction tab */}
             </TabsContent>
 
-            <TabsContent value="map" className="animate-fade-in">
-              <div className="rounded-lg border bg-white p-6">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-                  <h3 className="text-xl font-medium text-techtoniq-earth-dark">
-                    USGS Earthquake Map
-                  </h3>
-                  <div className="flex gap-2">
-                    <button 
-                      className={`rounded-md px-3 py-1.5 text-sm font-medium ${mapFilterType === 'continent' ? 'bg-techtoniq-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                      onClick={() => setMapFilterType('continent')}
-                    >
-                      View by Region
-                    </button>
-                    <button 
-                      className={`rounded-md px-3 py-1.5 text-sm font-medium ${mapFilterType === 'magnitude' ? 'bg-techtoniq-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                      onClick={() => setMapFilterType('magnitude')}
-                    >
-                      View by Magnitude
-                    </button>
-                    <button 
-                      className={`rounded-md px-3 py-1.5 text-sm font-medium ${mapFilterType === 'time' ? 'bg-techtoniq-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                      onClick={() => setMapFilterType('time')}
-                    >
-                      View by Time
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="h-[600px] rounded-lg border overflow-hidden">
-                  <USGSEarthquakeMapData
-                    height="600px"
-                    earthquakes={filteredEarthquakes}
-                    isLoading={isLoading}
-                  />
-                </div>
-                
-                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div className="rounded-lg bg-gray-50 p-3 text-center">
-                    <p className="text-xs text-techtoniq-earth">Active Regions</p>
-                    <p className="text-xl font-semibold text-techtoniq-earth-dark">42</p>
-                  </div>
-                  <div className="rounded-lg bg-gray-50 p-3 text-center">
-                    <p className="text-xs text-techtoniq-earth">Monitored Zones</p>
-                    <p className="text-xl font-semibold text-techtoniq-earth-dark">187</p>
-                  </div>
-                  <div className="rounded-lg bg-gray-50 p-3 text-center">
-                    <p className="text-xs text-techtoniq-earth">Alert Areas</p>
-                    <p className="text-xl font-semibold text-techtoniq-earth-dark">5</p>
-                  </div>
-                </div>
-                
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg text-sm">
-                  <p className="text-techtoniq-blue-dark font-medium">About USGS Earthquake Map</p>
-                  <p className="mt-1 text-techtoniq-earth">
-                    This interactive map shows earthquakes from the United States Geological Survey (USGS) 
-                    with magnitude 2.5+ from the past day. You can interact with the map by zooming, 
-                    panning, and clicking on earthquake markers for more details.
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
+            {/* Earthquake Map tab content removed */}
 
             <TabsContent value="ai-prediction" className="animate-fade-in">
-              <div className="grid grid-cols-1 gap-6">
-                {/* Top section: Map */}
-                <div className="rounded-lg border bg-white p-4">
-                  <h3 className="mb-4 text-xl font-medium text-techtoniq-earth-dark">
-                    Earthquake Activity Map
-                  </h3>
-                  <div className="h-[400px] rounded-lg border overflow-hidden">
-                    <USGSEarthquakeMapData
-                      height="400px"
-                      earthquakes={filteredEarthquakes}
-                      isLoading={isLoading}
-                    />
-                  </div>
-                  <div className="mt-3 p-3 bg-blue-50 rounded-lg text-sm">
-                    <p className="text-techtoniq-blue-dark font-medium">Earthquake Activity Visualization</p>
-                    <p className="mt-1 text-techtoniq-earth">
-                      This map shows recent earthquake activity. Larger and darker markers indicate higher magnitude events.
-                      Click on any marker to view detailed information about the earthquake.
-                    </p>
-                  </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <AIEarthquakePrediction 
+                    earthquakes={earthquakes || []} 
+                    isLoading={isLoading} 
+                  />
                 </div>
-                
-                {/* Bottom section: AI Prediction and ShakeAlert */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2">
-                    <AIEarthquakePrediction 
-                      earthquakes={earthquakes || []} 
-                      isLoading={isLoading} 
-                    />
-                  </div>
-                  <div className="lg:col-span-1">
-                    <USGSShakeAlert 
-                      onAlertReceived={(alert) => {
-                        console.log('ShakeAlert received:', alert);
-                        // You could add additional handling here if needed
-                      }}
-                    />
-                  </div>
+                <div className="lg:col-span-1">
+                  <USGSShakeAlert 
+                    onAlertReceived={(alert) => {
+                      console.log('ShakeAlert received:', alert);
+                      // You could add additional handling here if needed
+                    }}
+                  />
                 </div>
               </div>
             </TabsContent>
