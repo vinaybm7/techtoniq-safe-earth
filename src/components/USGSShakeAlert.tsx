@@ -169,14 +169,26 @@ const USGSShakeAlert = ({ className = '', onAlertReceived }: USGSShakeAlertProps
                 {soundEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
               </Label>
             </div>
-            
-            <Button
-              variant={notificationsEnabled ? "default" : "outline"}
-              size="sm"
-              onClick={requestNotificationPermission}
-            >
+            <Switch
+              id="notification-mode"
+              checked={notificationsEnabled}
+              onCheckedChange={async (checked) => {
+                if (checked) {
+                  await requestNotificationPermission();
+                } else {
+                  setNotificationsEnabled(false);
+                  localStorage.setItem('notificationsEnabled', JSON.stringify(false));
+                  toast({
+                    title: 'Notifications Disabled',
+                    description: 'You will not receive ShakeAlert notifications.',
+                    variant: 'default',
+                  });
+                }
+              }}
+            />
+            <Label htmlFor="notification-mode" className="text-sm">
               {notificationsEnabled ? 'Notifications On' : 'Enable Notifications'}
-            </Button>
+            </Label>
           </div>
         </div>
         <div className="mt-1 flex items-center">
