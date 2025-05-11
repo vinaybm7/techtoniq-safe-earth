@@ -49,11 +49,38 @@ const USGSEarthquakeMapData = ({
 
         map.current = new mapboxgl.Map({
           container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/dark-v11', // Dark style works well for earthquake visualization
+          style: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite style for better terrain visualization
           zoom: 1.5,
           center: [0, 20],
           projection: 'globe',
-          renderWorldCopies: true
+          renderWorldCopies: true,
+          pitch: 45, // Add default pitch for better 3D visualization
+          antialias: true // Enable antialiasing for smoother rendering
+        });
+
+        // Add terrain and sky layers for enhanced 3D visualization
+        map.current.on('style.load', () => {
+          map.current?.addSource('mapbox-dem', {
+            'type': 'raster-dem',
+            'url': 'mapbox://mapbox.terrain-rgb',
+            'tileSize': 512,
+            'maxzoom': 14
+          });
+
+          map.current?.setTerrain({
+            'source': 'mapbox-dem',
+            'exaggeration': 1.5
+          });
+
+          map.current?.addLayer({
+            'id': 'sky',
+            'type': 'sky',
+            'paint': {
+              'sky-type': 'atmosphere',
+              'sky-atmosphere-sun': [0.0, 90.0],
+              'sky-atmosphere-sun-intensity': 15
+            }
+          });
         });
         
         // Force the globe view to be visible
@@ -70,8 +97,43 @@ const USGSEarthquakeMapData = ({
           });
         });
 
+        // Add enhanced controls
         map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+        map.current.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
+        
+        // Add terrain control
+        map.current.addControl(
+          new mapboxgl.TerrainControl({
+            source: 'mapbox-dem',
+            exaggeration: 1.5
+          })
+        );
+        
         map.current.scrollZoom.enable();
+        
+        // Add custom controls for map style switching
+        const styles = [
+          { name: 'Satellite', uri: 'mapbox://styles/mapbox/satellite-streets-v12' },
+          { name: 'Dark', uri: 'mapbox://styles/mapbox/dark-v11' },
+          { name: 'Light', uri: 'mapbox://styles/mapbox/light-v11' }
+        ];
+        
+        const styleContainer = document.createElement('div');
+        styleContainer.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+        styleContainer.style.margin = '10px';
+        
+        styles.forEach(style => {
+          const button = document.createElement('button');
+          button.className = 'mapboxgl-ctrl-icon';
+          button.textContent = style.name;
+          button.addEventListener('click', () => {
+            map.current?.setStyle(style.uri);
+          });
+          styleContainer.appendChild(button);
+        });
+        
+        map.current.getContainer().appendChild(styleContainer);
 
         // Add atmosphere for globe view
         map.current.on('style.load', () => {
