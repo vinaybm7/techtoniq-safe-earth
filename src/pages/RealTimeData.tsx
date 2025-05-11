@@ -326,21 +326,11 @@ const RealTimeData = () => {
             </TabsContent>
 
             <TabsContent value="ai-prediction" className="animate-fade-in">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <AIEarthquakePrediction 
-                    earthquakes={earthquakes || []} 
-                    isLoading={isLoading} 
-                  />
-                </div>
-                <div className="lg:col-span-1">
-                  <USGSShakeAlert 
-                    onAlertReceived={(alert) => {
-                      console.log('ShakeAlert received:', alert);
-                      // You could add additional handling here if needed
-                    }}
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-6">
+                <AIEarthquakePrediction 
+                  earthquakes={earthquakes || []} 
+                  isLoading={isLoading} 
+                />
               </div>
             </TabsContent>
 

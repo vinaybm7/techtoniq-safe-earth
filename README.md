@@ -76,6 +76,36 @@ techtoniq/
 
 ## 🌐 Deployment
 
+### Deploying to Vercel
+
+1. Connect your GitHub repository to Vercel
+2. Configure the following settings:
+   - Framework Preset: `Vite`
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+3. Set up environment variables:
+   - Add `VITE_GEMINI_API_KEY` with your Google Gemini API key
+4. Deploy the application
+
+### Deploying to Netlify
+
+1. Connect your GitHub repository to Netlify
+2. Configure the build settings:
+   - Build Command: `npm run build`
+   - Publish Directory: `dist`
+3. Set up environment variables:
+   - Go to Site settings > Build & deploy > Environment
+   - Add `VITE_GEMINI_API_KEY` with your Google Gemini API key
+4. Deploy the application
+
+### Environment Variables
+
+The application requires the following environment variables:
+
+- `VITE_GEMINI_API_KEY`: Your Google Gemini API key for AI predictions
+
+You can copy the `.env.example` file to `.env` and fill in your API keys for local development.
+
 
 
 ## 🤝 Contributing

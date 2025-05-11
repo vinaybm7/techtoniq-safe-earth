@@ -97,7 +97,7 @@ const AIEarthquakePrediction = ({
     }
   };
 
-  // Function to analyze earthquake data and generate predictions using our server-side implementation
+  // Function to analyze earthquake data and generate predictions
   const generatePredictions = async (latitude?: number, longitude?: number, locationName?: string) => {
     if (!earthquakes || earthquakes.length === 0) return;
     
@@ -114,25 +114,88 @@ const AIEarthquakePrediction = ({
         coordinates: quake.coordinates
       }));
       
-      // Call our server-side API endpoint
-      const response = await fetch('http://localhost:3001/api/predict', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          earthquakes: recentEarthquakes,
-          latitude,
-          longitude
-        })
-      });
+      // Check if we're in development or production environment
+      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      let data;
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `API request failed with status ${response.status}`);
+      if (isDevelopment) {
+        // In development, use the local server
+        const response = await fetch('http://localhost:3001/api/predict', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            earthquakes: recentEarthquakes,
+            latitude,
+            longitude
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `API request failed with status ${response.status}`);
+        }
+        
+        data = await response.json();
+      } else {
+        // In production, call Gemini API directly
+        try {
+          // Prepare the prompt for Gemini API with seismologist persona
+          let prompt = `You are an expert seismologist and data scientist with extensive experience in analyzing earthquake data. Analyze the following recent earthquake data and provide probabilistic forecasts for potential future seismic activity. Focus on pattern recognition, spatial clustering, depth distribution, and correlation with geological features.\n\nRecent Earthquake Data:\n${JSON.stringify(recentEarthquakes, null, 2)}\n\n`;
+          
+          // Add location context if available
+          if (latitude && longitude) {
+            prompt += `\nUser's current location: Latitude ${latitude}, Longitude ${longitude}.\nProvide a personalized risk assessment for this location based on proximity to fault lines, historical seismic activity, and current patterns.\n`;
+          }
+          
+          prompt += `\nImportant guidelines for your analysis:\n1. Present forecasts as probabilities rather than definitive predictions\n2. Clearly communicate the uncertainty in earthquake forecasting\n3. Consider precursory seismic activity patterns where relevant\n4. Evaluate limitations of the data and analysis\n5. Give priority to forecasts for India, with special attention to known seismic zones\n\nIf there are no significant forecasts for India, explicitly state that India currently has low seismic risk based on available data.\n\nProvide 3-4 probabilistic forecasts in this JSON format:\n[{\n  "location": "specific location name",\n  "probability": number between 0-100,\n  "confidence": number between 0-100 indicating scientific confidence in this forecast,\n  "timeframe": "forecast timeframe (e.g., '7-14 days')",\n  "magnitude": "predicted magnitude range",\n  "description": "scientific explanation including pattern analysis and geological context",\n  "isIndian": boolean indicating if this is an Indian location,\n  "riskFactors": ["list of specific risk factors for this forecast"],\n  "dataLimitations": "brief note on limitations of this forecast"\n}]`;
+          
+          // Get API key from environment variable if available, otherwise use fallback
+          // For Vercel, you should set this in your project settings
+          const apiKey = import.meta.env?.VITE_GEMINI_API_KEY || 'AIzaSyC_ZWpE4nx8W-fB5A3SCdhE5AR8HD2uD8M';
+          
+          // Call Gemini API directly
+          const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: prompt
+                }]
+              }]
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+          }
+          
+          const apiData = await response.json();
+          const content = apiData.candidates[0].content.parts[0].text;
+          
+          // Find JSON array in the response
+          const jsonMatch = content.match(/\[\s*\{.*?\}\s*\]/s);
+          
+          if (jsonMatch) {
+            const parsedPredictions = JSON.parse(jsonMatch[0]);
+            data = { predictions: parsedPredictions };
+          } else {
+            throw new Error('Failed to parse prediction data from API response');
+          }
+        } catch (apiError) {
+          console.error('Error calling Gemini API directly:', apiError);
+          // Use fallback predictions
+          setDefaultPredictions();
+          setUsingFallbackData(true);
+          setAiLoading(false);
+          return;
+        }
       }
-      
-      const data = await response.json();
       
       if (data.predictions && Array.isArray(data.predictions)) {
         // If we have a user-specified location, add it to the predictions if not already present
