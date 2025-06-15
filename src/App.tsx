@@ -14,6 +14,8 @@ import EducationalMaterials from "./pages/EducationalMaterials";
 import LatestNews from "./pages/LatestNews";
 import ContactUs from "./pages/ContactUs";
 import NotFound from "./pages/NotFound";
+import Subscribe from "./pages/subscribe";
+
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+         <Route path="/subscribe" element={<Subscribe />} />
+
           <Route path="/" element={<Index />} />
           <Route path="/real-time-data" element={<RealTimeData />} />
           <Route path="/safety-guidelines" element={<SafetyGuidelines />} />
