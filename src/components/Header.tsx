@@ -60,6 +60,13 @@ const Header = () => {
           >
             Contact
           </Link>
+          <Link
+  to="/subscribe"
+  className="rounded-md bg-techtoniq-blue px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-teal transition"
+>
+  Subscribe
+</Link>
+
         </nav>
 
         {/* Mobile Menu Button */}
@@ -123,6 +130,13 @@ const Header = () => {
             >
               Contact
             </Link>
+            <Link
+  to="/subscribe"
+  className="rounded-md bg-techtoniq-blue px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-teal transition"
+>
+  Subscribe
+</Link>
+
           </nav>
         </div>
       )}
