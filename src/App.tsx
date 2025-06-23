@@ -15,34 +15,36 @@ import LatestNews from "./pages/LatestNews";
 import ContactUs from "./pages/ContactUs";
 import NotFound from "./pages/NotFound";
 import Subscribe from "./pages/subscribe";
+import { SubscriptionProvider } from "./context/SubscriptionContext";
+
 
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-         <Route path="/subscribe" element={<Subscribe />} />
-
-          <Route path="/" element={<Index />} />
-          <Route path="/real-time-data" element={<RealTimeData />} />
-          <Route path="/safety-guidelines" element={<SafetyGuidelines />} />
-          <Route path="/earthquake-statistics" element={<EarthquakeStatistics />} />
-          <Route path="/earthquake-by-region" element={<EarthquakeByRegion />} />
-          <Route path="/emergency-resources" element={<EmergencyResources />} />
-          <Route path="/educational-materials" element={<EducationalMaterials />} />
-          <Route path="/latest-news" element={<LatestNews />} />
-          <Route path="/contact-us" element={<ContactUs />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <SubscriptionProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/real-time-data" element={<RealTimeData />} />
+            <Route path="/safety-guidelines" element={<SafetyGuidelines />} />
+            <Route path="/earthquake-statistics" element={<EarthquakeStatistics />} />
+            <Route path="/earthquake-by-region" element={<EarthquakeByRegion />} />
+            <Route path="/emergency-resources" element={<EmergencyResources />} />
+            <Route path="/educational-materials" element={<EducationalMaterials />} />
+            <Route path="/latest-news" element={<LatestNews />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </SubscriptionProvider>
 );
 
 export default App;
