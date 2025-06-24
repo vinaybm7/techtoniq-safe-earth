@@ -61,11 +61,17 @@ const Header = () => {
             Contact
           </Link>
           <Link
-  to="/subscribe"
-  className="rounded-md bg-techtoniq-blue px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-teal transition"
->
-  Subscribe
-</Link>
+            to="/my-location"
+            className="text-sm font-medium text-techtoniq-earth-dark hover:text-techtoniq-teal"
+          >
+            My Location
+          </Link>
+          <Link
+            to="/subscribe"
+            className="rounded-md bg-techtoniq-blue px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-teal transition"
+          >
+            Subscribe
+          </Link>
 
         </nav>
 
@@ -117,13 +123,6 @@ const Header = () => {
               Education
             </Link>
             <Link
-              to="/latest-news"
-              className="rounded-md px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              News
-            </Link>
-            <Link
               to="/contact-us"
               className="rounded-md px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue"
               onClick={() => setIsMenuOpen(false)}
@@ -131,12 +130,19 @@ const Header = () => {
               Contact
             </Link>
             <Link
-  to="/subscribe"
-  className="rounded-md bg-techtoniq-blue px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-teal transition"
->
-  Subscribe
-</Link>
-
+              to="/my-location"
+              className="rounded-md px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              My Location
+            </Link>
+            <Link
+              to="/subscribe"
+              className="mt-2 rounded-md bg-techtoniq-blue px-4 py-2 text-center text-lg font-medium text-white hover:bg-techtoniq-teal"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Subscribe
+            </Link>
           </nav>
         </div>
       )}
