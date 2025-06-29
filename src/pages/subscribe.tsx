@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSubscription } from "../context/SubscriptionContext";
 import { useNavigate, Link } from "react-router-dom";
 import Header from "../components/Header";
+import { subscribeUser } from "../services/api";
 
 const Subscribe = () => {
   const [inputEmail, setInputEmail] = useState("");
@@ -12,38 +13,27 @@ const Subscribe = () => {
   const { setToken, setEmail } = useSubscription();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
-    try {
-      const response = await fetch("http://localhost:5000/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inputEmail }),
-      });
+    const result = await subscribeUser(inputEmail);
 
-      const data = await response.json();
+    if (result.success) {
+      setToken(result.token || '');
+      setEmail(inputEmail);
+      localStorage.setItem("subscription_token", result.token || '');
+      localStorage.setItem("subscription_email", inputEmail);
+      setInputEmail("");
+      setShowModal(true);
 
-      if (data.success) {
-        setToken(data.token);
-        setEmail(inputEmail);
-        localStorage.setItem("subscription_token", data.token);
-        localStorage.setItem("subscription_email", inputEmail);
-        setInputEmail("");
-        setShowModal(true); // ✅ SHOW MODAL
-
-        setTimeout(() => {
-          setShowModal(false);
-          navigate("/"); // ✅ NAVIGATE AFTER DELAY
-        }, 2000); // 2 seconds
-      } else {
-        setMessage("❌ Subscription failed.");
-      }
-    } catch (error) {
-      console.error("❌ Error subscribing:", error);
-      setMessage("❌ Server error.");
+      setTimeout(() => {
+        setShowModal(false);
+        navigate("/");
+      }, 2000);
+    } else {
+      setMessage(result.message || "❌ Subscription failed.");
     }
 
     setLoading(false);

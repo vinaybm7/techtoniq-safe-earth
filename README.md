@@ -3,6 +3,14 @@
 Techtoniq is an AI-powered earthquake prediction and safety platform that helps users anticipate seismic events, prepare effectively, and protect what matters most.
 By combining Google Gemini API for advanced analysis of real-time data with comprehensive safety resources, Techtoniq provides a complete earthquake safety solution.
 
+## 🔒 Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```
+MONGODB_URI=your_mongodb_connection_string
+```
+
 ## 🌟 Features
 
 - **AI-Powered Earthquake Prediction**: Advanced seismic pattern analysis using Google Gemini API to forecast potential events
@@ -16,6 +24,7 @@ By combining Google Gemini API for advanced analysis of real-time data with comp
 ### Prerequisites
 - Node.js (v16 or higher)
 - npm or yarn
+- MongoDB Atlas account for database hosting
 
 ### Installation
 
@@ -32,7 +41,17 @@ By combining Google Gemini API for advanced analysis of real-time data with comp
    yarn install
    ```
 
-3. Start the development server:
+3. Set up environment variables:
+   - Copy `.env.example` to `.env.local`
+   - Update the `MONGODB_URI` with your MongoDB Atlas connection string
+   - Make sure to include your database credentials in the connection string
+
+4. Install MongoDB dependencies:
+   ```sh
+   npm install mongodb @types/mongodb
+   ```
+
+5. Start the development server:
    ```sh
    npm run dev
    # or
@@ -46,6 +65,8 @@ By combining Google Gemini API for advanced analysis of real-time data with comp
 This project is built with modern technologies to ensure a responsive, accessible, and performant user experience:
 
 - **Frontend Framework**: React 18
+- **Backend**: Next.js API Routes
+- **Database**: MongoDB Atlas
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS with custom theme
 - **UI Components**: shadcn/ui
