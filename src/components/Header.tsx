@@ -53,9 +53,13 @@ const Header = () => {
           <Link to="/contact-us" className="text-sm font-medium text-techtoniq-earth-dark hover:text-techtoniq-blue">
             Contact
           </Link>
-          <Link to="/my-location" className="text-sm font-medium text-techtoniq-earth-dark hover:text-techtoniq-teal">
+          <Link
+            to="/my-location"
+            className="text-sm font-medium text-techtoniq-earth-dark hover:text-techtoniq-teal"
+          >
             My Location
           </Link>
+
           {token ? (
             <>
               <Link to="/premium" className="rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 transition">
@@ -66,11 +70,9 @@ const Header = () => {
               </button>
             </>
           ) : (
-            <>
-              <Link to="/subscribe" className="rounded-md bg-techtoniq-blue px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-teal transition">
-                Subscribe
-              </Link>
-            </>
+            <Link to="/subscribe" className="rounded-md bg-techtoniq-blue px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-teal transition">
+              Subscribe
+            </Link>
           )}
         </nav>
 
@@ -105,6 +107,7 @@ const Header = () => {
             <Link to="/my-location" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue">
               My Location
             </Link>
+
             {token ? (
               <>
                 <Link to="/premium" onClick={() => setIsMenuOpen(false)} className="w-full rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 transition">
@@ -115,11 +118,9 @@ const Header = () => {
                 </button>
               </>
             ) : (
-              <>
-                <Link to="/subscribe" onClick={() => setIsMenuOpen(false)} className="rounded-md bg-techtoniq-blue px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-teal transition">
-                  Subscribe
-                </Link>
-              </>
+              <Link to="/subscribe" onClick={() => setIsMenuOpen(false)} className="w-full rounded-md bg-techtoniq-blue px-4 py-2 text-center text-sm font-medium text-white hover:bg-techtoniq-teal transition">
+                Subscribe
+              </Link>
             )}
           </nav>
         </div>

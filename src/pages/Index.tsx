@@ -6,6 +6,8 @@ import PageLayout from "@/components/PageLayout";
 import DataOverview from "@/components/DataOverview";
 import EarthquakeCard from "@/components/EarthquakeCard";
 import GlobeAnimation from "@/components/GlobeAnimation";
+import AnimatedShapes from "@/components/AnimatedShapes";
+import TrustMetrics from "@/components/TrustMetrics";
 
 const Index = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -65,22 +67,22 @@ const Index = () => {
 
   return (
     <PageLayout>
-      <section className="relative overflow-hidden bg-gradient-to-b from-techtoniq-blue-light to-white py-16">
+      <section className="relative overflow-hidden bg-gradient-to-b from-techtoniq-blue-light to-white pt-12 pb-8 md:pt-16">
         <div className="container relative z-10 px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="mx-auto max-w-xl md:mx-0 text-center md:text-left">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <div className="mx-auto max-w-xl md:mx-0 text-center md:text-left pt-4">
               <div className="mb-6 inline-flex animate-pulse-slow items-center rounded-full bg-techtoniq-blue-light px-4 py-1.5">
                 <AlertTriangle className="mr-2 h-4 w-4 text-techtoniq-blue" />
                 <span className="text-sm font-medium text-techtoniq-blue">Earthquake Preparedness & Safety</span>
               </div>
-              <h1 className="mb-6 text-4xl font-bold tracking-tight text-techtoniq-earth-dark sm:text-5xl md:text-6xl">
+              <h1 className="mb-4 text-4xl font-bold tracking-tight text-techtoniq-earth-dark sm:text-5xl md:text-6xl">
                 <span className="text-techtoniq-blue">Predict</span>, Prepare, <span className="text-techtoniq-teal">Protect</span>
               </h1>
               <p className="mb-8 text-xl text-techtoniq-earth">
                 Techtoniq combines AI-powered prediction technology with real-time data to help you
                 anticipate earthquakes, prepare effectively, and protect what matters most.
               </p>
-              <div className="flex flex-col items-center md:items-start justify-start gap-4 sm:flex-row">
+              <div className="flex flex-col items-center md:items-start justify-start gap-4 sm:flex-row mt-2">
                 <Button asChild className="bg-techtoniq-blue hover:bg-techtoniq-blue-dark">
                   <Link to="/real-time-data">
                     Get Earthquake Predictions
@@ -92,18 +94,23 @@ const Index = () => {
                   </Link>
                 </Button>
               </div>
+              <div className="w-full mt-20 mb-6">
+                <TrustMetrics />
+              </div>
+              <div className="w-full -mt-2">
+                <AnimatedShapes />
+              </div>
             </div>
-            <div className="hidden md:block relative w-full h-full max-h-[500px] mt-8 md:mt-0">
-              <GlobeAnimation />
+            <div className="hidden md:flex items-start justify-center w-full h-full -mt-6">
+              <div className="relative w-full h-full" style={{ height: '750px', maxHeight: '85vh' }}>
+                <GlobeAnimation />
+              </div>
             </div>
           </div>
         </div>
-        
-        <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-techtoniq-teal/10"></div>
-        <div className="absolute -right-10 top-20 h-32 w-32 rounded-full bg-techtoniq-blue/10"></div>
       </section>
 
-      <section className="py-12 md:py-16">
+      <section className="pt-6 pb-12 md:pt-12 md:pb-16">
         <div className="container px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-techtoniq-earth-dark md:text-3xl">
@@ -117,7 +124,7 @@ const Index = () => {
           <DataOverview />
           
           <div className="mt-12">
-            <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-medium text-techtoniq-earth-dark">Recent Earthquakes</h3>
               <Link 
                 to="/real-time-data" 
