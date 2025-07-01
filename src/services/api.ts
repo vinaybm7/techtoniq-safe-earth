@@ -1,9 +1,11 @@
 import axios from 'axios';
 
-// For production, use the full URL if VITE_API_URL is set, otherwise use relative URL
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://techtoniq-safe-earth.vercel.app/api' 
-  : '/api';
+// Configure API base URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.PROD 
+    ? 'https://techtoniq.vercel.app/api'
+    : '/api'
+  );
 
 interface SubscriptionResponse {
   success: boolean;
@@ -13,29 +15,40 @@ interface SubscriptionResponse {
 
 export const subscribeUser = async (email: string): Promise<SubscriptionResponse> => {
   try {
-    console.log('Making request to:', `${API_BASE_URL}/subscribe`);
+    const url = `${API_BASE_URL}/subscribe`;
+    console.log('Making request to:', url);
+    
     const response = await axios.post<SubscriptionResponse>(
-      `${API_BASE_URL}/subscribe`,
+      url,
       { email },
       {
         headers: {
           'Content-Type': 'application/json',
         },
-        withCredentials: true,
+        timeout: 10000, // 10 second timeout
+        validateStatus: (status) => status < 500, // Don't throw for 4xx errors
       }
     );
+
     console.log('Subscription response:', response.data);
     return response.data;
+    
   } catch (error: any) {
     console.error('Error subscribing user:', error);
-    const errorMessage = error.response?.data?.message || 
-                        error.message || 
-                        'Failed to subscribe. Please try again.';
-    console.error('Error details:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      config: error.config
-    });
+    
+    // Handle different error types
+    let errorMessage = 'Failed to subscribe. Please try again.';
+    
+    if (error.response) {
+      // Server responded with a status outside 2xx
+      errorMessage = error.response.data?.message || errorMessage;
+    } else if (error.request) {
+      // Request was made but no response received
+      errorMessage = 'No response from server. Please check your connection.';
+    } else if (error.code === 'ECONNABORTED') {
+      errorMessage = 'Request timed out. Please try again.';
+    }
+
     return {
       success: false,
       message: errorMessage

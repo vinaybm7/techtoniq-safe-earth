@@ -1,17 +1,25 @@
 import { MongoClient } from 'mongodb';
 
-// Use dynamic import for environment variables
+// MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://vnyone7:aXAFVRa2EMNCwu9N@cluster0.idp0jqw.mongodb.net/techtoniq?retryWrites=true&w=majority';
 
-// Add error handling for MongoDB connection
-let client: MongoClient;
+// Connection pooling for serverless
+const client = new MongoClient(MONGODB_URI);
+let clientPromise: Promise<MongoClient>;
 
-async function getMongoClient() {
-  if (!client) {
-    client = new MongoClient(MONGODB_URI);
-    await client.connect();
+if (process.env.NODE_ENV === 'development') {
+  // In development, use a global variable to preserve the connection
+  if (!global._mongoClientPromise) {
+    global._mongoClientPromise = client.connect();
   }
-  return client;
+  clientPromise = global._mongoClientPromise;
+} else {
+  // In production, use a module-level connection
+  clientPromise = client.connect();
+}
+
+declare global {
+  var _mongoClientPromise: Promise<MongoClient>;
 }
 
 interface SubscriptionData {
@@ -23,6 +31,16 @@ interface SubscriptionData {
 
 // Using named export for better compatibility
 export default async function handler(req: any, res: any) {
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Connect to MongoDB
+  const client = await clientPromise;
+  const db = client.db('techtoniq');
+  const collection = db.collection('subscriptions');
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -37,15 +55,10 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const client = await getMongoClient();
-    const db = client.db('techtoniq');
-    const collection = db.collection<SubscriptionData>('subscriptions');
-
     // Check if email exists
     const existing = await collection.findOne({ email });
     if (existing) {
-      // Don't close the connection in serverless environment
-    // Connection will be reused for subsequent requests
+      // Connection is managed by the clientPromise
       return res.status(200).json({ 
         success: true, 
         message: 'Email already subscribed',
@@ -61,8 +74,7 @@ export default async function handler(req: any, res: any) {
       lastUpdated: new Date()
     });
 
-    // Don't close the connection in serverless environment
-    // Connection will be reused for subsequent requests
+    // Connection is managed by the clientPromise
 
     return res.status(200).json({ 
       success: true, 
@@ -79,23 +91,10 @@ export default async function handler(req: any, res: any) {
   }
 }
 
-// Add TypeScript types for Vercel Serverless Functions
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      MONGODB_URI: string;
-      NODE_ENV: 'development' | 'production';
-    }
-  }
-}
-
 // Vercel Serverless Function config
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '1mb',
-    },
-    // Enable external resolver for better error handling
-    externalResolver: true,
+    // Disable body parsing, we'll handle it manually
+    bodyParser: false,
   },
 };
