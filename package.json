@@ -3,6 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinaybm7/techtoniq-safe-earth.git"
+  },
+  "homepage": "https://techtoniq.vercel.app",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -88,8 +97,9 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@vercel/build-utils": "^6.9.0",
-    "@vercel/static-build": "^1.0.0",
+    "@vercel/build-utils": "^6.7.5",
+    "@vercel/node": "^4.2.4",
+    "@vercel/static-build": "^1.0.5",
     "@eslint/js": "^9.9.0",
     "@netlify/functions": "^4.1.8",
     "@tailwindcss/typography": "^0.5.15",
