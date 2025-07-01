@@ -13,9 +13,13 @@
     "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
     "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/favicon.ico",
     "netlify:build": "npm run build",
-    "netlify:dev": "netlify dev"
+    "netlify:dev": "netlify dev",
+    "vercel-build": "npm run build",
+    "vercel-dev": "npm run dev"
   },
   "dependencies": {
+    "@vercel/node": "^4.1.0",
+    "@vercel/static-build": "^1.0.0",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",

@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // For production, use the full URL if VITE_API_URL is set, otherwise use relative URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.PROD 
+  ? 'https://techtoniq-safe-earth.vercel.app/api' 
+  : '/api';
 
 interface SubscriptionResponse {
   success: boolean;
