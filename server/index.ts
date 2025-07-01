@@ -11,9 +11,37 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS Configuration
+const allowedOrigins = [
+  'http://localhost:8080',
+  'http://localhost:3000',
+  'https://techtoniq-safe-earth.vercel.app',
+  'https://techtoniq-safe-earth.netlify.app'
+];
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
+// Body parser middleware
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://vnyone7:aXAFVRa2EMNCwu9N@cluster0.idp0jqw.mongodb.net/techtoniq?retryWrites=true&w=majority';
@@ -49,8 +77,11 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// API Routes
+const router = express.Router();
+
 // Subscription endpoint
-app.post('/api/subscribe', (async (req: Request, res: Response) => {
+router.post('/subscribe', (async (req: Request, res: Response) => {
   try {
     const { email } = req.body as { email: string };
 
@@ -97,7 +128,10 @@ app.post('/api/subscribe', (async (req: Request, res: Response) => {
       message: 'Internal server error' 
     });
   }
-}) as unknown as RequestHandler);
+}) as RequestHandler);
+
+// Mount the router
+app.use('/api', router);
 
 // Apply error handling middleware
 app.use(errorHandler);

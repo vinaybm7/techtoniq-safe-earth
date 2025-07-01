@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://techtoniq-safe-earth.vercel.app/api'  // Replace with your actual Vercel/Netlify URL if different
-  : '/api';
+// For production, use the full URL if VITE_API_URL is set, otherwise use relative URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 interface SubscriptionResponse {
   success: boolean;
@@ -12,16 +11,32 @@ interface SubscriptionResponse {
 
 export const subscribeUser = async (email: string): Promise<SubscriptionResponse> => {
   try {
+    console.log('Making request to:', `${API_BASE_URL}/subscribe`);
     const response = await axios.post<SubscriptionResponse>(
       `${API_BASE_URL}/subscribe`,
-      { email }
+      { email },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      }
     );
+    console.log('Subscription response:', response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error subscribing user:', error);
+    const errorMessage = error.response?.data?.message || 
+                        error.message || 
+                        'Failed to subscribe. Please try again.';
+    console.error('Error details:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      config: error.config
+    });
     return {
       success: false,
-      message: error.response?.data?.message || 'Failed to subscribe. Please try again.'
+      message: errorMessage
     };
   }
 };
