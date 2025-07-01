@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction, Application } from 'express';
+import express, { Request, Response, NextFunction, Application, RequestHandler } from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { MongoClient, Collection, WithId } from 'mongodb';
@@ -49,13 +49,16 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Subscribe endpoint
-app.post('/subscribe', async (req: Request, res: Response, next: NextFunction) => {
+// Subscription endpoint
+app.post('/api/subscribe', (async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { email } = req.body as { email: string };
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ success: false, message: 'Invalid email address' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid email address' 
+      });
     }
 
     const db = client.db('techtoniq');
@@ -82,16 +85,19 @@ app.post('/subscribe', async (req: Request, res: Response, next: NextFunction) =
 
     await collection.insertOne(subscription);
 
-    res.status(200).json({ 
+    return res.status(200).json({ 
       success: true, 
       message: 'Subscription successful',
       token: Buffer.from(email).toString('base64')
     });
   } catch (error) {
     console.error('Error saving subscription:', error);
-    next(error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
   }
-});
+}) as unknown as RequestHandler);
 
 // Apply error handling middleware
 app.use(errorHandler);
