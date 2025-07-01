@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = import.meta.env.PROD 
+  ? 'https://techtoniq-safe-earth.vercel.app/api'  // Replace with your actual Vercel/Netlify URL if different
+  : '/api';
 
 interface SubscriptionResponse {
   success: boolean;

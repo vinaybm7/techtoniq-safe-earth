@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "server": "tsx server/server.ts",
     "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
-    "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/favicon.ico"
+    "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/favicon.ico",
+    "netlify:build": "npm run build",
+    "netlify:dev": "netlify dev"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -83,6 +85,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@netlify/functions": "^4.1.8",
     "@tailwindcss/typography": "^0.5.15",
     "@types/body-parser": "^1.19.6",
     "@types/cors": "^2.8.19",
