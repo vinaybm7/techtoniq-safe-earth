@@ -328,7 +328,7 @@ const AIEarthquakePrediction = ({
       }
       
       // Generate new predictions
-      setDefaultPredictions();
+      await generateGeminiPredictions(latitude, longitude, locationName);
       
       // Increment API call counter
       incrementApiCallCount();
@@ -347,6 +347,76 @@ const AIEarthquakePrediction = ({
       setError("Failed to generate earthquake predictions. Please try again later.");
       setDefaultPredictions();
       setAiLoading(false);
+    }
+  };
+
+  const generateGeminiPredictions = async (latitude?: number, longitude?: number, locationName?: string) => {
+    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
+      console.warn('No valid Gemini API key found. Using sample data.');
+      setDefaultPredictions();
+      return;
+    }
+
+    const prompt = `Analyze the earthquake risk for the following locations and provide a JSON response with a list of predictions. Include a personalized prediction if a location is provided.\n    Locations: India, Nepal, Indonesia, Japan, California\n    Personalized Location: ${locationName ? `${locationName} (${latitude}, ${longitude})` : 'Not provided'}\n    Recent Earthquakes: ${JSON.stringify(earthquakes.slice(0, 10))}\n    `;
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            topP: 0.8,
+            topK: 40,
+          },
+        }),
+        signal: AbortSignal.timeout(15000) // 15 second timeout
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Gemini API error:', errorData);
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!content) {
+        console.warn('No content in Gemini API response, using sample data');
+        setDefaultPredictions();
+        return;
+      }
+
+      let jsonString = content;
+      const jsonMatch = content.match(/```(?:json)?\n([\s\S]*?)\n```/);
+      if (jsonMatch && jsonMatch[1]) {
+        jsonString = jsonMatch[1];
+      }
+
+      const result = JSON.parse(jsonString);
+
+      if (!result.predictions || !Array.isArray(result.predictions)) {
+        console.warn('Invalid response structure from Gemini API, using sample data');
+        setDefaultPredictions();
+        return;
+      }
+
+      setPredictions(result.predictions);
+      setUsingFallbackData(false);
+
+    } catch (error) {
+      console.error('Error calling Gemini API:', error);
+      setDefaultPredictions();
     }
   };
   
