@@ -21,13 +21,7 @@ export default defineConfig(({ mode }) => {
   const apiUrl = isProduction ? '/api' : 'http://localhost:3000';
 
   return {
-    define: {
-      'process.env': {
-        ...env,
-        VITE_API_URL: JSON.stringify(apiUrl),
-        VITE_NODE_ENV: JSON.stringify(mode)
-      }
-    },
+    
     server: {
       host: '::',
       port: 3000,
