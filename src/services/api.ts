@@ -1,11 +1,7 @@
 import axios from 'axios';
 
 // Configure API base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.PROD 
-    ? 'https://techtoniq.vercel.app/api'
-    : '/api'
-  );
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 interface SubscriptionResponse {
   success: boolean;
