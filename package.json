@@ -19,8 +19,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "tsx server/server.ts",
-    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
+    
     "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/favicon.ico",
     "netlify:build": "npm run build",
     "netlify:dev": "netlify dev",
