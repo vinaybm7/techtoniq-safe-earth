@@ -3,14 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      VITE_API_URL: string;
-      VITE_NODE_ENV: 'development' | 'production' | 'test';
-    }
-  }
-}
+
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
