@@ -1,15 +1,68 @@
 # Techtoniq - Predict, Prepare, Protect
 
-Techtoniq is an AI-powered earthquake prediction and safety platform that helps users anticipate seismic events, prepare effectively, and protect what matters most.
-By combining Google Gemini API for advanced analysis of real-time data with comprehensive safety resources, Techtoniq provides a complete earthquake safety solution.
+Techtoniq is an AI-powered earthquake prediction and safety platform that helps users anticipate seismic events, prepare effectively, and protect what matters most. This repository contains the Next.js application with serverless API routes for handling subscriptions and other backend functionality.
+
+## 🚀 Features
+
+- **Robust MongoDB Connection**: Optimized for serverless environments with connection pooling and retry logic
+- **Serverless API**: Built with Next.js API routes for seamless deployment on Vercel
+- **Type Safety**: Full TypeScript support with proper type definitions
+- **Production-Ready**: Environment-specific configurations and error handling
+- **Health Check**: Built-in health check endpoint for monitoring
 
 ## 🔒 Environment Variables
 
+### Local Development
 Create a `.env.local` file in the root directory with the following variables:
 
+```env
+# Required
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
+NODE_ENV=development
+
+# Optional
+MONGODB_DB_NAME=techtoniq
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
 ```
-MONGODB_URI=your_mongodb_connection_string
-```
+
+### Vercel Deployment
+Add these environment variables in your Vercel project settings:
+
+1. Go to your project in the Vercel dashboard
+2. Navigate to Settings → Environment Variables
+3. Add the following variables:
+   - `MONGODB_URI`: Your MongoDB Atlas connection string
+   - `NODE_ENV`: `production`
+   - `MONGODB_DB_NAME`: (Optional) Your database name (defaults to 'techtoniq')
+   - `JWT_SECRET`: (Optional) For authentication (generate a strong secret)
+
+## 🛠️ MongoDB Atlas Setup
+
+1. **Create a Cluster**:
+   - Log in to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+   - Create a new project and cluster
+   - Choose your preferred cloud provider and region
+
+2. **Database Access**:
+   - Go to Database Access
+   - Create a new database user with read/write access
+   - Note down the username and password
+
+3. **Network Access**:
+   - Go to Network Access
+   - Add IP address `0.0.0.0/0` to allow connections from anywhere
+   - For production, restrict to Vercel's IP ranges:
+     ```
+     76.76.14.0/24
+     100.24.0.0/16
+     172.64.0.0/13
+     2600:1f1c:2b9:6900::/56
+     ```
+
+4. **Get Connection String**:
+   - Go to Database → Connect → Connect your application
+   - Copy the connection string
+   - Replace `<username>`, `<password>`, and `<database>` with your actual credentials
 
 ## 🌟 Features
 

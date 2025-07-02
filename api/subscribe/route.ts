@@ -1,10 +1,11 @@
-import { MongoClient, MongoClientOptions } from 'mongodb';
+import { MongoClient, MongoClientOptions, MongoServerError } from 'mongodb';
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://vnyone7:aXAFVRa2EMNCwu9N@cluster0.idp0jqw.mongodb.net/techtoniq?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
+  console.error('MongoDB URI is not defined in environment variables');
+  throw new Error('Database configuration error');
 }
 
 declare global {
@@ -74,12 +75,9 @@ export default async function handler(req: any, res: any) {
     const db = client.db('techtoniq');
     const collection = db.collection('subscriptions');
 
-
     // Check if email exists
     const existing = await collection.findOne({ email });
     if (existing) {
-      // Connection is managed by the clientPromise
-    // No need to close the connection in serverless environment
       return res.status(200).json({ 
         success: true, 
         message: 'Email already subscribed',
@@ -95,20 +93,37 @@ export default async function handler(req: any, res: any) {
       lastUpdated: new Date()
     });
 
-    // Connection is managed by the clientPromise
-    // No need to close the connection in serverless environment
-
     return res.status(200).json({ 
       success: true, 
       message: 'Subscription successful',
       token: Buffer.from(email).toString('base64')
     });
-  } catch (error: any) {
-    console.error('Error:', error);
-    return res.status(500).json({ 
+  } catch (error) {
+    console.error('Subscription error:', error);
+    
+    let errorMessage = 'Failed to process subscription';
+    let statusCode = 500;
+
+    if (error instanceof MongoServerError) {
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        errorMessage = 'Database connection error';
+      } else if (error.code === 11000) {
+        // Duplicate key error (email already exists)
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Email already subscribed',
+          token: Buffer.from(email).toString('base64')
+        });
+      }
+      console.error('MongoDB Error:', error.message);
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    return res.status(statusCode).json({ 
       success: false, 
-      message: 'Internal server error',
-      error: error.message 
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }
