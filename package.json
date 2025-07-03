@@ -23,7 +23,7 @@
     "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/favicon.ico",
     "netlify:build": "npm run build",
     "netlify:dev": "netlify dev",
-    "vercel-build": "npm run build",
+    "vercel-build": "NODE_OPTIONS='--experimental-specifier-resolution=node' npm run build",
     "vercel-dev": "npm run dev"
   },
   "dependencies": {
