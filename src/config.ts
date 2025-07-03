@@ -1,2 +1,1 @@
-// Replace 'YOUR_GEMINI_API_KEY' with your actual Gemini API key
-export const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
+export const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;

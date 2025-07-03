@@ -14,7 +14,9 @@ export default defineConfig(({ mode }) => {
   const apiUrl = isProduction ? '/api' : 'http://localhost:3000';
 
   return {
-    
+    define: {
+      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
+    },
     server: {
       host: '::',
       port: 3000,
