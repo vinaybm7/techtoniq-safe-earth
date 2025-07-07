@@ -26,5 +26,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "src/types/mapbox-gl.d.ts"]
+  "include": ["src/**/*"],
+  "typeRoots": ["./node_modules/@types", "./src/types"]
 }
