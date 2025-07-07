@@ -3,7 +3,7 @@
     "target": "es2018",
     "module": "commonjs",
     "outDir": "./dist",
-    "rootDir": "./server",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -17,6 +17,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["server/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["server/**/*.ts", "src/**/*.ts"],
+  "exclude": ["node_modules", "**/*.test.ts"]
 }
