@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "commonjs",
+    "target": "es2020",
+    "module": "es2020",
     "outDir": "./dist",
     "rootDir": ".",
     "strict": true,
@@ -11,12 +11,14 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false,
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": ["node"]
   },
-  "include": ["server/**/*.ts", "src/**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts"]
+  "include": ["server/**/*.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx"]
 }
