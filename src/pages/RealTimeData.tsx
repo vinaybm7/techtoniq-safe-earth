@@ -54,7 +54,7 @@ const RealTimeData = () => {
     },
     refetchInterval: 300000, // Refresh every 5 minutes
     meta: {
-      onSettled: (data, error) => {
+      onSettled: (data: Earthquake[] | undefined, error: Error | null) => {
         if (error) {
           toast({
             title: "Error",

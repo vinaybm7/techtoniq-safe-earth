@@ -98,14 +98,12 @@ const AnimatedBorderButton = React.forwardRef<HTMLButtonElement, AnimatedBorderB
         />
         <Button
           ref={(node) => {
-            if (ref) {
-              if (typeof ref === 'function') {
-                ref(node);
-              } else {
-                ref.current = node;
-              }
+            if (typeof ref === 'function') {
+              ref(node);
+            } else if (ref) {
+              ref.current = node;
             }
-            buttonRef.current = node;
+            (buttonRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
           }}
           className={`relative z-10 bg-techtoniq-blue hover:bg-techtoniq-blue/90 transition-colors duration-300 ${className}`}
           variant={variant}

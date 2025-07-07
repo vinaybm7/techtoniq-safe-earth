@@ -163,8 +163,8 @@ const EarthquakeFilter = ({
                 <ToggleGroup 
                   type="single" 
                   value={filterValues.timeframe}
-                  onValueChange={(value: 'all' | 'today' | 'week' | 'month' | null) => {
-                    if (value) handleFilterValueChange('timeframe', value);
+                  onValueChange={(value) => {
+                    if (value) handleFilterValueChange('timeframe', value as 'all' | 'today' | 'week' | 'month');
                   }}
                   className="justify-start"
                 >
@@ -225,7 +225,7 @@ const EarthquakeFilter = ({
         <ToggleGroup 
           type="single" 
           value={filterValues.sortBy}
-          onValueChange={handleSortChange}
+          onValueChange={(value) => handleSortChange(value as 'latest' | 'magnitude' | 'location' | null)}
         >
           <ToggleGroupItem value="latest" aria-label="Show latest">
             <Clock className="h-4 w-4 mr-1" /> Latest

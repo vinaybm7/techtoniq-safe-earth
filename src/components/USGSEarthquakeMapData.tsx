@@ -149,7 +149,7 @@ const USGSEarthquakeMapData = ({
         });
 
         // Add popup for when map is clicked on empty space
-        map.current.on('click', (e) => {
+        map.current.on('click', (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
           // If click is on a marker, the marker's popup will show instead
           if (e.originalEvent.defaultPrevented) return;
           
