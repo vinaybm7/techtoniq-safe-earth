@@ -62,70 +62,43 @@ interface PredictionResponse {
   nextCheck?: string;
 }
 
-// Generate nearby fault lines based on user's location
-const generateNearbyFaults = (lat: number, lng: number) => {
-  // These are mock fault lines that would normally come from a geological database
-  // In a real app, this would be an API call to a geological service
-  
-  // Base faults with relative positions
-  const baseFaults = [
-    { 
-      name: 'Tectonic Rift', 
-      latOffset: 0.1, 
-      lngOffset: 0.15, 
-      type: 'Transform' 
-    },
-    { 
-      name: 'Seismic Zone', 
-      latOffset: -0.08, 
-      lngOffset: 0.05, 
-      type: 'Strike-slip' 
-    },
-    { 
-      name: 'Subduction Boundary', 
-      latOffset: 0.15, 
-      lngOffset: -0.1, 
-      type: 'Thrust' 
-    }
-  ];
+import { getNearbyFaultLines } from '@/utils/geologicalData';
 
-  // Convert to actual positions relative to user
-  return baseFaults.map(fault => {
-    const faultLat = lat + (Math.random() * 0.2 - 0.1); // Add some randomness
-    const faultLng = lng + (Math.random() * 0.2 - 0.1);
+// Get nearby fault lines from USGS API
+const getNearbyFaultLinesData = async (lat: number, lng: number) => {
+  try {
+    // Get fault lines within 200km radius
+    const faultLines = await getNearbyFaultLines(lat, lng, 200);
     
-    // Calculate distance in km (simplified)
-    const distance = Math.round(
-      Math.sqrt(
-        Math.pow((faultLat - lat) * 111, 2) + 
-        Math.pow((faultLng - lng) * 111 * Math.cos(lat * Math.PI / 180), 2)
-      ) * 10
-    ) / 10;
+    // If no fault lines found within 200km, try a wider search (500km)
+    if (faultLines.length === 0) {
+      const widerSearch = await getNearbyFaultLines(lat, lng, 500);
+      return widerSearch;
+    }
     
-    // Calculate direction
-    const angle = Math.atan2(
-      faultLng - lng, 
-      faultLat - lat
-    ) * 180 / Math.PI;
-    
-    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-    const direction = directions[Math.round(angle / 22.5) % 16];
-    
-    return {
-      name: fault.name,
-      distance,
-      direction,
-      type: fault.type,
-      coordinates: { lat: faultLat, lng: faultLng }
-    };
-  }).sort((a, b) => a.distance - b.distance); // Sort by distance
+    return faultLines;
+  } catch (error) {
+    console.error('Error getting fault lines:', error);
+    return [];
+  }
 };
 
 // Generate prediction data based on location
-const generatePredictionData = (lat: number, lng: number): PredictionResponse => {
-  // Calculate risk based on location (mock implementation)
-  // In a real app, this would be determined by ML model
-  const baseRisk = 0.2 + (Math.sin(lat * 10) + 1) * 0.15 + (Math.cos(lng * 5) + 1) * 0.1;
+const generatePredictionData = async (lat: number, lng: number): Promise<PredictionResponse> => {
+  // Get real fault line data
+  const nearbyFaultLines = await getNearbyFaultLinesData(lat, lng);
+  
+  // Calculate risk based on nearby fault lines and historical data
+  let baseRisk = 0.2; // Base risk level
+  
+  // Increase risk based on proximity to fault lines
+  if (nearbyFaultLines.length > 0) {
+    const closestFault = nearbyFaultLines[0];
+    if (closestFault.distance < 10) baseRisk = 0.7; // Very close to a fault
+    else if (closestFault.distance < 50) baseRisk = 0.5; // Moderately close
+    else if (closestFault.distance < 100) baseRisk = 0.3; // Somewhat close
+  }
+  
   const riskLevel = baseRisk > 0.6 ? 'high' : baseRisk > 0.3 ? 'medium' : 'low';
   
   return {
@@ -133,11 +106,7 @@ const generatePredictionData = (lat: number, lng: number): PredictionResponse =>
     probability: baseRisk,
     safetyScore: Math.max(30, Math.min(95, 100 - (baseRisk * 100))),
     lastUpdated: new Date().toISOString(),
-    recommendations: [
-      'Secure heavy furniture to walls',
-      'Prepare an emergency kit with supplies for 3 days',
-      'Identify safe spots in each room (under sturdy furniture, against inside walls)'
-    ],
+    recommendations: generateRecommendations(riskLevel, nearbyFaultLines.length > 0),
     historicalData: {
       lastMonth: Math.round(baseRisk * 5),
       lastYear: Math.round(baseRisk * 50),
@@ -147,12 +116,43 @@ const generatePredictionData = (lat: number, lng: number): PredictionResponse =>
         average: 3.0 + (baseRisk * 2)
       }
     },
-    nearbyFaultLines: generateNearbyFaults(lat, lng)
+    nearbyFaultLines
   };
+};
+
+// Generate recommendations based on risk level and fault proximity
+const generateRecommendations = (riskLevel: string, hasNearbyFaults: boolean): string[] => {
+  const recommendations: string[] = [
+    'Secure heavy furniture to walls',
+    'Prepare an emergency kit with supplies for 3 days',
+    'Identify safe spots in each room (under sturdy furniture, against inside walls)'
+  ];
+
+  if (hasNearbyFaults) {
+    recommendations.push(
+      'Consider a professional structural assessment of your building'
+    );
+  }
+
+  if (riskLevel === 'high') {
+    recommendations.push(
+      'Develop and practice an earthquake drill with your household',
+      'Consider earthquake insurance if available in your area'
+    );
+  }
+
+  return recommendations;
 };
 
 // Function to call Gemini API
 async function getGeminiPrediction(lat: number, lng: number): Promise<PredictionResponse> {
+  // First get real fault line data
+  const nearbyFaultLines = await getNearbyFaultLinesData(lat, lng);
+  
+  // If we have fault line data, use it to enhance the Gemini prompt
+  const faultLineContext = nearbyFaultLines.length > 0
+    ? `The location is near the following fault lines: ${nearbyFaultLines.map(f => `${f.name} (${f.distance.toFixed(1)}km ${f.direction})`).join(', ')}. `
+    : 'No known major fault lines were found nearby. ';
   // First check if we have a valid API key
   if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
     console.warn('No valid Gemini API key found. Using sample data.');
@@ -160,7 +160,7 @@ async function getGeminiPrediction(lat: number, lng: number): Promise<Prediction
   }
 
   try {
-    const prompt = `Analyze the earthquake risk for location at ${lat}, ${lng}. 
+    const prompt = `Analyze the earthquake risk for location at ${lat}, ${lng}. ${faultLineContext}
     Provide a JSON response with the following structure:
     {
       "riskLevel": "low|medium|high",
@@ -269,18 +269,24 @@ const MyLocation = () => {
   
   const loadPrediction = async (lat: number, lng: number) => {
     setIsLoading(true);
-    setError(null);
+    setError('');
     
     try {
       console.log('Loading prediction for location:', { lat, lng });
-      const prediction = await getGeminiPrediction(lat, lng);
-      console.log('Prediction data:', prediction);
-      setPrediction(prediction);
+      const response = await generatePredictionData(lat, lng);
+      console.log('Prediction data:', response);
+      setPrediction(response);
     } catch (err) {
       console.error('Unexpected error in loadPrediction:', err);
       setError('Failed to load prediction. Using sample data.');
-      // Fallback to sample data
-      setPrediction(generatePredictionData(lat, lng));
+      // Fallback to sample data if there's an error
+      try {
+        const sampleData = await generatePredictionData(lat, lng);
+        setPrediction(sampleData);
+      } catch (sampleErr) {
+        console.error('Failed to generate sample data:', sampleErr);
+        setError('Failed to load any prediction data. Please try again later.');
+      }
     } finally {
       setIsLoading(false);
     }
