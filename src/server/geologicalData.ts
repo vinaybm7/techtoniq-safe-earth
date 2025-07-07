@@ -1,4 +1,8 @@
-import { FaultLine } from '@/types';
+import fetch from 'node-fetch';
+import { FaultLine, Coordinates } from '@/types';
+
+// Re-export the FaultLine type for backward compatibility
+export type { FaultLine };
 
 interface USGSFaultFeature {
   type: string;
@@ -46,37 +50,57 @@ const getCardinalDirection = (bearing: number): string => {
   return directions[index];
 };
 
-// This is a client-side only function that calls our API route
-export const getNearbyFaultLines = async (
+export const fetchFaultLinesFromUSGS = async (
   lat: number, 
   lng: number, 
   radiusKm: number = 100
 ): Promise<FaultLine[]> => {
   try {
-    // Use the environment variable for the API base URL with a fallback
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-    const apiUrl = `${apiBaseUrl}/fault-lines`;
-    
     const response = await fetch(
-      `${apiUrl}?lat=${lat}&lng=${lng}&radius=${radiusKm}`,
+      `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=1900-01-01&latitude=${lat}&longitude=${lng}&maxradiuskm=${radiusKm}&producttype=fault`,
       {
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include'
+          'User-Agent': 'SafeEarthApp/1.0 (techtoniq.vercel.app)'
+        }
       }
     );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to fetch fault data');
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch fault data from USGS: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
-    return await response.json();
+    const data = await response.json() as any;
+    const faultLines: FaultLine[] = [];
+    
+    if (data.features && Array.isArray(data.features)) {
+      data.features.forEach((feature: USGSFaultFeature) => {
+        const coords = feature.geometry.coordinates[0];
+        const [lngFault, latFault] = coords;
+        
+        const distance = calculateDistance(lat, lng, latFault, lngFault);
+        const bearing = calculateBearing(lat, lng, latFault, lngFault);
+        const direction = getCardinalDirection(bearing);
+        
+        faultLines.push({
+          name: feature.properties.name || 'Unnamed Fault',
+          distance: parseFloat(distance.toFixed(1)),
+          direction,
+          type: feature.properties.slip_type || 'Unknown',
+          coordinates: {
+            lat: latFault,
+            lng: lngFault
+          }
+        });
+      });
+    }
+
+    return faultLines
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 5);
+      
   } catch (error) {
-    console.error('Error fetching fault data:', error);
-    // Return an empty array in case of error
-    return [];
+    console.error('Error fetching fault data from USGS:', error);
+    throw error;
   }
 };

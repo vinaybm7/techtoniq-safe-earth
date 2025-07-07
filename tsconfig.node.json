@@ -4,12 +4,25 @@
     "lib": ["ES2023"],
     "module": "CommonJS",
     "moduleResolution": "Node",
-
-    /* Linting */
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["vite.config.cjs"]
+  "include": [
+    "vite.config.cjs",
+    "server/**/*.ts",
+    "src/server/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
 }

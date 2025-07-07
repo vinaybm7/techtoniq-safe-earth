@@ -11,26 +11,38 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   const isProduction = mode === 'production';
-  const apiUrl = isProduction ? '/api' : 'http://localhost:3000';
+  const apiUrl = isProduction ? '/api' : 'http://localhost:3001';
 
   return {
     define: {
       'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(apiUrl),
+      'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development'),
     },
     server: {
       host: '::',
       port: 3000,
       strictPort: true,
-      proxy: !isProduction ? {
-        // In development, proxy API requests to the API server
-        '^/api/.*': {
+      proxy: {
+        // Proxy API requests to the API server
+        '^/api': {
           target: 'http://localhost:3001',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
           secure: false,
           ws: true,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, _res) => {
+              console.error('Proxy error:', err);
+            });
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              console.log('Sending Request to the Target:', req.method, req.url);
+            });
+            proxy.on('proxyRes', (proxyRes, req, _res) => {
+              console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+            });
+          }
         }
-      } : undefined,
+      },
     },
     plugins: [
       react(),

@@ -32,35 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { GEMINI_API_KEY } from "@/config";
 
-interface HistoricalData {
-  lastMonth: number;
-  lastYear: number;
-  averageMagnitude: {
-    min: number;
-    max: number;
-    average: number;
-  };
-}
-
-interface PredictionResponse {
-  riskLevel: 'low' | 'medium' | 'high';
-  probability: number;
-  recommendations: string[];
-  lastUpdated: string;
-  historicalData: HistoricalData;
-  nearbyFaultLines?: {
-    name: string;
-    distance: number;
-    direction: string;
-    type: string;
-    coordinates: {
-      lat: number;
-      lng: number;
-    };
-  }[];
-  safetyScore?: number;
-  nextCheck?: string;
-}
+import { PredictionResponse } from '@/types';
 
 import { getNearbyFaultLines } from '@/utils/geologicalData';
 
