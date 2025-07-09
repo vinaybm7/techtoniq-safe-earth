@@ -133,12 +133,12 @@ const MyLocation = () => {
           </div>
           <div className="border rounded-lg p-6 shadow">
             <div className="text-sm font-medium text-gray-500 mb-2">SAFETY SCORE</div>
-            <div className="text-2xl font-bold mb-2 text-green-600">{Math.round(prediction.safetyScore)}/100</div>
+            <div className="text-2xl font-bold mb-2 text-green-600">{Math.round(prediction.safetyScore ?? 0)}/100</div>
             <div className="flex justify-between text-sm mb-1">
               <span>Infrastructure</span>
-              <span className="font-medium">{prediction.safetyScore > 70 ? 'Good' : prediction.safetyScore > 40 ? 'Needs Attention' : 'Poor'}</span>
+              <span className="font-medium">{(prediction.safetyScore ?? 0) > 70 ? 'Good' : (prediction.safetyScore ?? 0) > 40 ? 'Needs Attention' : 'Poor'}</span>
             </div>
-            <Progress value={prediction.safetyScore} className="h-2" />
+            <Progress value={prediction.safetyScore ?? 0} className="h-2" />
           </div>
           <div className="border rounded-lg p-6 shadow">
             <div className="text-sm font-medium text-gray-500 mb-2">RECENT ACTIVITY</div>
