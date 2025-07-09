@@ -5,7 +5,12 @@ const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB_NAME || 'techtoniq';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'GET') {
+    // Health check endpoint
+    return res.status(200).json({ status: 'ok' });
+  }
   if (!uri) {
+    console.error('MONGODB_URI environment variable is not set.');
     return res.status(500).json({ success: false, message: 'MONGODB_URI environment variable is not set.' });
   }
   if (req.method !== 'POST') {
@@ -28,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ success: true, message: 'Subscription successful', token: Buffer.from(email).toString('base64') });
   } catch (error: any) {
     console.error('Subscription error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+    return res.status(500).json({ success: false, message: error.message || 'Internal server error', error: error });
   } finally {
     if (client) await client.close();
   }
