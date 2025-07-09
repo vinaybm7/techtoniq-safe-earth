@@ -1,17 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { MongoClient } from 'mongodb';
+import { createClient } from '@supabase/supabase-js';
 
-const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB_NAME || 'techtoniq';
+const SUPABASE_URL = 'https://wqsuuxgpbgsipnbzzjms.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc3V1eGdwYmdzaXBuYnp6am1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwNjE0MDAsImV4cCI6MjA2NzYzNzQwMH0.MASxCbSIHKvXpmv4377pRof8JhfcJNJ8ZUSE2Gzc1w0';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
-    // Health check endpoint
     return res.status(200).json({ status: 'ok' });
-  }
-  if (!uri) {
-    console.error('MONGODB_URI environment variable is not set.');
-    return res.status(500).json({ success: false, message: 'MONGODB_URI environment variable is not set.' });
   }
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
@@ -20,21 +16,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ success: false, message: 'Invalid email address' });
   }
-  let client: MongoClient | null = null;
   try {
-    client = await MongoClient.connect(uri, { maxPoolSize: 1 });
-    const db = client.db(dbName);
-    const collection = db.collection('subscriptions');
-    const existing = await collection.findOne({ email });
+    // Check if already subscribed
+    const { data: existing, error: findError } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('email', email)
+      .single();
     if (existing) {
-      return res.status(200).json({ success: true, message: 'Email already subscribed', token: Buffer.from(email).toString('base64') });
+      return res.status(200).json({ success: true, message: 'Email already subscribed' });
     }
-    await collection.insertOne({ email, createdAt: new Date(), isActive: true, lastUpdated: new Date() });
-    return res.status(200).json({ success: true, message: 'Subscription successful', token: Buffer.from(email).toString('base64') });
-  } catch (error: any) {
-    console.error('Subscription error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Internal server error', error: error });
-  } finally {
-    if (client) await client.close();
+    // Insert new subscription
+    const { error } = await supabase
+      .from('subscriptions')
+      .insert([{ email }]);
+    if (error) {
+      return res.status(500).json({ success: false, message: error.message || 'Failed to subscribe.' });
+    }
+    return res.status(200).json({ success: true, message: 'Subscription successful' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message || 'Internal server error' });
   }
 }
