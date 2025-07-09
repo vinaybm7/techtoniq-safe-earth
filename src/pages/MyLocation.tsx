@@ -120,17 +120,12 @@ const generateRecommendations = (riskLevel: string, hasNearbyFaults: boolean): s
 async function getGeminiPrediction(lat: number, lng: number): Promise<PredictionResponse> {
   // First get real fault line data
   const nearbyFaultLines = await getNearbyFaultLinesData(lat, lng);
-  
-  // If we have fault line data, use it to enhance the Gemini prompt
   const faultLineContext = nearbyFaultLines.length > 0
     ? `The location is near the following fault lines: ${nearbyFaultLines.map(f => `${f.name} (${f.distance.toFixed(1)}km ${f.direction})`).join(', ')}. `
     : 'No known major fault lines were found nearby. ';
-  // First check if we have a valid API key
   if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
-    console.warn('No valid Gemini API key found. Using sample data.');
-    return generatePredictionData(lat, lng);
+    throw new Error('No valid Gemini API key found. Please contact support.');
   }
-
   try {
     const prompt = `Analyze the earthquake risk for location at ${lat}, ${lng}. ${faultLineContext}
     Provide a JSON response with the following structure:
@@ -157,70 +152,38 @@ async function getGeminiPrediction(lat: number, lng: number): Promise<Prediction
       "safetyScore": number (0-100),
       "nextCheck": string (ISO date)
     }`;
-
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.2,
-          topP: 0.8,
-          topK: 40,
-        },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.2, topP: 0.8, topK: 40 },
       }),
-      signal: AbortSignal.timeout(10000) // 10 second timeout
+      signal: AbortSignal.timeout(10000)
     });
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error('Gemini API error:', errorData);
       throw new Error(`API request failed with status ${response.status}`);
     }
-
     const data = await response.json();
-    console.log('Gemini API response:', data);
-    
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
     if (!content) {
-      console.warn('No content in Gemini API response, using sample data');
-      return generatePredictionData(lat, lng);
+      throw new Error('No content in Gemini API response.');
     }
-
-    // Try to extract JSON from the response
-    try {
-      let jsonString = content;
-      // Try to extract JSON from markdown code block
-      const jsonMatch = content.match(/```(?:json)?\n([\s\S]*?)\n```/);
-      if (jsonMatch && jsonMatch[1]) {
-        jsonString = jsonMatch[1];
-      }
-      
-      const result = JSON.parse(jsonString);
-      
-      // Validate the response has required fields
-      if (!result.riskLevel || !result.probability || !result.recommendations) {
-        console.warn('Invalid response structure from Gemini API, using sample data');
-        return generatePredictionData(lat, lng);
-      }
-      
-      return result;
-    } catch (parseError) {
-      console.error('Error parsing Gemini API response:', parseError);
-      console.warn('Falling back to sample data');
-      return generatePredictionData(lat, lng);
+    let jsonString = content;
+    const jsonMatch = content.match(/```(?:json)?\n([\s\S]*?)\n```/);
+    if (jsonMatch && jsonMatch[1]) {
+      jsonString = jsonMatch[1];
     }
+    const result = JSON.parse(jsonString);
+    if (!result.riskLevel || !result.probability || !result.recommendations) {
+      throw new Error('Invalid response structure from Gemini API.');
+    }
+    return result;
   } catch (error) {
     console.error('Error calling Gemini API:', error);
-    // Instead of throwing, return sample data
-    return generatePredictionData(lat, lng);
+    throw new Error('Failed to load prediction from Gemini AI.');
   }
 }
 
@@ -242,23 +205,15 @@ const MyLocation = () => {
   const loadPrediction = async (lat: number, lng: number) => {
     setIsLoading(true);
     setError('');
-    
     try {
       console.log('Loading prediction for location:', { lat, lng });
-      const response = await generatePredictionData(lat, lng);
+      const response = await getGeminiPrediction(lat, lng);
       console.log('Prediction data:', response);
       setPrediction(response);
-    } catch (err) {
-      console.error('Unexpected error in loadPrediction:', err);
-      setError('Failed to load prediction. Using sample data.');
-      // Fallback to sample data if there's an error
-      try {
-        const sampleData = await generatePredictionData(lat, lng);
-        setPrediction(sampleData);
-      } catch (sampleErr) {
-        console.error('Failed to generate sample data:', sampleErr);
-        setError('Failed to load any prediction data. Please try again later.');
-      }
+    } catch (err: any) {
+      console.error('Error in loadPrediction:', err);
+      setError(err.message || 'Failed to load prediction from Gemini AI.');
+      setPrediction(null);
     } finally {
       setIsLoading(false);
     }
