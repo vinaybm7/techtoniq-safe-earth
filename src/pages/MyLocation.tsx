@@ -1,72 +1,86 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { GEMINI_API_KEY } from "@/config";
-import { PredictionResponse } from '@/types';
-import { getNearbyFaultLines } from '@/utils/geologicalData';
+import Header from "@/components/Header";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Info } from "lucide-react";
 
-const getNearbyFaultLinesData = async (lat: number, lng: number) => {
-  try {
-    const faultLines = await getNearbyFaultLines(lat, lng, 200);
-    if (faultLines.length === 0) {
-      return await getNearbyFaultLines(lat, lng, 500);
-    }
-    return faultLines;
-  } catch (error) {
-    return [];
-  }
-};
-
-async function getGeminiPrediction(lat: number, lng: number): Promise<PredictionResponse> {
-  const nearbyFaultLines = await getNearbyFaultLinesData(lat, lng);
-  const faultLineContext = nearbyFaultLines.length > 0
-    ? `The location is near the following fault lines: ${nearbyFaultLines.map(f => `${f.name} (${f.distance.toFixed(1)}km ${f.direction})`).join(', ')}. `
-    : 'No known major fault lines were found nearby. ';
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
-    throw new Error('No valid Gemini API key found. Please contact support.');
-  }
-  const prompt = `Analyze the earthquake risk for location at ${lat}, ${lng}. ${faultLineContext}
-  Provide a JSON response with the following structure: { ... }`;
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.2, topP: 0.8, topK: 40 },
-    }),
-    signal: AbortSignal.timeout(10000)
-  });
-  if (!response.ok) {
-    throw new Error(`Gemini API request failed with status ${response.status}`);
-  }
-  const data = await response.json();
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!content) {
-    throw new Error('No content in Gemini API response.');
-  }
-  let jsonString = content;
-  const jsonMatch = content.match(/```(?:json)?\n([\s\S]*?)\n```/);
-  if (jsonMatch && jsonMatch[1]) {
-    jsonString = jsonMatch[1];
-  }
-  const result = JSON.parse(jsonString);
-  if (!result.riskLevel || !result.probability || !result.recommendations) {
-    throw new Error('Invalid response structure from Gemini API.');
-  }
-  return result;
-}
+const GEMINI_API_KEY = 'AIzaSyCZEc1WQiieUiM0ab0K8pk4apASpspYz98';
+const CACHE_EXPIRY_TIME = 60 * 60 * 1000; // 1 hour
 
 const MyLocation = () => {
   const [location, setLocation] = useState<{ lat: number; lng: number; address?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
+  const [prediction, setPrediction] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
+
+  // Load cached prediction on mount
+  useEffect(() => {
+    const cachedPrediction = localStorage.getItem('cached_my_location_prediction');
+    const cachedTimestamp = localStorage.getItem('cached_my_location_prediction_timestamp');
+    if (cachedPrediction && cachedTimestamp) {
+      const cachedTime = new Date(cachedTimestamp);
+      const now = new Date();
+      setLastUpdateTime(cachedTime);
+      if (now.getTime() - cachedTime.getTime() < CACHE_EXPIRY_TIME) {
+        try {
+          setPrediction(JSON.parse(cachedPrediction));
+        } catch {}
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (location) {
       loadPrediction(location.lat, location.lng);
     }
+    // eslint-disable-next-line
   }, [location]);
+
+  const cachePrediction = useCallback((predictionToCache: any) => {
+    try {
+      localStorage.setItem('cached_my_location_prediction', JSON.stringify(predictionToCache));
+      const now = new Date();
+      localStorage.setItem('cached_my_location_prediction_timestamp', now.toISOString());
+      setLastUpdateTime(now);
+    } catch {}
+  }, []);
+
+  const getGeminiPrediction = async (lat: number, lng: number) => {
+    if (!GEMINI_API_KEY) {
+      throw new Error('No valid Gemini API key found. Please contact support.');
+    }
+    const prompt = `Analyze the earthquake risk for the location at ${lat}, ${lng}. Provide a JSON response with the following structure: { "riskLevel": "low|medium|high", "probability": number (0-1), "safetyScore": number (0-100), "historicalData": { "lastMonth": number }, "recommendations": string[] }`;
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.2, topP: 0.8, topK: 40 },
+      }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!response.ok) {
+      throw new Error(`Gemini API request failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!content) {
+      throw new Error('No content in Gemini API response.');
+    }
+    let jsonString = content;
+    const jsonMatch = content.match(/```(?:json)?\n([\s\S]*?)\n```/);
+    if (jsonMatch && jsonMatch[1]) {
+      jsonString = jsonMatch[1];
+    }
+    const result = JSON.parse(jsonString);
+    if (!result.riskLevel || typeof result.probability !== 'number' || !result.recommendations) {
+      throw new Error('There is no prediction for your location as the data is not sufficient.');
+    }
+    return result;
+  };
 
   const loadPrediction = async (lat: number, lng: number) => {
     setIsLoading(true);
@@ -74,8 +88,15 @@ const MyLocation = () => {
     try {
       const response = await getGeminiPrediction(lat, lng);
       setPrediction(response);
+      cachePrediction(response);
     } catch (err: any) {
-      setError(err.message || 'Failed to load prediction from Gemini AI.');
+      if (err.message && err.message.includes('No valid Gemini API key')) {
+        setError('No valid Gemini API key found. Please contact support.');
+      } else if (err.message && (err.message.includes('There is no prediction for your location') || err.message.includes('Invalid response structure') || err.message.includes('No content in Gemini API response'))) {
+        setError('There is no prediction for your location as the data is not sufficient.');
+      } else {
+        setError(err.message || 'Failed to load prediction from Gemini AI.');
+      }
       setPrediction(null);
     } finally {
       setIsLoading(false);
@@ -105,60 +126,83 @@ const MyLocation = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-4 text-center">My Location Safety</h1>
-      <p className="mb-6 text-center text-gray-600">Get personalized earthquake risk assessment and safety recommendations for your current location.</p>
-      <div className="flex flex-col items-center mb-8">
-        <div className="flex items-center space-x-4">
-          <span className="font-semibold text-lg">{location ? `Approx. ${location.lat.toFixed(4)}°N, ${location.lng.toFixed(4)}°E` : 'Location not set'}</span>
-          <Button onClick={getUserLocation} disabled={isLoading}>
-            {isLoading ? 'Loading...' : 'Update Location'}
-          </Button>
+    <>
+      <Header />
+      <PageBreadcrumbs items={[{ label: 'My Location Safety' }]} />
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-4 text-center text-techtoniq-earth-dark">My Location Safety</h1>
+        <p className="mb-8 text-center text-techtoniq-earth">Get personalized earthquake risk assessment and safety recommendations for your current location.</p>
+        <div className="flex flex-col items-center mb-10">
+          <div className="flex items-center space-x-4">
+            <span className="font-semibold text-lg">{location ? `Approx. ${location.lat.toFixed(4)}°N, ${location.lng.toFixed(4)}°E` : 'Location not set'}</span>
+            <Button onClick={getUserLocation} disabled={isLoading}>
+              {isLoading ? 'Loading...' : 'Update Location'}
+            </Button>
+          </div>
+          {location && <div className="text-xs text-gray-500 mt-1">{location.lat}, {location.lng}</div>}
         </div>
-        {location && <div className="text-xs text-gray-500 mt-1">{location.lat}, {location.lng}</div>}
+        {error && (
+          <div className="bg-red-100 text-red-700 p-4 rounded mb-8 text-center font-medium border border-red-200 max-w-xl mx-auto">{error}</div>
+        )}
+        {prediction && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardDescription>RISK LEVEL</CardDescription>
+                <CardTitle className={prediction.riskLevel === 'low' ? 'text-green-600' : prediction.riskLevel === 'medium' ? 'text-yellow-600' : 'text-red-600'}>
+                  {prediction.riskLevel === 'low' ? 'Low Risk' : prediction.riskLevel === 'medium' ? 'Medium Risk' : 'High Risk'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Probability</span>
+                  <span className="font-medium">{Math.round((prediction.probability || 0) * 100)}%</span>
+                </div>
+                <Progress value={(prediction.probability || 0) * 100} className="h-2" />
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardDescription>SAFETY SCORE</CardDescription>
+                <CardTitle className="text-green-600">{Math.round(prediction.safetyScore ?? 0)}/100</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Infrastructure</span>
+                  <span className="font-medium">{(prediction.safetyScore ?? 0) > 70 ? 'Good' : (prediction.safetyScore ?? 0) > 40 ? 'Needs Attention' : 'Poor'}</span>
+                </div>
+                <Progress value={prediction.safetyScore ?? 0} className="h-2" />
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardDescription>RECENT ACTIVITY</CardDescription>
+                <CardTitle className="text-yellow-600">{prediction.historicalData?.lastMonth ?? '-'}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-gray-500">Earthquakes in the last 30 days</div>
+                <div className="text-xs text-gray-400 mt-1">Last checked: {lastUpdateTime ? lastUpdateTime.toLocaleString() : new Date().toLocaleString()}</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {prediction && !error && (
+          <Card className="max-w-3xl mx-auto bg-techtoniq-blue-light/20 border-blue-100 shadow-sm">
+            <CardHeader className="flex flex-row items-center gap-2 pb-2">
+              <Info className="h-5 w-5 text-techtoniq-blue" />
+              <CardTitle className="text-lg text-techtoniq-earth-dark">Safety Recommendations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="list-disc pl-6 space-y-2 text-techtoniq-earth text-base">
+                {prediction.recommendations?.map((rec: string, idx: number) => (
+                  <li key={idx}>{rec}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
       </div>
-      {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded mb-6 text-center">{error}</div>
-      )}
-      {prediction && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="border rounded-lg p-6 shadow">
-            <div className="text-sm font-medium text-gray-500 mb-2">RISK LEVEL</div>
-            <div className="text-2xl font-bold mb-2 text-green-600">{prediction.riskLevel === 'low' ? 'Low Risk' : prediction.riskLevel === 'medium' ? 'Medium Risk' : 'High Risk'}</div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>Probability</span>
-              <span className="font-medium">{Math.round((prediction.probability || 0) * 100)}%</span>
-            </div>
-            <Progress value={(prediction.probability || 0) * 100} className="h-2" />
-          </div>
-          <div className="border rounded-lg p-6 shadow">
-            <div className="text-sm font-medium text-gray-500 mb-2">SAFETY SCORE</div>
-            <div className="text-2xl font-bold mb-2 text-green-600">{Math.round(prediction.safetyScore ?? 0)}/100</div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>Infrastructure</span>
-              <span className="font-medium">{(prediction.safetyScore ?? 0) > 70 ? 'Good' : (prediction.safetyScore ?? 0) > 40 ? 'Needs Attention' : 'Poor'}</span>
-            </div>
-            <Progress value={prediction.safetyScore ?? 0} className="h-2" />
-          </div>
-          <div className="border rounded-lg p-6 shadow">
-            <div className="text-sm font-medium text-gray-500 mb-2">RECENT ACTIVITY</div>
-            <div className="text-2xl font-bold mb-2 text-yellow-600">{prediction.historicalData?.lastMonth ?? '-'}</div>
-            <div className="text-sm text-gray-500">Earthquakes in the last 30 days</div>
-            <div className="text-xs text-gray-400 mt-1">Last checked: {new Date().toLocaleString()}</div>
-          </div>
-        </div>
-      )}
-      {prediction && !error && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">Safety Recommendations</h2>
-          <ul className="list-disc pl-6">
-            {prediction.recommendations?.map((rec, idx) => (
-              <li key={idx}>{rec}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+    </>
   );
 };
 
