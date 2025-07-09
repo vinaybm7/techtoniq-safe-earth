@@ -192,6 +192,19 @@ If you see errors like 'Failed to load prediction. Using sample data.' in produc
 - Ensure your API route (`src/pages/api/fault-lines.ts`) is deployed and accessible at `/api/fault-lines`.
 - Do not use static export unless you deploy your API separately.
 
+## MongoDB Environment Variables (Required for Subscriptions)
+
+Set these in your Vercel/Netlify (or other) deployment dashboard:
+
+- `MONGODB_URI`: Your MongoDB Atlas connection string (required for subscriptions)
+- `MONGODB_DB_NAME`: (Optional) Your database name (defaults to 'techtoniq')
+- `NODE_ENV`: `production`
+
+If you see errors like 'Subscription failed' in production:
+- Make sure the above environment variables are set.
+- Ensure your MongoDB Atlas cluster allows connections from your deployment (IP whitelist).
+- Only one subscribe API handler should exist: `src/pages/api/subscribe.ts`.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request or create an Issue to improve this project.

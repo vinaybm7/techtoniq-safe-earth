@@ -12,6 +12,9 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  if (!process.env.MONGODB_URI) {
+    return res.status(500).json({ success: false, message: 'MONGODB_URI environment variable is not set. Please set it in your deployment environment.' });
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
