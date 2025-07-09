@@ -180,7 +180,17 @@ The application requires the following environment variables:
 
 You can copy the `.env.example` file to `.env` and fill in your API keys for local development.
 
+## Production Environment Variables
 
+Set these in your Vercel/Netlify (or other) deployment dashboard:
+
+- `VITE_GEMINI_API_KEY`: Your Google Gemini API key (required for AI predictions)
+- `VITE_API_BASE_URL`: Set to `/api` (default for Vercel/Netlify serverless API routes)
+
+If you see errors like 'Failed to load prediction. Using sample data.' in production:
+- Make sure the above environment variables are set.
+- Ensure your API route (`src/pages/api/fault-lines.ts`) is deployed and accessible at `/api/fault-lines`.
+- Do not use static export unless you deploy your API separately.
 
 ## 🤝 Contributing
 
