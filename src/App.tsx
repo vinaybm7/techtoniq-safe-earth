@@ -14,9 +14,9 @@ import EducationalMaterials from "./pages/EducationalMaterials";
 import LatestNews from "./pages/LatestNews";
 import ContactUs from "./pages/ContactUs";
 import NotFound from "./pages/NotFound";
-import Subscribe from "./pages/subscribe.tsx";
+import Subscribe from "./pages/subscribe";
 import MyLocation from "./pages/MyLocation";
-import { SubscriptionProvider } from "./context/SubscriptionContext";
+import { SubscriptionProvider } from "./context/SubscriptionContext.jsx";
 
 const queryClient = new QueryClient();
 

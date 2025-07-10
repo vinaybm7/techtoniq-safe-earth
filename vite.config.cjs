@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   const isProduction = mode === 'production';
-  const apiUrl = isProduction ? '/api' : 'http://localhost:3001';
+  const apiUrl = '/api'; // Use /api for both development (proxy) and production (serverless)
 
   return {
     define: {
@@ -23,7 +23,13 @@ export default defineConfig(({ mode }) => {
       host: '::',
       port: 3000,
       strictPort: true,
-      
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false,
+        },
+      },
     },
     plugins: [
       react(),

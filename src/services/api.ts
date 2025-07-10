@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Configure API base URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+console.log('API_BASE_URL configured as:', API_BASE_URL);
 
 interface SubscriptionResponse {
   success: boolean;

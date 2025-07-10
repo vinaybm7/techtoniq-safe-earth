@@ -15,6 +15,7 @@
   "homepage": "https://techtoniq.vercel.app",
   "scripts": {
     "dev": "vite",
+    "dev-full": "concurrently \"npm run dev\" \"npm run server\"",
     "build": "vite build && tsc --project tsconfig.server.json --outDir dist/server",
     "build:dev": "vite build --mode development && tsc --project tsconfig.server.json",
     "lint": "eslint .",

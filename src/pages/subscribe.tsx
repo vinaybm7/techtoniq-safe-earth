@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { subscribeUser } from "@/services/api";
 
 const Subscribe = () => {
   const [email, setEmail] = useState("");
@@ -23,13 +24,8 @@ const Subscribe = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3001/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const result = await subscribeUser(email);
+      if (result.success) {
         setSuccess(true);
         setEmail("");
         // Redirect to premium page after a short delay
@@ -37,10 +33,10 @@ const Subscribe = () => {
           navigate("/premium");
         }, 1500);
       } else {
-        setError(data.message || "Subscription failed. Please try again.");
+        setError(result.message || "Subscription failed. Please try again.");
       }
-    } catch {
-      setError("No response from server. Please check your connection.");
+    } catch (error) {
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
