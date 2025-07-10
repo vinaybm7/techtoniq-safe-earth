@@ -62,10 +62,11 @@ const Header = () => {
 
           {token ? (
             <>
-              <Link to="/premium" className="rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 transition">
-                Premium
-              </Link>
-              <button onClick={handleLogout} className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition">
+              <div className="flex items-center gap-2 rounded-md bg-gradient-to-r from-yellow-500 to-amber-500 px-3 py-2 text-sm font-medium text-white shadow-md">
+                <span className="animate-pulse">⭐</span>
+                <span>Premium</span>
+              </div>
+              <button onClick={handleLogout} className="rounded-md bg-techtoniq-earth-dark px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-earth transition">
                 Logout
               </button>
             </>
@@ -110,10 +111,11 @@ const Header = () => {
 
             {token ? (
               <>
-                <Link to="/premium" onClick={() => setIsMenuOpen(false)} className="w-full rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 transition">
-                  Premium
-                </Link>
-                <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="w-full rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition">
+                <div className="flex items-center justify-center gap-2 w-full rounded-md bg-gradient-to-r from-yellow-500 to-amber-500 px-4 py-2 text-sm font-medium text-white shadow-md">
+                  <span className="animate-pulse">⭐</span>
+                  <span>Premium Subscriber</span>
+                </div>
+                <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="w-full rounded-md bg-techtoniq-earth-dark px-4 py-2 text-sm font-medium text-white hover:bg-techtoniq-earth transition">
                   Logout
                 </button>
               </>

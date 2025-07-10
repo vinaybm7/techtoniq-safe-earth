@@ -55,11 +55,9 @@ export const subscribeUser = async (email: string): Promise<SubscriptionResponse
 
 export const checkSubscription = async (email: string): Promise<boolean> => {
   try {
-    const response = await axios.get<{ isSubscribed: boolean }>(
-      `${API_BASE_URL}/subscription/status`,
-      { params: { email } }
-    );
-    return response.data.isSubscribed;
+    // For now, we'll check if the email is in localStorage since our API uses in-memory storage
+    const storedEmail = localStorage.getItem('subscription_email');
+    return storedEmail === email;
   } catch (error) {
     console.error('Error checking subscription:', error);
     return false;

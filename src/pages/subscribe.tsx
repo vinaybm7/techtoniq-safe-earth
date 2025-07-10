@@ -5,14 +5,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { subscribeUser } from "@/services/api";
+import { subscribeUser, checkSubscription } from "@/services/api";
+import { useSubscription } from "../context/SubscriptionContext";
 
 const Subscribe = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const navigate = useNavigate();
+  const { setToken, setEmail: setSubscriptionEmail, token } = useSubscription();
+
+  // Check subscription status when email changes
+  const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    
+    if (newEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      const subscribed = await checkSubscription(newEmail);
+      setIsSubscribed(subscribed);
+    } else {
+      setIsSubscribed(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("subscription_token");
+    localStorage.removeItem("subscription_email");
+    setToken(null);
+    setSubscriptionEmail(null);
+    setEmail("");
+    setIsSubscribed(false);
+    navigate("/");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,10 +53,14 @@ const Subscribe = () => {
       const result = await subscribeUser(email);
       if (result.success) {
         setSuccess(true);
+        // Set subscription state
+        const subscriptionToken = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        setToken(subscriptionToken);
+        setSubscriptionEmail(email);
         setEmail("");
-        // Redirect to premium page after a short delay
+        // Redirect to home page with premium badge after a short delay
         setTimeout(() => {
-          navigate("/premium");
+          navigate("/");
         }, 1500);
       } else {
         setError(result.message || "Subscription failed. Please try again.");
@@ -74,7 +104,7 @@ const Subscribe = () => {
                   <CheckCircle2 className="w-8 h-8 text-green-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Successfully Subscribed!</h2>
-                <p className="text-gray-600 mb-4 text-center">Thank you for subscribing to our earthquake alerts.</p>
+                <p className="text-gray-600 mb-4 text-center">Thank you for subscribing to our earthquake alerts. Redirecting to home page with your premium badge...</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -83,15 +113,27 @@ const Subscribe = () => {
                   <Input
                     type="email"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
                     placeholder="Enter your email address"
                     required
                     className="flex-1"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Subscribing...' : 'Subscribe Now'}
-                </Button>
+                {isSubscribed ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-center gap-2 w-full rounded-md bg-gradient-to-r from-yellow-500 to-amber-500 px-4 py-2 text-sm font-medium text-white">
+                      <span className="animate-pulse">⭐</span>
+                      <span>Already Subscribed</span>
+                    </div>
+                    <Button onClick={handleLogout} className="w-full bg-techtoniq-earth-dark hover:bg-techtoniq-earth">
+                      Logout from Subscription
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Subscribing...' : 'Subscribe Now'}
+                  </Button>
+                )}
                 {error && <div className="text-red-600 text-center font-medium mt-2">{error}</div>}
               </form>
             )}
