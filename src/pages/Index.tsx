@@ -8,11 +8,9 @@ import EarthquakeCard from "@/components/EarthquakeCard";
 import GlobeAnimation from "@/components/GlobeAnimation";
 import AnimatedShapes from "@/components/AnimatedShapes";
 import TrustMetrics from "@/components/TrustMetrics";
-import { useSubscription } from "../context/SubscriptionContext";
 
 const Index = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const { token } = useSubscription();
 
   const slides = [
     {
@@ -73,12 +71,6 @@ const Index = () => {
         <div className="container relative z-10 px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             <div className="mx-auto max-w-xl md:mx-0 text-center md:text-left pt-4">
-              {token && (
-                <div className="mb-4 inline-flex items-center rounded-md bg-gradient-to-r from-yellow-500 to-amber-500 px-3 py-1 text-sm font-medium text-white animate-pulse">
-                  <AlertTriangle className="mr-2 h-4 w-4 text-white" />
-                  <span>Premium Subscriber</span>
-                </div>
-              )}
               <div className="mb-6 inline-flex animate-pulse-slow items-center rounded-full bg-techtoniq-blue-light px-4 py-1.5">
                 <AlertTriangle className="mr-2 h-4 w-4 text-techtoniq-blue" />
                 <span className="text-sm font-medium text-techtoniq-blue">Earthquake Preparedness & Safety</span>
