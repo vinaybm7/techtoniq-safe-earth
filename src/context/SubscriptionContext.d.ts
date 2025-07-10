@@ -6,5 +6,4 @@ export declare const useSubscription: () => {
   setToken: (token: string | null) => void;
   email: string | null;
   setEmail: (email: string | null) => void;
-  isPremium: boolean;
 };

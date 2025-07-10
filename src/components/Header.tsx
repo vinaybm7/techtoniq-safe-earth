@@ -1,4 +1,4 @@
-import { AlertTriangle, Menu, X, Crown } from "lucide-react";
+import { AlertTriangle, Menu, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -6,7 +6,7 @@ import { useSubscription } from "../context/SubscriptionContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { token, setToken, setEmail, isPremium } = useSubscription();
+  const { token, setToken, setEmail } = useSubscription();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -31,12 +31,6 @@ const Header = () => {
               Techtoniq
             </span>
           </Link>
-          {isPremium && (
-            <div className="ml-2 px-2 py-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold rounded-md shadow-sm flex items-center">
-              <Crown className="h-3 w-3 mr-1 text-yellow-100" />
-              PREMIUM
-            </div>
-          )}
         </div>
 
         {/* Desktop Nav */}
@@ -66,7 +60,7 @@ const Header = () => {
             My Location
           </Link>
 
-          {isPremium ? (
+          {token ? (
             <>
               <Link to="/premium" className="rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 transition">
                 Premium
@@ -91,12 +85,6 @@ const Header = () => {
       {/* Mobile Nav */}
       {isMenuOpen && (
         <div className="fixed inset-0 top-16 z-50 flex flex-col bg-white p-4 md:hidden">
-          {isPremium && (
-            <div className="self-start mb-4 px-3 py-1.5 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-sm font-bold rounded-md shadow-sm flex items-center">
-              <Crown className="h-4 w-4 mr-1 text-yellow-100" />
-              PREMIUM MEMBER
-            </div>
-          )}
           <nav className="flex flex-col gap-4">
             <Link to="/real-time-data" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-lg font-medium text-techtoniq-earth-dark hover:bg-techtoniq-blue-light hover:text-techtoniq-blue">
               AI Analysis
@@ -120,7 +108,7 @@ const Header = () => {
               My Location
             </Link>
 
-            {isPremium ? (
+            {token ? (
               <>
                 <Link to="/premium" onClick={() => setIsMenuOpen(false)} className="w-full rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 transition">
                   Premium

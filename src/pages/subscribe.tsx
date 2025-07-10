@@ -23,9 +23,7 @@ const Subscribe = () => {
     }
     setLoading(true);
     try {
-      // Use the API base URL from environment variables
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || '';
-      const response = await fetch(`${apiUrl}/subscribe`, {
+      const response = await fetch("http://localhost:3001/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
@@ -34,14 +32,9 @@ const Subscribe = () => {
       if (response.ok && data.success) {
         setSuccess(true);
         setEmail("");
-        // Store subscription data in context
-        if (data.token) {
-          localStorage.setItem("subscription_token", data.token);
-          localStorage.setItem("subscription_email", email);
-        }
-        // Redirect to home page after a short delay
+        // Redirect to premium page after a short delay
         setTimeout(() => {
-          navigate("/");
+          navigate("/premium");
         }, 1500);
       } else {
         setError(data.message || "Subscription failed. Please try again.");

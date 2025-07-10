@@ -84,13 +84,7 @@ app.post('/api/subscribe', async (req, res) => {
     }
     
     if (existing) {
-      // Generate token for existing subscription
-      const token = Buffer.from(`${email}:${Date.now()}`).toString('base64');
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Email already subscribed',
-        token: token
-      });
+      return res.status(200).json({ success: true, message: 'Email already subscribed' });
     }
     
     // Insert new subscription
@@ -103,13 +97,7 @@ app.post('/api/subscribe', async (req, res) => {
       return res.status(500).json({ success: false, message: error.message || 'Failed to subscribe.' });
     }
     
-    // Generate token for new subscription
-    const token = Buffer.from(`${email}:${Date.now()}`).toString('base64');
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Subscription successful',
-      token: token
-    });
+    return res.status(200).json({ success: true, message: 'Subscription successful' });
   } catch (err) {
     console.error('❌ Subscription Error:', err);
     return res.status(500).json({ success: false, message: err.message || 'Internal server error' });
