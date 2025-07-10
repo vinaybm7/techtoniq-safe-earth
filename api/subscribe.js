@@ -1,8 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
 
-// Supabase configuration
-const SUPABASE_URL = 'https://wqsuuxgpbgsipnbzzjms.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc3V1eGdwYmdzaXBuYnp6am1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwNjE0MDAsImV4cCI6MjA2NzYzNzQwMH0.MASxCbSIHKvXpmv4377pRof8JhfcJNJ8ZUSE2Gzc1w0';
+// Supabase configuration with fallback
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wqsuuxgpbgsipnbzzjms.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc3V1eGdwYmdzaXBuYnp6am1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwNjE0MDAsImV4cCI6MjA2NzYzNzQwMH0.MASxCbSIHKvXpmv4377pRof8JhfcJNJ8ZUSE2Gzc1w0';
+
+// Validate configuration
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('❌ Missing Supabase configuration');
+}
+
+console.log('🔧 Supabase URL:', SUPABASE_URL);
+console.log('🔧 Supabase Key configured:', SUPABASE_ANON_KEY ? 'Yes' : 'No');
 
 // Initialize Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -20,12 +28,31 @@ module.exports = async function handler(req, res) {
 
   // Handle GET request for health check
   if (req.method === 'GET') {
-    return res.status(200).json({ 
-      status: 'ok', 
-      message: 'Techtoniq Subscription API is running',
-      timestamp: new Date().toISOString(),
-      version: 'commonjs-fixed'
-    });
+    try {
+      // Test database connection
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('count')
+        .limit(1);
+      
+      return res.status(200).json({ 
+        status: 'ok', 
+        message: 'Techtoniq Subscription API is running',
+        timestamp: new Date().toISOString(),
+        version: 'enhanced-logging',
+        database: error ? 'error' : 'connected',
+        dbError: error ? error.message : null
+      });
+    } catch (err) {
+      return res.status(200).json({ 
+        status: 'partial', 
+        message: 'API running but database connection failed',
+        timestamp: new Date().toISOString(),
+        version: 'enhanced-logging',
+        database: 'error',
+        dbError: err.message
+      });
+    }
   }
 
   // Only allow POST requests for subscription
@@ -93,7 +120,13 @@ module.exports = async function handler(req, res) {
       .select();
 
     if (insertError) {
-      console.error('❌ Error inserting subscription:', insertError);
+console.error('❌ Error inserting subscription:', insertError);
+if (insertError instanceof Error) {
+  console.error('Error details:', insertError.message);
+  if (insertError.stack) {
+    console.error('Stack trace:', insertError.stack);
+  }
+}
       return res.status(500).json({ 
         success: false, 
         message: 'Failed to create subscription. Please try again.' 
@@ -116,3 +149,5 @@ module.exports = async function handler(req, res) {
     });
   }
 };
+
+console.log('✉️ Subscription API Function Loaded.');
