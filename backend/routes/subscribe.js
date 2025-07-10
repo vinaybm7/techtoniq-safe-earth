@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const Subscription = require("../models/Subsciption"); // ✅ Fix spelling here
+const Subscription = require("../models/Subscription");
 const secretKey = "your_secret_key"; // ✅ Keep consistent
 
 router.post("/", async (req, res) => {

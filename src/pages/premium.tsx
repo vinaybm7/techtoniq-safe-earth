@@ -1,8 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+import { useSubscription } from "../context/SubscriptionContext";
 
 const Premium: React.FC = () => {
   const navigate = useNavigate();
+  const { isPremium } = useSubscription();
+
+  // Redirect non-premium users to subscribe page
+  useEffect(() => {
+    if (!isPremium) {
+      navigate("/subscribe");
+    }
+  }, [isPremium, navigate]);
 
   const handleUpgrade = (): void => {
     // Placeholder for payment gateway logic
@@ -11,8 +21,10 @@ const Premium: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 flex items-center justify-center p-6">
-      <div className="bg-white shadow-xl rounded-2xl p-10 max-w-3xl w-full text-techtoniq-earth-dark">
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-100">
+      <Header />
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
+        <div className="bg-white shadow-xl rounded-2xl p-10 max-w-3xl w-full text-techtoniq-earth-dark">
         <h1 className="text-4xl font-bold mb-4 text-center text-techtoniq-blue">🌐 Premium Plan</h1>
         <p className="text-center mb-8 text-gray-600">
           Enhance your safety with our premium earthquake alert service.
@@ -55,6 +67,7 @@ const Premium: React.FC = () => {
         </p>
       </div>
     </div>
+  </div>
   );
 };
 

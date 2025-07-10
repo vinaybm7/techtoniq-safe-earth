@@ -1,16 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Mail } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Subscribe = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +23,9 @@ const Subscribe = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch("/api/subscribe", {
+      // Use the API base URL from environment variables
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${apiUrl}/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
@@ -31,6 +34,15 @@ const Subscribe = () => {
       if (response.ok && data.success) {
         setSuccess(true);
         setEmail("");
+        // Store subscription data in context
+        if (data.token) {
+          localStorage.setItem("subscription_token", data.token);
+          localStorage.setItem("subscription_email", email);
+        }
+        // Redirect to home page after a short delay
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
       } else {
         setError(data.message || "Subscription failed. Please try again.");
       }
@@ -101,4 +113,4 @@ const Subscribe = () => {
   );
 };
 
-export default Subscribe; 
+export default Subscribe;

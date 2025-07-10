@@ -7,6 +7,7 @@ const SubscriptionContext = createContext();
 export const SubscriptionProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [email, setEmail] = useState(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   // Load from localStorage if it exists
   useEffect(() => {
@@ -17,14 +18,28 @@ export const SubscriptionProvider = ({ children }) => {
     if (storedEmail) setEmail(storedEmail);
   }, []);
 
+  // Update premium status when token changes
+  useEffect(() => {
+    setIsPremium(!!token);
+  }, [token]);
+
   // Save to localStorage on change
   useEffect(() => {
-    if (token) localStorage.setItem("subscription_token", token);
-    if (email) localStorage.setItem("subscription_email", email);
+    if (token) {
+      localStorage.setItem("subscription_token", token);
+    } else {
+      localStorage.removeItem("subscription_token");
+    }
+    
+    if (email) {
+      localStorage.setItem("subscription_email", email);
+    } else {
+      localStorage.removeItem("subscription_email");
+    }
   }, [token, email]);
 
   return (
-    <SubscriptionContext.Provider value={{ token, setToken, email, setEmail }}>
+    <SubscriptionContext.Provider value={{ token, setToken, email, setEmail, isPremium }}>
       {children}
     </SubscriptionContext.Provider>
   );
