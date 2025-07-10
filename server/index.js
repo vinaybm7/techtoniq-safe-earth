@@ -1,13 +1,7 @@
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import { createClient } from '@supabase/supabase-js';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-// Get current file path for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 
 // Supabase client initialization
 const SUPABASE_URL = 'https://wqsuuxgpbgsipnbzzjms.supabase.co';
@@ -41,7 +35,7 @@ app.get('/api/fault-lines', async (req, res) => {
     }
 
     // Import the server-side function
-    const { fetchFaultLinesFromUSGS } = await import('../src/server/geologicalData.js');
+    const { fetchFaultLinesFromUSGS } = require('../src/server/geologicalData');
     
     // First try with the requested radius
     let faultLines = await fetchFaultLinesFromUSGS(latitude, longitude, radiusKm);

@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
       status: 'ok', 
       message: 'Techtoniq Subscription API is running',
       timestamp: new Date().toISOString(),
-      version: 'es-modules'
+      version: 'commonjs-fixed'
     });
   }
 

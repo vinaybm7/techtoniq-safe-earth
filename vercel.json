@@ -9,8 +9,16 @@
       }
     },
     {
-      "src": "api/**/*.js",
-      "use": "@vercel/node@3.0.0"
+      "src": "api/subscribe.js",
+      "use": "@vercel/node@2.15.10",
+      "config": {
+        "runtime": "nodejs18.x"
+      }
     }
-  ]
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
 }
