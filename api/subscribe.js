@@ -1,17 +1,13 @@
-// Test simple function first
-let supabase = null;
+import { createClient } from '@supabase/supabase-js';
 
-// Try to load Supabase only if available
-try {
-  const { createClient } = require('@supabase/supabase-js');
-  const SUPABASE_URL = 'https://wqsuuxgpbgsipnbzzjms.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc3V1eGdwYmdzaXBuYnp6am1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwNjE0MDAsImV4cCI6MjA2NzYzNzQwMH0.MASxCbSIHKvXpmv4377pRof8JhfcJNJ8ZUSE2Gzc1w0';
-  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} catch (error) {
-  console.log('Supabase not available:', error.message);
-}
+// Supabase configuration
+const SUPABASE_URL = 'https://wqsuuxgpbgsipnbzzjms.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc3V1eGdwYmdzaXBuYnp6am1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwNjE0MDAsImV4cCI6MjA2NzYzNzQwMH0.MASxCbSIHKvXpmv4377pRof8JhfcJNJ8ZUSE2Gzc1w0';
 
-module.exports = async function handler(req, res) {
+// Initialize Supabase client
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+export default async function handler(req, res) {
   // Set CORS headers for all requests
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -28,8 +24,7 @@ module.exports = async function handler(req, res) {
       status: 'ok', 
       message: 'Techtoniq Subscription API is running',
       timestamp: new Date().toISOString(),
-      version: 'js-simple',
-      supabaseLoaded: !!supabase
+      version: 'es-modules'
     });
   }
 
@@ -62,16 +57,6 @@ module.exports = async function handler(req, res) {
     }
 
     console.log('📩 New subscription attempt:', email);
-
-    // If Supabase is not available, return success anyway for testing
-    if (!supabase) {
-      console.log('⚠️ Supabase not available, simulating success');
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Subscription received (test mode - database not available)',
-        data: { email, subscribed_at: new Date().toISOString() }
-      });
-    }
 
     // Check if email already exists
     const { data: existing, error: findError } = await supabase
