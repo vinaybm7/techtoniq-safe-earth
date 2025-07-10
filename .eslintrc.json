@@ -6,19 +6,15 @@
     "node": true
   },
   "extends": [
-    "eslint:recommended",
-    "@typescript-eslint/recommended"
+    "eslint:recommended"
   ],
-  "ignorePatterns": ["dist"],
-  "parser": "@typescript-eslint/parser",
+  "ignorePatterns": ["dist", "dev-dist"],
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint"],
   "rules": {
-    "@typescript-eslint/no-unused-vars": "off",
-    "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/ban-ts-comment": "off"
+    "no-unused-vars": "off",
+    "no-undef": "off"
   }
 }
