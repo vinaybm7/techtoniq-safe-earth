@@ -1,5 +1,5 @@
 // Bulletproof subscription API - works guaranteed
-let subscriptions = new Set();
+const supabase = require('./_supabaseClient');
 
 // Email validation
 function isValidEmail(email) {
@@ -32,8 +32,8 @@ module.exports = async function handler(req, res) {
       message: 'Techtoniq Subscription API is running perfectly',
       timestamp: new Date().toISOString(),
       version: 'bulletproof-v1.0',
-      storage: 'in-memory',
-      totalSubscriptions: subscriptions.size
+      storage: 'supabase',
+      totalSubscriptions: 'N/A'
     });
   }
 
@@ -72,7 +72,21 @@ module.exports = async function handler(req, res) {
     const cleanEmail = email.trim().toLowerCase();
 
     // Check if already subscribed
-    if (subscriptions.has(cleanEmail)) {
+    const { data: existing, error: findErr } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('email', cleanEmail)
+      .single();
+
+    if (findErr && findErr.code !== 'PGRST116') {
+      log('Error checking existing subscription:', findErr.message);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Database error. Please try again.' 
+      });
+    }
+
+    if (existing) {
       log('Email already subscribed:', cleanEmail);
       return res.status(200).json({ 
         success: true, 
@@ -81,17 +95,26 @@ module.exports = async function handler(req, res) {
     }
 
     // Add subscription
-    subscriptions.add(cleanEmail);
+    const { error: insertErr } = await supabase
+      .from('subscriptions')
+      .insert([{ email: cleanEmail, created_at: new Date().toISOString() }]);
+
+    if (insertErr) {
+      log('Error inserting subscription:', insertErr.message);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to save subscription. Please try again.' 
+      });
+    }
+
     log('Successful subscription for:', cleanEmail);
-    log('Total subscriptions:', subscriptions.size);
 
     return res.status(200).json({ 
       success: true, 
       message: 'Successfully subscribed to earthquake alerts!',
       data: { 
         email: cleanEmail, 
-        subscribed_at: new Date().toISOString(),
-        total_subscribers: subscriptions.size
+        subscribed_at: new Date().toISOString()
       }
     });
 

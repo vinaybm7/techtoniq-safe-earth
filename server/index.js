@@ -4,10 +4,8 @@ const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
 // Supabase client initialization
-const SUPABASE_URL = 'https://wqsuuxgpbgsipnbzzjms.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc3V1eGdwYmdzaXBuYnp6am1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwNjE0MDAsImV4cCI6MjA2NzYzNzQwMH0.MASxCbSIHKvXpmv4377pRof8JhfcJNJ8ZUSE2Gzc1w0';
-// Use service role key to bypass RLS for server operations
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc3V1eGdwYmdzaXBuYnp6am1zIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjA2MTQwMCwiZXhwIjoyMDY3NjM3NDAwfQ.BQMIAKeuVKqRuHnRps_AzY1xhXxJ22u9iA_TzcQ0KZw';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 const app = express();
