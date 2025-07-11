@@ -27,12 +27,18 @@ module.exports = async function handler(req, res) {
   // Health check
   if (req.method === 'GET') {
     log('Health check requested');
+    
+    // Check if Supabase is configured
+    const hasSupabase = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY;
+    
     return res.status(200).json({ 
       status: 'ok', 
       message: 'Techtoniq Subscription API is running perfectly',
       timestamp: new Date().toISOString(),
       version: 'bulletproof-v1.0',
-      storage: 'supabase',
+      storage: hasSupabase ? 'supabase' : 'in-memory',
+      environment: process.env.NODE_ENV || 'development',
+      supabase_configured: hasSupabase,
       totalSubscriptions: 'N/A'
     });
   }
