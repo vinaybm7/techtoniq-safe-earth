@@ -55,9 +55,15 @@ export const subscribeUser = async (email: string): Promise<SubscriptionResponse
 
 export const checkSubscription = async (email: string): Promise<boolean> => {
   try {
-    // For now, we'll check if the email is in localStorage since our API uses in-memory storage
+    // Check if the email is in localStorage for immediate feedback
     const storedEmail = localStorage.getItem('subscription_email');
-    return storedEmail === email;
+    if (storedEmail === email) {
+      return true;
+    }
+    
+    // For production, we could make an API call to check subscription status
+    // For now, we'll rely on localStorage and the subscription response
+    return false;
   } catch (error) {
     console.error('Error checking subscription:', error);
     return false;

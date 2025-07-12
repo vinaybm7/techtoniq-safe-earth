@@ -1,5 +1,8 @@
 {
   "name": "techtoniq-api",
   "version": "1.0.0",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "2.50.4"
+  }
 }

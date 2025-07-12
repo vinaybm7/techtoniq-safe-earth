@@ -1,23 +1,19 @@
-// Bulletproof subscription API - works guaranteed
-let supabase = null;
+// Vercel serverless function for subscription API
+const { createClient } = require('@supabase/supabase-js');
 
-// Try to initialize Supabase, but don't fail if it's not configured
+// Initialize Supabase with provided credentials
+const supabaseUrl = process.env.SUPABASE_URL || 'https://wqsuuxgpbgsipnbzzjms.supabase.co';
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc3V1eGdwYmdzaXBuYnp6am1zIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjA2MTQwMCwiZXhwIjoyMDY3NjM3NDAwfQ.BQMIAKeuVKqRuHnRps_AzY1xhXxJ22u9iA_TzcQ0KZw';
+
+let supabase = null;
 try {
-  const { createClient } = require('@supabase/supabase-js');
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-  
-  if (supabaseUrl && supabaseKey) {
-    supabase = createClient(supabaseUrl, supabaseKey);
-    console.log('✅ Supabase client initialized successfully');
-  } else {
-    console.log('⚠️ Supabase not configured, using fallback storage');
-  }
+  supabase = createClient(supabaseUrl, supabaseKey);
+  console.log('✅ Supabase client initialized successfully');
 } catch (error) {
-  console.log('⚠️ Supabase initialization failed, using fallback storage:', error.message);
+  console.log('⚠️ Supabase initialization failed:', error.message);
 }
 
-// In-memory storage for fallback (development/testing)
+// In-memory storage for fallback
 let emailSubscriptions = new Set();
 
 // Email validation
@@ -32,7 +28,8 @@ function log(message, data = null) {
   console.log(`[${timestamp}] ${message}`, data || '');
 }
 
-module.exports = async function handler(req, res) {
+// Main handler function for Vercel
+module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -51,7 +48,7 @@ module.exports = async function handler(req, res) {
       status: 'ok', 
       message: 'Techtoniq Subscription API is running perfectly',
       timestamp: new Date().toISOString(),
-      version: 'bulletproof-v2.0',
+      version: 'vercel-v1.0',
       storage: supabase ? 'supabase' : 'in-memory',
       environment: process.env.NODE_ENV || 'production',
       supabase_configured: !!supabase,
@@ -182,5 +179,3 @@ function handleInMemorySubscription(cleanEmail, res) {
     }
   });
 }
-
-log('🚀 Bulletproof Subscription API v2.0 Loaded Successfully');
