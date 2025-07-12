@@ -140,6 +140,29 @@ const isLocationInIndia = (place: string, coordinates?: [number, number]): boole
   return indiaKeywords.some(keyword => searchText.includes(keyword.toLowerCase()));
 };
 
+// Helper for India detection in news articles
+const isNewsAboutIndia = (text: string): boolean => {
+  if (!text) return false;
+  const indiaKeywords = [
+    'india', 'indian', 'bharat', 'hindustan', 'republic of india',
+    'delhi', 'mumbai', 'bangalore', 'chennai', 'kolkata', 'hyderabad', 'pune', 'ahmedabad',
+    'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam',
+    'patna', 'vadodara', 'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut',
+    'rajkot', 'kalyan', 'vasai', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota',
+    'chandigarh', 'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon', 'noida', 'greater noida',
+    'kerala', 'tamil nadu', 'karnataka', 'andhra pradesh', 'telangana', 'maharashtra',
+    'gujarat', 'rajasthan', 'madhya pradesh', 'uttar pradesh', 'bihar', 'west bengal',
+    'odisha', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
+    'jharkhand', 'chhattisgarh', 'goa', 'manipur', 'meghalaya', 'tripura',
+    'nagaland', 'arunachal pradesh', 'mizoram', 'sikkim', 'andaman', 'nicobar',
+    'lakshadweep', 'dadra', 'nagar haveli', 'daman', 'diu', 'chandigarh',
+    'delhi ncr', 'ncr', 'national capital region', 'uttarakhand', 'himachal', 'kashmir', 'ladakh',
+    'nepal border', 'china border', 'pakistan border', 'bangladesh border', 'myanmar border'
+  ];
+  const lower = text.toLowerCase();
+  return indiaKeywords.some(keyword => lower.includes(keyword));
+};
+
 // Helper function to create news article from earthquake data
 const createSeismicArticle = (
   earthquake: USGSEarthquake | EMSCEarthquake | IRISEvent,
@@ -384,18 +407,159 @@ const fetchHindustanTimesNews = async (): Promise<NewsArticle[]> => {
   }
 };
 
+// Fetch from NewsAPI.org (India and worldwide earthquake news)
+const fetchNewsApiOrg = async (): Promise<NewsArticle[]> => {
+  try {
+    // India news
+    const indiaUrl = 'https://newsapi.org/v2/everything?q=earthquake&language=en&sortBy=publishedAt&pageSize=20&apiKey=d4b87e3551324d55b23a8b04822bd917&country=in';
+    // Worldwide news
+    const worldUrl = 'https://newsapi.org/v2/everything?q=earthquake&language=en&sortBy=publishedAt&pageSize=20&apiKey=d4b87e3551324d55b23a8b04822bd917';
+    const [indiaRes, worldRes] = await Promise.all([
+      fetch(indiaUrl),
+      fetch(worldUrl)
+    ]);
+    const indiaData = indiaRes.ok ? await indiaRes.json() : { articles: [] };
+    const worldData = worldRes.ok ? await worldRes.json() : { articles: [] };
+    const allArticles = [...(indiaData.articles || []), ...(worldData.articles || [])];
+    return allArticles
+      .filter((item: any) =>
+        (item.title && item.title.toLowerCase().includes('earthquake')) ||
+        (item.description && item.description.toLowerCase().includes('earthquake'))
+      )
+      .map((item: any) => {
+        const text = `${item.title} ${item.description} ${item.content}`;
+        return {
+          id: item.url || Math.random().toString(36).substr(2, 9),
+          title: item.title,
+          description: item.description || '',
+          content: item.content || item.description || '',
+          url: item.url,
+          image: item.urlToImage || '/placeholder.svg',
+          publishedAt: item.publishedAt,
+          source: {
+            name: 'NewsAPI.org',
+            url: 'https://newsapi.org/'
+          },
+          location: {
+            country: isNewsAboutIndia(text) ? 'India' : 'Unknown',
+            region: isNewsAboutIndia(text) ? 'India' : 'Unknown'
+          },
+          type: 'news'
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching NewsAPI.org news:', error);
+    return [];
+  }
+};
+
+// Fetch from GNews (India and worldwide earthquake news)
+const fetchGNews = async (): Promise<NewsArticle[]> => {
+  try {
+    // India news
+    const indiaUrl = 'https://gnews.io/api/v4/search?q=earthquake&lang=en&country=in&max=20&apikey=0f2829470d1cca9155f182ffab0cb3b2';
+    // Worldwide news
+    const worldUrl = 'https://gnews.io/api/v4/search?q=earthquake&lang=en&max=20&apikey=0f2829470d1cca9155f182ffab0cb3b2';
+    const [indiaRes, worldRes] = await Promise.all([
+      fetch(indiaUrl),
+      fetch(worldUrl)
+    ]);
+    const indiaData = indiaRes.ok ? await indiaRes.json() : { articles: [] };
+    const worldData = worldRes.ok ? await worldRes.json() : { articles: [] };
+    const allArticles = [...(indiaData.articles || []), ...(worldData.articles || [])];
+    return allArticles
+      .filter((item: any) =>
+        (item.title && item.title.toLowerCase().includes('earthquake')) ||
+        (item.description && item.description.toLowerCase().includes('earthquake'))
+      )
+      .map((item: any) => {
+        const text = `${item.title} ${item.description} ${item.content}`;
+        return {
+          id: item.url || Math.random().toString(36).substr(2, 9),
+          title: item.title,
+          description: item.description || '',
+          content: item.content || item.description || '',
+          url: item.url,
+          image: item.image || '/placeholder.svg',
+          publishedAt: item.publishedAt,
+          source: {
+            name: 'GNews',
+            url: 'https://gnews.io/'
+          },
+          location: {
+            country: isNewsAboutIndia(text) ? 'India' : 'Unknown',
+            region: isNewsAboutIndia(text) ? 'India' : 'Unknown'
+          },
+          type: 'news'
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching GNews news:', error);
+    return [];
+  }
+};
+
+// Fetch from Current News API (India and worldwide earthquake news)
+const fetchCurrentNewsApi = async (): Promise<NewsArticle[]> => {
+  try {
+    // India news
+    const indiaUrl = 'https://api.currentsapi.services/v1/search?apiKey=qVWbmf0_0vrdrjVZ5BNc5MqMf4lwI0GVeSSl3VRMaZjeNwum&language=en&country=IN&keywords=earthquake';
+    // Worldwide news
+    const worldUrl = 'https://api.currentsapi.services/v1/search?apiKey=qVWbmf0_0vrdrjVZ5BNc5MqMf4lwI0GVeSSl3VRMaZjeNwum&language=en&keywords=earthquake';
+    const [indiaRes, worldRes] = await Promise.all([
+      fetch(indiaUrl),
+      fetch(worldUrl)
+    ]);
+    const indiaData = indiaRes.ok ? await indiaRes.json() : { news: [] };
+    const worldData = worldRes.ok ? await worldRes.json() : { news: [] };
+    const allArticles = [...(indiaData.news || []), ...(worldData.news || [])];
+    return allArticles
+      .filter((item: any) =>
+        (item.title && item.title.toLowerCase().includes('earthquake')) ||
+        (item.description && item.description.toLowerCase().includes('earthquake'))
+      )
+      .map((item: any) => {
+        const text = `${item.title} ${item.description} ${item.content}`;
+        return {
+          id: item.url || item.id || Math.random().toString(36).substr(2, 9),
+          title: item.title,
+          description: item.description || '',
+          content: item.description || '',
+          url: item.url || item.url,
+          image: item.image || '/placeholder.svg',
+          publishedAt: item.published || item.publishedAt,
+          source: {
+            name: 'CurrentsAPI',
+            url: 'https://currentsapi.services/'
+          },
+          location: {
+            country: isNewsAboutIndia(text) ? 'India' : 'Unknown',
+            region: isNewsAboutIndia(text) ? 'India' : 'Unknown'
+          },
+          type: 'news'
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching CurrentsAPI news:', error);
+    return [];
+  }
+};
+
 // Main function to fetch all earthquake news
 export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
   try {
-    // Fetch from all sources concurrently
-    const [usgsQuakes, emscQuakes, irisEvents, guardianNews, reutersNews, toiNews, htNews] = await Promise.allSettled([
+    // Fetch from all sources concurrently (with NewsAPI.org, GNews, and CurrentsAPI)
+    const [usgsQuakes, emscQuakes, irisEvents, guardianNews, reutersNews, toiNews, htNews, newsApiOrgNews, gnewsNews, currentNewsApiNews] = await Promise.allSettled([
       fetchUSGSEarthquakes(),
       fetchEMSCEarthquakes(),
       fetchIRISEvents(),
       fetchGuardianNews(),
       fetchReutersNews(),
       fetchTimesOfIndiaNews(),
-      fetchHindustanTimesNews()
+      fetchHindustanTimesNews(),
+      fetchNewsApiOrg(),
+      fetchGNews(),
+      fetchCurrentNewsApi()
     ]);
 
     // Combine all successful results
@@ -427,6 +591,18 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
     
     if (htNews.status === 'fulfilled') {
       allArticles.push(...htNews.value);
+    }
+    
+    if (newsApiOrgNews.status === 'fulfilled') {
+      allArticles.push(...newsApiOrgNews.value);
+    }
+    
+    if (gnewsNews.status === 'fulfilled') {
+      allArticles.push(...gnewsNews.value);
+    }
+    
+    if (currentNewsApiNews.status === 'fulfilled') {
+      allArticles.push(...currentNewsApiNews.value);
     }
 
     // Remove duplicates based on ID
