@@ -95,27 +95,49 @@ interface GuardianResponse {
   };
 }
 
-// Helper function to check if location is in India
-const isLocationInIndia = (place: string): boolean => {
+// Enhanced India detection with more comprehensive keywords and coordinates
+const isLocationInIndia = (place: string, coordinates?: [number, number]): boolean => {
+  // Check coordinates first (India's rough boundaries)
+  if (coordinates) {
+    const [lon, lat] = coordinates;
+    // India's approximate boundaries: 68°E to 97°E, 8°N to 37°N
+    if (lon >= 68 && lon <= 97 && lat >= 8 && lat <= 37) {
+      return true;
+    }
+  }
+
   const indiaKeywords = [
-    'india', 'indian', 'delhi', 'mumbai', 'bangalore', 'chennai', 'kolkata', 
-    'hyderabad', 'pune', 'ahmedabad', 'jaipur', 'lucknow', 'kanpur', 'nagpur',
-    'indore', 'thane', 'bhopal', 'visakhapatnam', 'patna', 'vadodara', 'ghaziabad',
-    'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot', 'kalyan',
-    'vasai', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota', 'chandigarh',
-    'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon', 'noida', 'greater noida',
+    // Major cities
+    'delhi', 'mumbai', 'bangalore', 'chennai', 'kolkata', 'hyderabad', 'pune', 'ahmedabad', 
+    'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam', 
+    'patna', 'vadodara', 'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 
+    'rajkot', 'kalyan', 'vasai', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota', 
+    'chandigarh', 'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon', 'noida', 'greater noida',
+    
+    // States and Union Territories
     'kerala', 'tamil nadu', 'karnataka', 'andhra pradesh', 'telangana', 'maharashtra',
     'gujarat', 'rajasthan', 'madhya pradesh', 'uttar pradesh', 'bihar', 'west bengal',
     'odisha', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
     'jharkhand', 'chhattisgarh', 'goa', 'manipur', 'meghalaya', 'tripura',
     'nagaland', 'arunachal pradesh', 'mizoram', 'sikkim', 'andaman', 'nicobar',
     'lakshadweep', 'dadra', 'nagar haveli', 'daman', 'diu', 'chandigarh',
-    'delhi ncr', 'ncr', 'national capital region'
+    
+    // Regions and areas
+    'delhi ncr', 'ncr', 'national capital region', 'konkan', 'malabar', 'coromandel',
+    'deccan', 'gangetic', 'himalayan', 'northeast', 'north east', 'south india',
+    'north india', 'east india', 'west india', 'central india',
+    
+    // Common terms
+    'india', 'indian', 'bharat', 'hindustan', 'republic of india',
+    
+    // Recent earthquake-prone areas
+    'uttarakhand', 'himachal', 'kashmir', 'ladakh', 'sikkim', 'assam', 'manipur',
+    'mizoram', 'nagaland', 'arunachal', 'meghalaya', 'tripura', 'bihar', 'nepal border',
+    'china border', 'pakistan border', 'bangladesh border', 'myanmar border'
   ];
   
-  return indiaKeywords.some(keyword => 
-    place.toLowerCase().includes(keyword.toLowerCase())
-  );
+  const searchText = place.toLowerCase();
+  return indiaKeywords.some(keyword => searchText.includes(keyword.toLowerCase()));
 };
 
 // Helper function to create news article from earthquake data
@@ -124,7 +146,11 @@ const createSeismicArticle = (
   source: string,
   sourceUrl: string
 ): NewsArticle => {
-  const isIndia = isLocationInIndia(earthquake.properties?.place || earthquake.location || '');
+  const coordinates = earthquake.geometry?.coordinates || earthquake.coordinates;
+  const isIndia = isLocationInIndia(
+    earthquake.properties?.place || earthquake.location || '', 
+    coordinates
+  );
   
   return {
     id: earthquake.id,
@@ -154,7 +180,9 @@ const createNewsArticle = (
   source: string,
   sourceUrl: string
 ): NewsArticle => {
-  const isIndia = isLocationInIndia(article.title + ' ' + article.description + ' ' + (article.content || ''));
+  const isIndia = isLocationInIndia(
+    article.title + ' ' + article.description + ' ' + (article.content || '')
+  );
   
   return {
     id: article.id || Math.random().toString(36).substr(2, 9),
@@ -176,11 +204,12 @@ const createNewsArticle = (
   };
 };
 
-// Fetch from USGS API
+// Fetch from USGS API with broader time range and lower magnitude threshold
 const fetchUSGSEarthquakes = async (): Promise<NewsArticle[]> => {
   try {
+    // Fetch last 7 days of data to catch more recent earthquakes
     const response = await fetch(
-      'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson'
+      'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson'
     );
     
     if (!response.ok) {
@@ -189,8 +218,8 @@ const fetchUSGSEarthquakes = async (): Promise<NewsArticle[]> => {
     
     const data = await response.json();
     return data.features
-      .filter((quake: USGSEarthquake) => quake.properties.mag >= 4.0) // Filter significant earthquakes
-      .slice(0, 15) // Limit to 15 most recent
+      .filter((quake: USGSEarthquake) => quake.properties.mag >= 3.0) // Lower threshold to catch more events
+      .slice(0, 20) // Limit to 20 most recent
       .map((quake: USGSEarthquake) => 
         createSeismicArticle(quake, 'USGS Earthquake Hazards Program', 'https://earthquake.usgs.gov')
       );
@@ -200,11 +229,11 @@ const fetchUSGSEarthquakes = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Fetch from EMSC API
+// Fetch from EMSC API with broader search
 const fetchEMSCEarthquakes = async (): Promise<NewsArticle[]> => {
   try {
     const response = await fetch(
-      'https://www.seismicportal.eu/fdsnws/event/1/query?starttime=2024-01-01&endtime=2025-12-31&minmag=4.0&format=json'
+      'https://www.seismicportal.eu/fdsnws/event/1/query?starttime=2024-01-01&endtime=2025-12-31&minmag=3.0&format=json'
     );
     
     if (!response.ok) {
@@ -213,7 +242,7 @@ const fetchEMSCEarthquakes = async (): Promise<NewsArticle[]> => {
     
     const data = await response.json();
     return data.features
-      .slice(0, 10) // Limit to 10 most recent
+      .slice(0, 15) // Limit to 15 most recent
       .map((quake: EMSCEarthquake) => 
         createSeismicArticle(quake, 'European-Mediterranean Seismological Centre', 'https://www.emsc-csem.org')
       );
@@ -227,7 +256,7 @@ const fetchEMSCEarthquakes = async (): Promise<NewsArticle[]> => {
 const fetchIRISEvents = async (): Promise<NewsArticle[]> => {
   try {
     const response = await fetch(
-      'https://service.iris.edu/fdsnws/event/1/query?starttime=2024-01-01&endtime=2025-12-31&minmag=4.0&format=json'
+      'https://service.iris.edu/fdsnws/event/1/query?starttime=2024-01-01&endtime=2025-12-31&minmag=3.0&format=json'
     );
     
     if (!response.ok) {
@@ -236,34 +265,12 @@ const fetchIRISEvents = async (): Promise<NewsArticle[]> => {
     
     const data = await response.json();
     return data.features
-      .slice(0, 10) // Limit to 10 most recent
+      .slice(0, 15) // Limit to 15 most recent
       .map((quake: IRISEvent) => 
         createSeismicArticle(quake, 'IRIS (Incorporated Research Institutions for Seismology)', 'https://www.iris.edu')
       );
   } catch (error) {
     console.error('Error fetching IRIS events:', error);
-    return [];
-  }
-};
-
-// Fetch news articles from NewsAPI (free tier)
-const fetchNewsArticles = async (): Promise<NewsArticle[]> => {
-  try {
-    // Using NewsAPI with earthquake-related search terms
-    const response = await fetch(
-      'https://newsapi.org/v2/everything?q=earthquake&language=en&sortBy=publishedAt&pageSize=20&apiKey=YOUR_NEWS_API_KEY'
-    );
-    
-    if (!response.ok) {
-      throw new Error(`NewsAPI error: ${response.status}`);
-    }
-    
-    const data: NewsAPIResponse = await response.json();
-    return data.articles.map(article => 
-      createNewsArticle(article, 'NewsAPI', 'https://newsapi.org')
-    );
-  } catch (error) {
-    console.error('Error fetching news articles:', error);
     return [];
   }
 };
@@ -281,7 +288,7 @@ const fetchGuardianNews = async (): Promise<NewsArticle[]> => {
     
     const data: GuardianResponse = await response.json();
     return data.response.results
-      .slice(0, 10)
+      .slice(0, 15)
       .map(article => 
         createNewsArticle(article, 'The Guardian', 'https://www.theguardian.com')
       );
@@ -309,7 +316,7 @@ const fetchReutersNews = async (): Promise<NewsArticle[]> => {
         item.title.toLowerCase().includes('earthquake') || 
         item.description.toLowerCase().includes('earthquake')
       )
-      .slice(0, 10)
+      .slice(0, 15)
       .map((item: any) => 
         createNewsArticle(item, 'Reuters', 'https://www.reuters.com')
       );
@@ -319,16 +326,76 @@ const fetchReutersNews = async (): Promise<NewsArticle[]> => {
   }
 };
 
+// Fetch from Times of India RSS (India-specific news)
+const fetchTimesOfIndiaNews = async (): Promise<NewsArticle[]> => {
+  try {
+    const response = await fetch(
+      'https://api.rss2json.com/v1/api.json?rss_url=https://timesofindia.indiatimes.com/rssfeedstopstories.cms'
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Times of India RSS error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.items
+      .filter((item: any) => 
+        item.title.toLowerCase().includes('earthquake') || 
+        item.description.toLowerCase().includes('earthquake') ||
+        item.title.toLowerCase().includes('quake') ||
+        item.description.toLowerCase().includes('quake')
+      )
+      .slice(0, 10)
+      .map((item: any) => 
+        createNewsArticle(item, 'Times of India', 'https://timesofindia.indiatimes.com')
+      );
+  } catch (error) {
+    console.error('Error fetching Times of India news:', error);
+    return [];
+  }
+};
+
+// Fetch from Hindustan Times RSS (India-specific news)
+const fetchHindustanTimesNews = async (): Promise<NewsArticle[]> => {
+  try {
+    const response = await fetch(
+      'https://api.rss2json.com/v1/api.json?rss_url=https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml'
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Hindustan Times RSS error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.items
+      .filter((item: any) => 
+        item.title.toLowerCase().includes('earthquake') || 
+        item.description.toLowerCase().includes('earthquake') ||
+        item.title.toLowerCase().includes('quake') ||
+        item.description.toLowerCase().includes('quake')
+      )
+      .slice(0, 10)
+      .map((item: any) => 
+        createNewsArticle(item, 'Hindustan Times', 'https://www.hindustantimes.com')
+      );
+  } catch (error) {
+    console.error('Error fetching Hindustan Times news:', error);
+    return [];
+  }
+};
+
 // Main function to fetch all earthquake news
 export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
   try {
     // Fetch from all sources concurrently
-    const [usgsQuakes, emscQuakes, irisEvents, guardianNews, reutersNews] = await Promise.allSettled([
+    const [usgsQuakes, emscQuakes, irisEvents, guardianNews, reutersNews, toiNews, htNews] = await Promise.allSettled([
       fetchUSGSEarthquakes(),
       fetchEMSCEarthquakes(),
       fetchIRISEvents(),
       fetchGuardianNews(),
-      fetchReutersNews()
+      fetchReutersNews(),
+      fetchTimesOfIndiaNews(),
+      fetchHindustanTimesNews()
     ]);
 
     // Combine all successful results
@@ -353,6 +420,14 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
     if (reutersNews.status === 'fulfilled') {
       allArticles.push(...reutersNews.value);
     }
+    
+    if (toiNews.status === 'fulfilled') {
+      allArticles.push(...toiNews.value);
+    }
+    
+    if (htNews.status === 'fulfilled') {
+      allArticles.push(...htNews.value);
+    }
 
     // Remove duplicates based on ID
     const uniqueArticles = allArticles.filter((article, index, self) => 
@@ -376,8 +451,8 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
 
-    // Return top 30 articles
-    return sortedArticles.slice(0, 30);
+    // Return top 40 articles
+    return sortedArticles.slice(0, 40);
     
   } catch (error) {
     console.error('Error fetching earthquake news:', error);

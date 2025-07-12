@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import PageLayout from "@/components/PageLayout";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import { fetchEarthquakeNews, fetchIndiaEarthquakes, fetchNewsOnly, fetchSeismicOnly } from "@/services/newsService";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, MapPin, Activity, Clock, Globe, Newspaper, Zap } from "lucide-react";
+import { ExternalLink, MapPin, Activity, Clock, Globe, Newspaper, Zap, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 
 const LatestNews = () => {
@@ -17,34 +17,55 @@ const LatestNews = () => {
   const [newsArticles, setNewsArticles] = useState<any[]>([]);
   const [seismicData, setSeismicData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  const getNews = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      
+      const [allArticles, indiaArticles, newsOnly, seismicOnly] = await Promise.all([
+        fetchEarthquakeNews(),
+        fetchIndiaEarthquakes(),
+        fetchNewsOnly(),
+        fetchSeismicOnly()
+      ]);
+      
+      setNews(allArticles);
+      setIndiaNews(indiaArticles);
+      setNewsArticles(newsOnly);
+      setSeismicData(seismicOnly);
+      setError(null);
+      setLastUpdated(new Date());
+    } catch (err) {
+      setError("Failed to load earthquake news. Please try again later.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const getNews = async () => {
-      try {
-        setLoading(true);
-        const [allArticles, indiaArticles, newsOnly, seismicOnly] = await Promise.all([
-          fetchEarthquakeNews(),
-          fetchIndiaEarthquakes(),
-          fetchNewsOnly(),
-          fetchSeismicOnly()
-        ]);
-        setNews(allArticles);
-        setIndiaNews(indiaArticles);
-        setNewsArticles(newsOnly);
-        setSeismicData(seismicOnly);
-        setError(null);
-      } catch (err) {
-        setError("Failed to load earthquake news. Please try again later.");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     getNews();
-  }, []);
+    
+    // Auto-refresh every 5 minutes
+    const interval = setInterval(() => {
+      getNews(true);
+    }, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [getNews]);
+
+  const handleRefresh = () => {
+    getNews(true);
+  };
 
   const formatDate = (dateString: string) => {
     try {
@@ -52,6 +73,10 @@ const LatestNews = () => {
     } catch (e) {
       return dateString;
     }
+  };
+
+  const formatLastUpdated = (date: Date) => {
+    return format(date, "MMM d, yyyy 'at' h:mm:ss a");
   };
 
   const getMagnitudeColor = (magnitude: number) => {
@@ -189,9 +214,27 @@ const LatestNews = () => {
             <h1 className="text-4xl font-bold tracking-tight text-techtoniq-earth-dark mb-4">
               Latest Earthquake News & Data
             </h1>
-            <p className="text-lg text-techtoniq-earth max-w-3xl mx-auto">
+            <p className="text-lg text-techtoniq-earth max-w-3xl mx-auto mb-4">
               Stay informed with real-time earthquake data and comprehensive news coverage including human impact, government response, and recovery efforts from around the world.
             </p>
+            
+            {/* Refresh and Last Updated Info */}
+            <div className="flex items-center justify-center gap-4 text-sm text-techtoniq-earth">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>Last updated: {formatLastUpdated(lastUpdated)}</span>
+              </div>
+              <Button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                variant="outline"
+                size="sm"
+                className="border-techtoniq-blue text-techtoniq-blue hover:bg-techtoniq-blue hover:text-white"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -221,7 +264,7 @@ const LatestNews = () => {
                   <p className="text-red-600 text-lg mb-4">{error}</p>
                   <Button
                     variant="outline"
-                    onClick={() => window.location.reload()}
+                    onClick={handleRefresh}
                     className="border-techtoniq-blue text-techtoniq-blue hover:bg-techtoniq-blue hover:text-white"
                   >
                     Try Again
@@ -250,7 +293,7 @@ const LatestNews = () => {
                   <p className="text-red-600 text-lg mb-4">{error}</p>
                   <Button
                     variant="outline"
-                    onClick={() => window.location.reload()}
+                    onClick={handleRefresh}
                     className="border-techtoniq-blue text-techtoniq-blue hover:bg-techtoniq-blue hover:text-white"
                   >
                     Try Again
@@ -279,7 +322,7 @@ const LatestNews = () => {
                   <p className="text-red-600 text-lg mb-4">{error}</p>
                   <Button
                     variant="outline"
-                    onClick={() => window.location.reload()}
+                    onClick={handleRefresh}
                     className="border-techtoniq-blue text-techtoniq-blue hover:bg-techtoniq-blue hover:text-white"
                   >
                     Try Again
@@ -308,7 +351,7 @@ const LatestNews = () => {
                   <p className="text-red-600 text-lg mb-4">{error}</p>
                   <Button
                     variant="outline"
-                    onClick={() => window.location.reload()}
+                    onClick={handleRefresh}
                     className="border-techtoniq-blue text-techtoniq-blue hover:bg-techtoniq-blue hover:text-white"
                   >
                     Try Again
@@ -337,7 +380,7 @@ const LatestNews = () => {
                   <p className="text-red-600 text-lg mb-4">{error}</p>
                   <Button
                     variant="outline"
-                    onClick={() => window.location.reload()}
+                    onClick={handleRefresh}
                     className="border-techtoniq-blue text-techtoniq-blue hover:bg-techtoniq-blue hover:text-white"
                   >
                     Try Again
@@ -385,14 +428,21 @@ const LatestNews = () => {
                 <span><strong>Reuters:</strong> Global news agency</span>
               </div>
               <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-techtoniq-orange" />
-                <span><strong>NewsAPI:</strong> Aggregated news sources</span>
+                <Newspaper className="h-4 w-4 text-techtoniq-orange" />
+                <span><strong>Times of India:</strong> Indian news coverage</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Newspaper className="h-4 w-4 text-techtoniq-red" />
+                <span><strong>Hindustan Times:</strong> Indian news coverage</span>
               </div>
             </div>
             <div className="mt-4 p-3 bg-white/50 rounded-md">
               <p className="text-xs text-techtoniq-earth-dark">
                 <strong>News Coverage Includes:</strong> Human impact, injuries, damage assessment, government response, 
                 rescue operations, relief efforts, infrastructure status, and recovery updates.
+              </p>
+              <p className="text-xs text-techtoniq-earth-dark mt-2">
+                <strong>Auto-refresh:</strong> Data updates automatically every 5 minutes. Click "Refresh" for immediate updates.
               </p>
             </div>
           </div>
