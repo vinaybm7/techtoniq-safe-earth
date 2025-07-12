@@ -1,6 +1,10 @@
 // Vercel serverless function for subscription API
 const { createClient } = require('@supabase/supabase-js');
 
+// Debug: Log environment variable presence
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
+console.log('SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? '***set***' : '***missing***');
+
 // Initialize Supabase with provided credentials
 const supabaseUrl = process.env.SUPABASE_URL || 'https://wqsuuxgpbgsipnbzzjms.supabase.co';
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc3V1eGdwYmdzaXBuYnp6am1zIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjA2MTQwMCwiZXhwIjoyMDY3NjM3NDAwfQ.BQMIAKeuVKqRuHnRps_AzY1xhXxJ22u9iA_TzcQ0KZw';
