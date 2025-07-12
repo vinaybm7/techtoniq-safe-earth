@@ -3,7 +3,7 @@ import { Activity, Info, MapPin, Search } from "lucide-react";
 import { LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line } from "recharts";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger, MobileTabsDropdown } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import PageLayout from "@/components/PageLayout";
 import EarthquakeCard from "@/components/EarthquakeCard";
@@ -21,6 +21,13 @@ import AIEarthquakePrediction from "@/components/AIEarthquakePrediction";
 import USGSShakeAlert from "@/components/USGSShakeAlert";
 import EarthquakeFilter from "@/components/EarthquakeFilter";
 import { FilterValues } from "@/components/EarthquakeFilter";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+const tabOptions = [
+  { value: "ai-prediction", label: "AI Earthquake Prediction" },
+  { value: "latest", label: "Latest Events" },
+  { value: "intensity", label: "Intensity Charts" },
+];
 
 const RealTimeData = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,6 +40,9 @@ const RealTimeData = () => {
     region: 'all',
     sortBy: 'latest',
   });
+
+  const isMobile = useIsMobile();
+  const [tabValue, setTabValue] = useState("ai-prediction");
 
   // Determine which API call to use based on the timeframe filter
   const queryKey = ['earthquakes', filters.timeframe, filters.region];
@@ -174,7 +184,12 @@ const RealTimeData = () => {
 
       <section className="py-12">
         <div className="container">
-          <Tabs defaultValue="ai-prediction" className="w-full">
+          <Tabs value={tabValue} onValueChange={setTabValue} className="w-full">
+            <MobileTabsDropdown
+              value={tabValue}
+              onValueChange={setTabValue}
+              options={tabOptions}
+            />
             <TabsList className="mb-8 grid w-full grid-cols-3">
               <TabsTrigger value="ai-prediction">AI Earthquake Prediction</TabsTrigger>
               <TabsTrigger value="latest">Latest Events</TabsTrigger>

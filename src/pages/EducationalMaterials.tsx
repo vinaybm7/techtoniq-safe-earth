@@ -1,10 +1,20 @@
 
 import { BookOpen, PlayCircle, ScrollText } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger, MobileTabsDropdown } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/use-mobile";
 import PageLayout from "@/components/PageLayout";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
+import { useState } from "react";
+
+const tabOptions = [
+  { value: "understanding", label: "Understanding Earthquakes" },
+  { value: "occurrence", label: "How Earthquakes Occur" },
+  { value: "glossary", label: "Glossary of Terms" },
+];
 
 const EducationalMaterials = () => {
+  const [tabValue, setTabValue] = useState("understanding");
+  const isMobile = useIsMobile();
   return (
     <PageLayout>
       <PageBreadcrumbs
@@ -23,7 +33,12 @@ const EducationalMaterials = () => {
 
       <section className="py-12">
         <div className="container">
-          <Tabs defaultValue="understanding" className="w-full">
+          <Tabs value={tabValue} onValueChange={setTabValue} className="w-full">
+            <MobileTabsDropdown
+              value={tabValue}
+              onValueChange={setTabValue}
+              options={tabOptions}
+            />
             <TabsList className="mb-8 grid w-full grid-cols-3">
               <TabsTrigger value="understanding">Understanding Earthquakes</TabsTrigger>
               <TabsTrigger value="occurrence">How Earthquakes Occur</TabsTrigger>

@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger, MobileTabsDropdown } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ExternalLink, MapPin, Activity, Clock, Globe, Newspaper, Zap, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 
@@ -20,6 +21,7 @@ const LatestNews = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");
+  const isMobile = useIsMobile();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   const getNews = useCallback(async (isRefresh = false) => {
@@ -199,6 +201,14 @@ const LatestNews = () => {
     </div>
   );
 
+  const tabOptions = [
+    { value: "all", label: `All (${news.length})` },
+    { value: "news", label: `📰 News (${newsArticles.length})` },
+    { value: "seismic", label: `⚡ Seismic (${seismicData.length})` },
+    { value: "india", label: `🇮🇳 India (${indiaNews.length})` },
+    { value: "significant", label: "Significant (M5.0+)" },
+  ];
+
   return (
     <PageLayout>
       <PageBreadcrumbs
@@ -238,6 +248,11 @@ const LatestNews = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <MobileTabsDropdown
+              value={activeTab}
+              onValueChange={setActiveTab}
+              options={tabOptions}
+            />
             <TabsList className="grid w-full grid-cols-5 mb-8">
               <TabsTrigger value="all" className="text-techtoniq-earth-dark">
                 All ({news.length})
