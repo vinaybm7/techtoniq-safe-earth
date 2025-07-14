@@ -12,6 +12,27 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ExternalLink, MapPin, Activity, Clock, Globe, Newspaper, Zap, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 
+const NEWS_CACHE_KEY = 'cached_earthquake_news';
+const NEWS_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+
+const loadCachedNews = () => {
+  try {
+    const cached = localStorage.getItem(NEWS_CACHE_KEY);
+    if (!cached) return null;
+    const parsed = JSON.parse(cached);
+    if (!parsed.timestamp || Date.now() - parsed.timestamp > NEWS_CACHE_EXPIRY) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const saveCachedNews = (data: any) => {
+  try {
+    localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify({ ...data, timestamp: Date.now() }));
+  } catch {}
+};
+
 const LatestNews = () => {
   const [news, setNews] = useState<any[]>([]);
   const [indiaNews, setIndiaNews] = useState<any[]>([]);
@@ -23,6 +44,8 @@ const LatestNews = () => {
   const [activeTab, setActiveTab] = useState("all");
   const isMobile = useIsMobile();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  // Add a new state to track if we're showing cached data
+  const [usingCache, setUsingCache] = useState(false);
 
   const getNews = useCallback(async (isRefresh = false) => {
     try {
@@ -31,20 +54,41 @@ const LatestNews = () => {
       } else {
         setLoading(true);
       }
-      
+      setUsingCache(false);
+      // Only use cache if not a refresh
+      if (!isRefresh) {
+        const cached = loadCachedNews();
+        if (cached) {
+          setNews(cached.news);
+          setIndiaNews(cached.indiaNews);
+          setNewsArticles(cached.newsArticles);
+          setSeismicData(cached.seismicData);
+          setLastUpdated(new Date(cached.lastUpdated));
+          setUsingCache(true);
+          setLoading(false); // Show cached instantly
+        }
+      }
+      // Always fetch fresh in background
       const [allArticles, indiaArticles, newsOnly, seismicOnly] = await Promise.all([
         fetchEarthquakeNews(),
         fetchIndiaEarthquakes(),
         fetchNewsOnly(),
         fetchSeismicOnly()
       ]);
-      
       setNews(allArticles);
       setIndiaNews(indiaArticles);
       setNewsArticles(newsOnly);
       setSeismicData(seismicOnly);
       setError(null);
       setLastUpdated(new Date());
+      setUsingCache(false);
+      saveCachedNews({
+        news: allArticles,
+        indiaNews: indiaArticles,
+        newsArticles: newsOnly,
+        seismicData: seismicOnly,
+        lastUpdated: new Date().toISOString(),
+      });
     } catch (err) {
       setError("Failed to load earthquake news. Please try again later.");
       console.error(err);
@@ -244,6 +288,9 @@ const LatestNews = () => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 {refreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
+              {usingCache && !loading && !refreshing && (
+                <span className="ml-2 text-xs text-techtoniq-blue">(Showing cached news, updating in background...)</span>
+              )}
             </div>
           </div>
 
