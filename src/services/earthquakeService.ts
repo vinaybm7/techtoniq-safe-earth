@@ -72,6 +72,7 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
   const locationLower = feature.properties.place.toLowerCase();
   
   // First, explicitly exclude locations that clearly aren't in India but might match partial text
+  // This includes US locations, neighboring countries, and oceanic regions
   if (locationLower.includes('indian springs') || 
       locationLower.includes('indian wells') || 
       locationLower.includes('indianapolis') ||
@@ -81,6 +82,34 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
       locationLower.includes('indian ocean') ||
       locationLower.includes('indian ridge') ||
       (locationLower.includes('indian') && locationLower.includes('california')) ||
+      locationLower.includes('california') || // Exclude all California locations
+      locationLower.includes('southern california') ||
+      locationLower.includes('northern california') ||
+      locationLower.includes('central california') ||
+      locationLower.includes('ca, usa') ||
+      locationLower.includes('ca,usa') ||
+      locationLower.includes('usa') || // Exclude all USA locations
+      locationLower.includes('united states') ||
+      locationLower.includes('nevada') ||
+      locationLower.includes('oregon') ||
+      locationLower.includes('washington') ||
+      locationLower.includes('idaho') ||
+      locationLower.includes('utah') ||
+      locationLower.includes('arizona') ||
+      locationLower.includes('new mexico') ||
+      locationLower.includes('colorado') ||
+      locationLower.includes('wyoming') ||
+      locationLower.includes('montana') ||
+      locationLower.includes('north dakota') ||
+      locationLower.includes('south dakota') ||
+      locationLower.includes('nebraska') ||
+      locationLower.includes('kansas') ||
+      locationLower.includes('oklahoma') ||
+      locationLower.includes('texas') ||
+      locationLower.includes('mexico') ||
+      locationLower.includes('baja california') ||
+      locationLower.includes('canada') ||
+      locationLower.includes('british columbia') ||
       locationLower.includes('indonesia') ||
       locationLower.includes('sumatera') ||
       locationLower.includes('sumatra') ||
@@ -122,7 +151,43 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
       locationLower.includes('juneau') ||
       locationLower.includes('bering sea') ||
       locationLower.includes('chukchi sea') ||
-      locationLower.includes('beaufort sea'))
+      locationLower.includes('beaufort sea') ||
+      locationLower.includes('wallis and futuna') ||
+      locationLower.includes('wallis') ||
+      locationLower.includes('futuna') ||
+      locationLower.includes('french polynesia') ||
+      locationLower.includes('tahiti') ||
+      locationLower.includes('samoa') ||
+      locationLower.includes('tonga') ||
+      locationLower.includes('fiji') ||
+      locationLower.includes('vanuatu') ||
+      locationLower.includes('new caledonia') ||
+      locationLower.includes('solomon islands') ||
+      locationLower.includes('marshall islands') ||
+      locationLower.includes('caroline islands') ||
+      locationLower.includes('mariana islands') ||
+      locationLower.includes('palau') ||
+      locationLower.includes('kiribati') ||
+      locationLower.includes('nauru') ||
+      locationLower.includes('tuvalu') ||
+      locationLower.includes('cook islands') ||
+      locationLower.includes('niue') ||
+      locationLower.includes('tokelau') ||
+      locationLower.includes('pitcairn') ||
+      locationLower.includes('american samoa') ||
+      locationLower.includes('guam') ||
+      locationLower.includes('northern mariana') ||
+      locationLower.includes('wake island') ||
+      locationLower.includes('johnston atoll') ||
+      locationLower.includes('midway') ||
+      locationLower.includes('hawaiian islands') ||
+      locationLower.includes('hawaii') ||
+      locationLower.includes('pacific ocean') ||
+      locationLower.includes('south pacific') ||
+      locationLower.includes('north pacific') ||
+      locationLower.includes('central pacific') ||
+      locationLower.includes('western pacific') ||
+      locationLower.includes('eastern pacific')
   {
     return false;
   }
