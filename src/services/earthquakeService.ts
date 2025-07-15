@@ -513,8 +513,34 @@ export const fetchNCSEarthquakeData = async (): Promise<ShakeAlertEvent[]> => {
     
     const data: NCSEarthquakeResponse = await response.json();
     
+    // Filter for events actually in India before mapping
+    const indianNCSFeatures = data.features.filter(feature => {
+        const locationLower = feature.properties.place.toLowerCase();
+        const { latitude, longitude } = feature.properties;
+
+        // Run the negative checks first to exclude non-Indian locations
+        if (NON_INDIAN_COUNTRIES.some(c => locationLower.includes(c))) return false;
+        if (NON_INDIAN_PLACES.some(p => locationLower.includes(p))) return false;
+        
+        // Then run positive checks
+        const isInIndianBounds =
+            latitude >= INDIA_LAT_MIN &&
+            latitude <= INDIA_LAT_MAX &&
+            longitude >= INDIA_LON_MIN &&
+            longitude <= INDIA_LON_MAX;
+        
+        if (isInIndianBounds) return true;
+
+        if (locationLower.includes('india') || INDIAN_STATES.some(s => locationLower.includes(s)) || INDIAN_CITIES.some(c => locationLower.includes(c))) {
+            return true;
+        }
+
+        // If it fails all checks, filter it out
+        return false;
+    });
+
     // Process NCS earthquake data
-    return data.features.map(feature => {
+    return indianNCSFeatures.map(feature => {
       // Determine alert level based on magnitude
       let alertLevel: ShakeAlertEvent['alertLevel'] = null;
       if (feature.properties.mag >= 5.0) alertLevel = 'red';
