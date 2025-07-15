@@ -9,7 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "composite": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -22,7 +22,8 @@
   "include": [
     "vite.config.cjs",
     "server/**/*.ts",
-    "src/server/**/*.ts"
+    "src/server/**/*.ts",
+    "src/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

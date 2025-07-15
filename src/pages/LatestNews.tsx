@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, memo } from "react";
 import PageLayout from "@/components/PageLayout";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import { fetchEarthquakeNews, fetchIndiaEarthquakes, fetchNewsOnly, fetchSeismicOnly } from "@/services/newsService";
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger, MobileTabsDropdown } from "@/
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ExternalLink, MapPin, Activity, Clock, Globe, Newspaper, Zap, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
+
 
 const NEWS_CACHE_KEY = 'cached_earthquake_news';
 const NEWS_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
@@ -55,6 +56,7 @@ const LatestNews = () => {
         setLoading(true);
       }
       setUsingCache(false);
+      
       // Only use cache if not a refresh
       if (!isRefresh) {
         const cached = loadCachedNews();
@@ -68,20 +70,44 @@ const LatestNews = () => {
           setLoading(false); // Show cached instantly
         }
       }
-      // Always fetch fresh in background
-      const [allArticles, indiaArticles, newsOnly, seismicOnly] = await Promise.all([
-        fetchEarthquakeNews(),
-        fetchIndiaEarthquakes(),
-        fetchNewsOnly(),
-        fetchSeismicOnly()
-      ]);
+      
+      // Progressive loading with immediate updates
+      const handleProgress = (progressArticles: any[]) => {
+        const newsOnly = progressArticles.filter(article => article.type === 'news');
+        const seismicOnly = progressArticles.filter(article => article.type === 'seismic');
+        // Strict filtering for India section - only articles with country explicitly set to 'India'
+        const indiaArticles = progressArticles.filter(article => 
+          article.location?.country === 'India'
+        );
+        
+        setNews(progressArticles);
+        setNewsArticles(newsOnly);
+        setSeismicData(seismicOnly);
+        setIndiaNews(indiaArticles);
+        setLoading(false);
+        setUsingCache(false);
+      };
+      
+      // Fetch with progressive loading
+      const allArticles = await fetchEarthquakeNews(handleProgress);
+      
+      // Final update with complete data
+      const newsOnly = allArticles.filter(article => article.type === 'news');
+      const seismicOnly = allArticles.filter(article => article.type === 'seismic');
+      // Strict filtering for India section - only articles with country explicitly set to 'India'
+      const indiaArticles = allArticles.filter(article => 
+        article.location?.country === 'India'
+      );
+      
       setNews(allArticles);
-      setIndiaNews(indiaArticles);
       setNewsArticles(newsOnly);
       setSeismicData(seismicOnly);
+      setIndiaNews(indiaArticles);
       setError(null);
       setLastUpdated(new Date());
       setUsingCache(false);
+      
+      // Cache the final results
       saveCachedNews({
         news: allArticles,
         indiaNews: indiaArticles,
@@ -89,6 +115,7 @@ const LatestNews = () => {
         seismicData: seismicOnly,
         lastUpdated: new Date().toISOString(),
       });
+      
     } catch (err) {
       setError("Failed to load earthquake news. Please try again later.");
       console.error(err);
@@ -140,8 +167,9 @@ const LatestNews = () => {
     return type === 'news' ? 'bg-blue-500' : 'bg-purple-500';
   };
 
-  const renderNewsCard = (article: any) => (
-    <Card key={article.id} className="flex flex-col h-full hover:shadow-lg transition-shadow duration-300 border-techtoniq-blue-light">
+  // Memoized news card component for better performance
+  const NewsCard = memo(({ article }: { article: any }) => (
+    <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-300 border-techtoniq-blue-light">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="line-clamp-2 text-techtoniq-earth-dark text-lg">
@@ -214,7 +242,21 @@ const LatestNews = () => {
         </Button>
       </CardFooter>
     </Card>
+  ));
+  
+  // Memoize filtered data for better performance
+  const significantEarthquakes = useMemo(() => 
+    news.filter(article => (article.magnitude || 0) >= 5.0),
+    [news]
   );
+  
+  const tabOptions = useMemo(() => [
+    { value: "all", label: `All (${news.length})` },
+    { value: "news", label: `📰 News (${newsArticles.length})` },
+    { value: "seismic", label: `⚡ Seismic (${seismicData.length})` },
+    { value: "india", label: `🇮🇳 India (${indiaNews.length})` },
+    { value: "significant", label: `Significant (${significantEarthquakes.length})` },
+  ], [news.length, newsArticles.length, seismicData.length, indiaNews.length, significantEarthquakes.length]);
 
   const renderSkeletonCards = () => (
     <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -245,13 +287,6 @@ const LatestNews = () => {
     </div>
   );
 
-  const tabOptions = [
-    { value: "all", label: `All (${news.length})` },
-    { value: "news", label: `📰 News (${newsArticles.length})` },
-    { value: "seismic", label: `⚡ Seismic (${seismicData.length})` },
-    { value: "india", label: `🇮🇳 India (${indiaNews.length})` },
-    { value: "significant", label: "Significant (M5.0+)" },
-  ];
 
   return (
     <PageLayout>
@@ -341,7 +376,7 @@ const LatestNews = () => {
                       <p className="text-techtoniq-earth">Check back later for the latest seismic activity and news.</p>
                     </div>
                   ) : (
-                    news.map(renderNewsCard)
+                    news.slice(0, 30).map(article => <NewsCard key={article.id} article={article} />)
                   )}
                 </div>
               )}
@@ -370,7 +405,7 @@ const LatestNews = () => {
                       <p className="text-techtoniq-earth">Check back later for the latest earthquake news coverage.</p>
                     </div>
                   ) : (
-                    newsArticles.map(renderNewsCard)
+                    newsArticles.map(article => <NewsCard key={article.id} article={article} />)
                   )}
                 </div>
               )}
@@ -399,7 +434,7 @@ const LatestNews = () => {
                       <p className="text-techtoniq-earth">Check back later for the latest earthquake data.</p>
                     </div>
                   ) : (
-                    seismicData.map(renderNewsCard)
+                    seismicData.map(article => <NewsCard key={article.id} article={article} />)
                   )}
                 </div>
               )}
@@ -428,7 +463,7 @@ const LatestNews = () => {
                       <p className="text-techtoniq-earth">This is good news! No significant seismic activity detected in India.</p>
                     </div>
                   ) : (
-                    indiaNews.map(renderNewsCard)
+                    indiaNews.map(article => <NewsCard key={article.id} article={article} />)
                   )}
                 </div>
               )}
@@ -459,7 +494,7 @@ const LatestNews = () => {
                   ) : (
                     news
                       .filter(article => (article.magnitude || 0) >= 5.0)
-                      .map(renderNewsCard)
+                      .map(article => <NewsCard key={article.id} article={article} />)
                   )}
                 </div>
               )}

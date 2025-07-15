@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { FaultLine, Coordinates } from '@/types';
+import { FaultLine } from '@/types';
 
 // Re-export the FaultLine type for backward compatibility
 export type { FaultLine };

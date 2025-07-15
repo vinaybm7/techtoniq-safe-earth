@@ -57,6 +57,7 @@ interface IRISEvent {
   time: string;
   depth: number;
   coordinates: [number, number];
+  url?: string;
 }
 
 interface NewsAPIResponse {
@@ -95,17 +96,10 @@ interface GuardianResponse {
   };
 }
 
-// Enhanced India detection with more comprehensive keywords and coordinates
-const isLocationInIndia = (place: string, coordinates?: [number, number]): boolean => {
-  // Check coordinates first (India's rough boundaries)
-  if (coordinates) {
-    const [lon, lat] = coordinates;
-    // India's approximate boundaries: 68°E to 97°E, 8°N to 37°N
-    if (lon >= 68 && lon <= 97 && lat >= 8 && lat <= 37) {
-      return true;
-    }
-  }
-
+// Enhanced India detection with more comprehensive keywords
+const isLocationInIndia = (place: string): boolean => {
+  if (!place) return false;
+  
   const indiaKeywords = [
     // Major cities
     'delhi', 'mumbai', 'bangalore', 'chennai', 'kolkata', 'hyderabad', 'pune', 'ahmedabad', 
@@ -120,29 +114,44 @@ const isLocationInIndia = (place: string, coordinates?: [number, number]): boole
     'odisha', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
     'jharkhand', 'chhattisgarh', 'goa', 'manipur', 'meghalaya', 'tripura',
     'nagaland', 'arunachal pradesh', 'mizoram', 'sikkim', 'andaman', 'nicobar',
-    'lakshadweep', 'dadra', 'nagar haveli', 'daman', 'diu', 'chandigarh',
+    'lakshadweep', 'dadra', 'nagar haveli', 'daman', 'diu',
     
-    // Regions and areas
+    // Regions and areas within India
     'delhi ncr', 'ncr', 'national capital region', 'konkan', 'malabar', 'coromandel',
-    'deccan', 'gangetic', 'himalayan', 'northeast', 'north east', 'south india',
-    'north india', 'east india', 'west india', 'central india',
+    'deccan', 'gangetic', 'himalayan foothills', 'northeast india', 'north east india', 
+    'south india', 'north india', 'east india', 'west india', 'central india',
     
     // Common terms
-    'india', 'indian', 'bharat', 'hindustan', 'republic of india',
+    'india', 'indian subcontinent', 'bharat', 'hindustan', 'republic of india',
     
-    // Recent earthquake-prone areas
-    'uttarakhand', 'himachal', 'kashmir', 'ladakh', 'sikkim', 'assam', 'manipur',
-    'mizoram', 'nagaland', 'arunachal', 'meghalaya', 'tripura', 'bihar', 'nepal border',
-    'china border', 'pakistan border', 'bangladesh border', 'myanmar border'
+    // Geographic regions in India
+    'western ghats', 'eastern ghats', 'arabian sea', 'bay of bengal', 'indian ocean',
+    'thar desert', 'sundarbans', 'nilgiri', 'sahyadri'
+  ];
+  
+  // Countries/regions that should NOT be considered India
+  const excludeKeywords = [
+    'nepal', 'bangladesh', 'pakistan', 'china', 'sri lanka', 'myanmar', 'bhutan',
+    'afghanistan', 'tibet', 'maldives', 'thailand', 'indonesia', 'malaysia'
   ];
   
   const searchText = place.toLowerCase();
+  
+  // First check if it contains any exclude keywords
+  const hasExcludeKeyword = excludeKeywords.some(keyword => 
+    searchText.includes(keyword.toLowerCase())
+  );
+  
+  if (hasExcludeKeyword) return false;
+  
+  // Then check if it contains India keywords
   return indiaKeywords.some(keyword => searchText.includes(keyword.toLowerCase()));
 };
 
 // Helper for India detection in news articles
 const isNewsAboutIndia = (text: string): boolean => {
   if (!text) return false;
+  
   const indiaKeywords = [
     'india', 'indian', 'bharat', 'hindustan', 'republic of india',
     'delhi', 'mumbai', 'bangalore', 'chennai', 'kolkata', 'hyderabad', 'pune', 'ahmedabad',
@@ -155,11 +164,29 @@ const isNewsAboutIndia = (text: string): boolean => {
     'odisha', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
     'jharkhand', 'chhattisgarh', 'goa', 'manipur', 'meghalaya', 'tripura',
     'nagaland', 'arunachal pradesh', 'mizoram', 'sikkim', 'andaman', 'nicobar',
-    'lakshadweep', 'dadra', 'nagar haveli', 'daman', 'diu', 'chandigarh',
-    'delhi ncr', 'ncr', 'national capital region', 'uttarakhand', 'himachal', 'kashmir', 'ladakh',
+    'lakshadweep', 'dadra', 'nagar haveli', 'daman', 'diu',
+    'delhi ncr', 'ncr', 'national capital region', 'kashmir', 'ladakh',
+    'western ghats', 'eastern ghats', 'arabian sea', 'bay of bengal', 'indian ocean',
+    'thar desert', 'sundarbans', 'nilgiri', 'sahyadri'
+  ];
+  
+  // Countries/regions that should NOT be considered India
+  const excludeKeywords = [
+    'nepal', 'bangladesh', 'pakistan', 'china', 'sri lanka', 'myanmar', 'bhutan',
+    'afghanistan', 'tibet', 'maldives', 'thailand', 'indonesia', 'malaysia',
     'nepal border', 'china border', 'pakistan border', 'bangladesh border', 'myanmar border'
   ];
+  
   const lower = text.toLowerCase();
+  
+  // First check if it contains any exclude keywords
+  const hasExcludeKeyword = excludeKeywords.some(keyword => 
+    lower.includes(keyword.toLowerCase())
+  );
+  
+  if (hasExcludeKeyword) return false;
+  
+  // Then check if it contains India keywords
   return indiaKeywords.some(keyword => lower.includes(keyword));
 };
 
@@ -169,30 +196,61 @@ const createSeismicArticle = (
   source: string,
   sourceUrl: string
 ): NewsArticle => {
-  const coordinates = earthquake.geometry?.coordinates || earthquake.coordinates;
-  const isIndia = isLocationInIndia(
-    earthquake.properties?.place || earthquake.location || '', 
-    coordinates
-  );
+  let id: string;
+  let title: string;
+  let magnitude: number | undefined;
+  let place: string;
+  let time: number | string;
+  let url: string;
+  let depth: number | undefined;
+  let coordinates: [number, number] | undefined;
+
+  if ('properties' in earthquake) { // USGSEarthquake or EMSCEarthquake
+    id = earthquake.id;
+    // Get magnitude from either mag or magnitude property
+    const properties = earthquake.properties;
+    const quakeMagnitude = ('mag' in properties) ? properties.mag : properties.magnitude;
+    
+    // Get place and format title
+    place = earthquake.properties.place;
+    title = earthquake.properties.title || 
+            `Earthquake of magnitude ${quakeMagnitude} in ${place}`;
+    magnitude = quakeMagnitude;
+    time = earthquake.properties.time;
+    url = earthquake.properties.url;
+    coordinates = [earthquake.geometry.coordinates[0], earthquake.geometry.coordinates[1]];
+    depth = earthquake.geometry.coordinates?.[2];
+  } else { // IRISEvent
+    id = earthquake.id;
+    title = `Earthquake of magnitude ${earthquake.magnitude} in ${earthquake.location}`;
+    magnitude = earthquake.magnitude;
+    place = earthquake.location;
+    time = earthquake.time;
+    url = earthquake.url || `https://service.iris.edu/fdsnws/event/1/query?eventid=${earthquake.id}`;
+    coordinates = earthquake.coordinates;
+    depth = earthquake.depth;
+  }
+
+  const isIndia = isLocationInIndia(place);
   
   return {
-    id: earthquake.id,
-    title: earthquake.properties?.title || `Earthquake of magnitude ${earthquake.magnitude || earthquake.properties?.mag} in ${earthquake.properties?.place || earthquake.location}`,
-    description: `A ${earthquake.magnitude || earthquake.properties?.mag} magnitude earthquake occurred in ${earthquake.properties?.place || earthquake.location}. ${isIndia ? 'This event occurred in India.' : ''}`,
-    content: `Earthquake Details: Magnitude ${earthquake.magnitude || earthquake.properties?.mag}, Location: ${earthquake.properties?.place || earthquake.location}, Depth: ${earthquake.depth || earthquake.geometry?.coordinates?.[2] || 'Unknown'} km`,
-    url: earthquake.properties?.url || earthquake.url || `https://earthquake.usgs.gov/earthquakes/eventpage/${earthquake.id}`,
+    id: id,
+    title: title,
+    description: `A ${magnitude} magnitude earthquake occurred in ${place}. ${isIndia ? 'This event occurred in India.' : ''}`,
+    content: `Earthquake Details: Magnitude ${magnitude}, Location: ${place}, Depth: ${depth || 'Unknown'} km`,
+    url: url,
     image: '/placeholder.svg', // Default placeholder image
-    publishedAt: new Date(earthquake.properties?.time || earthquake.time).toISOString(),
+    publishedAt: new Date(time).toISOString(),
     source: {
       name: source,
       url: sourceUrl
     },
     location: {
       country: isIndia ? 'India' : 'Unknown',
-      region: earthquake.properties?.place || earthquake.location || 'Unknown'
+      region: place || 'Unknown'
     },
-    magnitude: earthquake.magnitude || earthquake.properties?.mag,
-    depth: earthquake.depth || earthquake.geometry?.coordinates?.[2],
+    magnitude: magnitude,
+    depth: depth,
     type: 'seismic'
   };
 };
@@ -203,7 +261,7 @@ const createNewsArticle = (
   source: string,
   sourceUrl: string
 ): NewsArticle => {
-  const isIndia = isLocationInIndia(
+  const isIndia = isNewsAboutIndia(
     article.title + ' ' + article.description + ' ' + (article.content || '')
   );
   
@@ -220,7 +278,7 @@ const createNewsArticle = (
       url: sourceUrl
     },
     location: {
-      country: isIndia ? 'India' : 'Unknown',
+      country: source.includes('India') || source.includes('Hindustan Times') ? 'India' : (isIndia ? 'India' : 'Unknown'),
       region: 'Unknown'
     },
     type: 'news'
@@ -407,21 +465,13 @@ const fetchHindustanTimesNews = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Fetch from NewsAPI.org (India and worldwide earthquake news)
+// Fetch from NewsAPI.org (worldwide earthquake news)
 const fetchNewsApiOrg = async (): Promise<NewsArticle[]> => {
   try {
-    // India news
-    const indiaUrl = 'https://newsapi.org/v2/everything?q=earthquake&language=en&sortBy=publishedAt&pageSize=20&apiKey=d4b87e3551324d55b23a8b04822bd917&country=in';
-    // Worldwide news
     const worldUrl = 'https://newsapi.org/v2/everything?q=earthquake&language=en&sortBy=publishedAt&pageSize=20&apiKey=d4b87e3551324d55b23a8b04822bd917';
-    const [indiaRes, worldRes] = await Promise.all([
-      fetch(indiaUrl),
-      fetch(worldUrl)
-    ]);
-    const indiaData = indiaRes.ok ? await indiaRes.json() : { articles: [] };
-    const worldData = worldRes.ok ? await worldRes.json() : { articles: [] };
-    const allArticles = [...(indiaData.articles || []), ...(worldData.articles || [])];
-    return allArticles
+    const response = await fetch(worldUrl);
+    const data = response.ok ? await response.json() : { articles: [] };
+    return data.articles
       .filter((item: any) =>
         (item.title && item.title.toLowerCase().includes('earthquake')) ||
         (item.description && item.description.toLowerCase().includes('earthquake'))
@@ -453,21 +503,50 @@ const fetchNewsApiOrg = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Fetch from GNews (India and worldwide earthquake news)
+// Fetch from NewsAPI.org (India-specific earthquake news)
+const fetchNewsApiOrgIndia = async (): Promise<NewsArticle[]> => {
+  try {
+    const indiaUrl = 'https://newsapi.org/v2/everything?q=earthquake&language=en&sortBy=publishedAt&pageSize=20&apiKey=d4b87e3551324d55b23a8b04822bd917&country=in';
+    const response = await fetch(indiaUrl);
+    const data = response.ok ? await response.json() : { articles: [] };
+    return data.articles
+      .filter((item: any) =>
+        (item.title && item.title.toLowerCase().includes('earthquake')) ||
+        (item.description && item.description.toLowerCase().includes('earthquake'))
+      )
+      .map((item: any) => {
+        return {
+          id: item.url || Math.random().toString(36).substr(2, 9),
+          title: item.title,
+          description: item.description || '',
+          content: item.content || item.description || '',
+          url: item.url,
+          image: item.urlToImage || '/placeholder.svg',
+          publishedAt: item.publishedAt,
+          source: {
+            name: 'NewsAPI.org',
+            url: 'https://newsapi.org/'
+          },
+          location: {
+            country: 'India',
+            region: 'Unknown' // Specific region might not be available from API
+          },
+          type: 'news'
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching NewsAPI.org India news:', error);
+    return [];
+  }
+};
+
+// Fetch from GNews (worldwide earthquake news)
 const fetchGNews = async (): Promise<NewsArticle[]> => {
   try {
-    // India news
-    const indiaUrl = 'https://gnews.io/api/v4/search?q=earthquake&lang=en&country=in&max=20&apikey=0f2829470d1cca9155f182ffab0cb3b2';
-    // Worldwide news
     const worldUrl = 'https://gnews.io/api/v4/search?q=earthquake&lang=en&max=20&apikey=0f2829470d1cca9155f182ffab0cb3b2';
-    const [indiaRes, worldRes] = await Promise.all([
-      fetch(indiaUrl),
-      fetch(worldUrl)
-    ]);
-    const indiaData = indiaRes.ok ? await indiaRes.json() : { articles: [] };
-    const worldData = worldRes.ok ? await worldRes.json() : { articles: [] };
-    const allArticles = [...(indiaData.articles || []), ...(worldData.articles || [])];
-    return allArticles
+    const response = await fetch(worldUrl);
+    const data = response.ok ? await response.json() : { articles: [] };
+    return data.articles
       .filter((item: any) =>
         (item.title && item.title.toLowerCase().includes('earthquake')) ||
         (item.description && item.description.toLowerCase().includes('earthquake'))
@@ -499,21 +578,50 @@ const fetchGNews = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Fetch from Current News API (India and worldwide earthquake news)
+// Fetch from GNews (India-specific earthquake news)
+const fetchGNewsIndia = async (): Promise<NewsArticle[]> => {
+  try {
+    const indiaUrl = 'https://gnews.io/api/v4/search?q=earthquake&lang=en&country=in&max=20&apikey=0f2829470d1cca9155f182ffab0cb3b2';
+    const response = await fetch(indiaUrl);
+    const data = response.ok ? await response.json() : { articles: [] };
+    return data.articles
+      .filter((item: any) =>
+        (item.title && item.title.toLowerCase().includes('earthquake')) ||
+        (item.description && item.description.toLowerCase().includes('earthquake'))
+      )
+      .map((item: any) => {
+        return {
+          id: item.url || Math.random().toString(36).substr(2, 9),
+          title: item.title,
+          description: item.description || '',
+          content: item.content || item.description || '',
+          url: item.url,
+          image: item.image || '/placeholder.svg',
+          publishedAt: item.publishedAt,
+          source: {
+            name: 'GNews',
+            url: 'https://gnews.io/'
+          },
+          location: {
+            country: 'India',
+            region: 'Unknown' // Specific region might not be available from API
+          },
+          type: 'news'
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching GNews India news:', error);
+    return [];
+  }
+};
+
+// Fetch from Current News API (worldwide earthquake news)
 const fetchCurrentNewsApi = async (): Promise<NewsArticle[]> => {
   try {
-    // India news
-    const indiaUrl = 'https://api.currentsapi.services/v1/search?apiKey=qVWbmf0_0vrdrjVZ5BNc5MqMf4lwI0GVeSSl3VRMaZjeNwum&language=en&country=IN&keywords=earthquake';
-    // Worldwide news
     const worldUrl = 'https://api.currentsapi.services/v1/search?apiKey=qVWbmf0_0vrdrjVZ5BNc5MqMf4lwI0GVeSSl3VRMaZjeNwum&language=en&keywords=earthquake';
-    const [indiaRes, worldRes] = await Promise.all([
-      fetch(indiaUrl),
-      fetch(worldUrl)
-    ]);
-    const indiaData = indiaRes.ok ? await indiaRes.json() : { news: [] };
-    const worldData = worldRes.ok ? await worldRes.json() : { news: [] };
-    const allArticles = [...(indiaData.news || []), ...(worldData.news || [])];
-    return allArticles
+    const response = await fetch(worldUrl);
+    const data = response.ok ? await response.json() : { news: [] };
+    return data.news
       .filter((item: any) =>
         (item.title && item.title.toLowerCase().includes('earthquake')) ||
         (item.description && item.description.toLowerCase().includes('earthquake'))
@@ -545,73 +653,74 @@ const fetchCurrentNewsApi = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Main function to fetch all earthquake news
-export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
+// Fetch from Current News API (India-specific earthquake news)
+const fetchCurrentNewsApiIndia = async (): Promise<NewsArticle[]> => {
   try {
-    // Fetch from all sources concurrently (with NewsAPI.org, GNews, and CurrentsAPI)
-    const [usgsQuakes, emscQuakes, irisEvents, guardianNews, reutersNews, toiNews, htNews, newsApiOrgNews, gnewsNews, currentNewsApiNews] = await Promise.allSettled([
-      fetchUSGSEarthquakes(),
-      fetchEMSCEarthquakes(),
-      fetchIRISEvents(),
-      fetchGuardianNews(),
-      fetchReutersNews(),
-      fetchTimesOfIndiaNews(),
-      fetchHindustanTimesNews(),
-      fetchNewsApiOrg(),
-      fetchGNews(),
-      fetchCurrentNewsApi()
-    ]);
+    const indiaUrl = 'https://api.currentsapi.services/v1/search?apiKey=qVWbmf0_0vrdrjVZ5BNc5MqMf4lwI0GVeSSl3VRMaZjeNwum&language=en&country=IN&keywords=earthquake';
+    const response = await fetch(indiaUrl);
+    const data = response.ok ? await response.json() : { news: [] };
+    return data.news
+      .filter((item: any) =>
+        (item.title && item.title.toLowerCase().includes('earthquake')) ||
+        (item.description && item.description.toLowerCase().includes('earthquake'))
+      )
+      .map((item: any) => {
+        return {
+          id: item.url || item.id || Math.random().toString(36).substr(2, 9),
+          title: item.title,
+          description: item.description || '',
+          content: item.description || '',
+          url: item.url || item.url,
+          image: item.image || '/placeholder.svg',
+          publishedAt: item.published || item.publishedAt,
+          source: {
+            name: 'CurrentsAPI',
+            url: 'https://currentsapi.services/'
+          },
+          location: {
+            country: 'India',
+            region: 'Unknown' // Specific region might not be available from API
+          },
+          type: 'news'
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching CurrentsAPI India news:', error);
+    return [];
+  }
+};
 
-    // Combine all successful results
-    const allArticles: NewsArticle[] = [];
-    
-    if (usgsQuakes.status === 'fulfilled') {
-      allArticles.push(...usgsQuakes.value);
-    }
-    
-    if (emscQuakes.status === 'fulfilled') {
-      allArticles.push(...emscQuakes.value);
-    }
-    
-    if (irisEvents.status === 'fulfilled') {
-      allArticles.push(...irisEvents.value);
-    }
-    
-    if (guardianNews.status === 'fulfilled') {
-      allArticles.push(...guardianNews.value);
-    }
-    
-    if (reutersNews.status === 'fulfilled') {
-      allArticles.push(...reutersNews.value);
-    }
-    
-    if (toiNews.status === 'fulfilled') {
-      allArticles.push(...toiNews.value);
-    }
-    
-    if (htNews.status === 'fulfilled') {
-      allArticles.push(...htNews.value);
-    }
-    
-    if (newsApiOrgNews.status === 'fulfilled') {
-      allArticles.push(...newsApiOrgNews.value);
-    }
-    
-    if (gnewsNews.status === 'fulfilled') {
-      allArticles.push(...gnewsNews.value);
-    }
-    
-    if (currentNewsApiNews.status === 'fulfilled') {
-      allArticles.push(...currentNewsApiNews.value);
-    }
+// Priority-based API fetching with timeout and cancellation
+const fetchWithTimeout = async <T>(fetchFn: () => Promise<T>, timeout: number = 10000): Promise<T> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const result = await fetchFn();
+    clearTimeout(timeoutId);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
 
-    // Remove duplicates based on ID
-    const uniqueArticles = allArticles.filter((article, index, self) => 
-      index === self.findIndex(a => a.id === article.id)
-    );
+// Optimized progressive loading with priority tiers
+export const fetchEarthquakeNews = async (onProgress?: (articles: NewsArticle[]) => void): Promise<NewsArticle[]> => {
+  const allArticles: NewsArticle[] = [];
+  const seenIds = new Set<string>();
 
-    // Sort by priority: India first, then by type (news first), then by date
-    const sortedArticles = uniqueArticles.sort((a, b) => {
+  // Helper function to add articles and remove duplicates
+  const addArticles = (articles: NewsArticle[]) => {
+    const newArticles = articles.filter(article => {
+      if (seenIds.has(article.id)) return false;
+      seenIds.add(article.id);
+      return true;
+    });
+    allArticles.push(...newArticles);
+    
+    // Sort articles by priority in-place
+    allArticles.sort((a, b) => {
       const aIsIndia = isLocationInIndia(a.location?.region || '');
       const bIsIndia = isLocationInIndia(b.location?.region || '');
       
@@ -626,22 +735,136 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
       // Then by date (newer first)
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
+    
+    // Notify progress with top 40 articles
+    if (onProgress) {
+      onProgress(allArticles.slice(0, 40));
+    }
+  };
 
-    // Return top 40 articles
-    return sortedArticles.slice(0, 40);
+  try {
+    // TIER 1: Critical sources (fastest, most reliable) - 5 second timeout
+    const tier1Sources = [
+      () => fetchUSGSEarthquakes(),
+      () => fetchTimesOfIndiaNews(),
+      () => fetchHindustanTimesNews()
+    ];
+
+    // TIER 2: Important sources - 8 second timeout
+    const tier2Sources = [
+      () => fetchEMSCEarthquakes(),
+      () => fetchGuardianNews(),
+      () => fetchNewsApiOrg()
+    ];
+
+    // TIER 3: Additional sources - 12 second timeout
+    const tier3Sources = [
+      () => fetchReutersNews(),
+      () => fetchGNews(),
+      () => fetchNewsApiOrgIndia()
+    ];
+
+    // TIER 4: Optional sources - 15 second timeout
+    const tier4Sources = [
+      () => fetchIRISEvents(),
+      () => fetchCurrentNewsApi(),
+      () => fetchGNewsIndia(),
+      () => fetchCurrentNewsApiIndia()
+    ];
+
+    // Fetch Tier 1 first (most critical)
+    const tier1Results = await Promise.allSettled(
+      tier1Sources.map(fn => fetchWithTimeout(fn, 5000))
+    );
+    
+    tier1Results.forEach(result => {
+      if (result.status === 'fulfilled') {
+        addArticles(result.value);
+      }
+    });
+
+    // Fetch Tier 2 concurrently with Tier 3 & 4 (but prioritize Tier 2)
+    const [tier2Results, tier3Results] = await Promise.all([
+      Promise.allSettled(tier2Sources.map(fn => fetchWithTimeout(fn, 8000))),
+      Promise.allSettled(tier3Sources.map(fn => fetchWithTimeout(fn, 12000)))
+    ]);
+
+    // Process Tier 2 results
+    tier2Results.forEach(result => {
+      if (result.status === 'fulfilled') {
+        addArticles(result.value);
+      }
+    });
+
+    // Process Tier 3 results
+    tier3Results.forEach(result => {
+      if (result.status === 'fulfilled') {
+        addArticles(result.value);
+      }
+    });
+
+    // Fetch Tier 4 in background (optional)
+    Promise.allSettled(tier4Sources.map(fn => fetchWithTimeout(fn, 15000)))
+      .then(tier4Results => {
+        tier4Results.forEach(result => {
+          if (result.status === 'fulfilled') {
+            addArticles(result.value);
+          }
+        });
+      })
+      .catch(error => {
+        console.warn('Tier 4 sources failed:', error);
+      });
+
+    // Return the current best articles (limit to 40)
+    return allArticles.slice(0, 40);
     
   } catch (error) {
     console.error('Error fetching earthquake news:', error);
-    return [];
+    return allArticles.slice(0, 40); // Return whatever we have
   }
 };
 
 // Additional function to get India-specific earthquakes
 export const fetchIndiaEarthquakes = async (): Promise<NewsArticle[]> => {
-  const allArticles = await fetchEarthquakeNews();
-  return allArticles.filter(article => 
-    isLocationInIndia(article.location?.region || '')
-  );
+  try {
+    const [toiNews, htNews, newsApiOrgIndiaNews, gnewsIndiaNews, currentNewsApiIndiaNews] = await Promise.allSettled([
+      fetchTimesOfIndiaNews(),
+      fetchHindustanTimesNews(),
+      fetchNewsApiOrgIndia(),
+      fetchGNewsIndia(),
+      fetchCurrentNewsApiIndia()
+    ]);
+
+    const indiaArticles: NewsArticle[] = [];
+    if (toiNews.status === 'fulfilled') {
+      indiaArticles.push(...toiNews.value);
+    }
+    if (htNews.status === 'fulfilled') {
+      indiaArticles.push(...htNews.value);
+    }
+    if (newsApiOrgIndiaNews.status === 'fulfilled') {
+      indiaArticles.push(...newsApiOrgIndiaNews.value);
+    }
+    if (gnewsIndiaNews.status === 'fulfilled') {
+      indiaArticles.push(...gnewsIndiaNews.value);
+    }
+    if (currentNewsApiIndiaNews.status === 'fulfilled') {
+      indiaArticles.push(...currentNewsApiIndiaNews.value);
+    }
+
+    // Remove duplicates based on ID
+    const uniqueIndiaArticles = indiaArticles.filter((article, index, self) => 
+      index === self.findIndex(a => a.id === article.id)
+    );
+
+    // Sort by date (newer first)
+    return uniqueIndiaArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+  } catch (error) {
+    console.error('Error fetching India-specific news:', error);
+    return [];
+  }
 };
 
 // Function to get only news articles (not seismic data)
