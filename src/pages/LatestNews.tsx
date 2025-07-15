@@ -323,9 +323,6 @@ const LatestNews = () => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 {refreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
-              {usingCache && !loading && !refreshing && (
-                <span className="ml-2 text-xs text-techtoniq-blue">(Showing cached news, updating in background...)</span>
-              )}
             </div>
           </div>
 
