@@ -67,332 +67,275 @@ export interface ShakeAlertEvent {
   isPriority?: boolean; // Flag to indicate if this is a priority event (e.g., from India)
 }
 
-// Updated function to check if an earthquake is in India based on specific locations
+// Define India's bounding box (more precise)
+const INDIA_LAT_MIN = 6.5;  // Southern tip of Andaman & Nicobar Islands
+const INDIA_LAT_MAX = 37.0; // Northern Kashmir
+const INDIA_LON_MIN = 68.0; // Western Gujarat
+const INDIA_LON_MAX = 97.5; // Eastern Arunachal Pradesh
+
+// List of countries that are definitely not India
+const NON_INDIAN_COUNTRIES = [
+  'japan', 'china', 'pakistan', 'bangladesh', 'nepal', 'bhutan', 'myanmar', 'burma',
+  'thailand', 'laos', 'cambodia', 'vietnam', 'malaysia', 'singapore', 'indonesia',
+  'philippines', 'taiwan', 'south korea', 'north korea', 'mongolia', 'russia',
+  'kazakhstan', 'uzbekistan', 'turkmenistan', 'kyrgyzstan', 'tajikistan', 'afghanistan',
+  'iran', 'iraq', 'syria', 'jordan', 'lebanon', 'israel', 'palestine', 'saudi arabia',
+  'yemen', 'oman', 'uae', 'qatar', 'bahrain', 'kuwait', 'turkey', 'cyprus', 'greece',
+  'bulgaria', 'romania', 'ukraine', 'moldova', 'belarus', 'poland', 'czech republic',
+  'slovakia', 'hungary', 'austria', 'switzerland', 'italy', 'france', 'spain', 'portugal',
+  'united kingdom', 'ireland', 'iceland', 'norway', 'sweden', 'finland', 'denmark',
+  'estonia', 'latvia', 'lithuania', 'germany', 'netherlands', 'belgium', 'luxembourg',
+  'liechtenstein', 'monaco', 'andorra', 'san marino', 'vatican city', 'malta', 'albania',
+  'north macedonia', 'serbia', 'montenegro', 'bosnia', 'croatia', 'slovenia', 'australia',
+  'new zealand', 'papua new guinea', 'fiji', 'solomon islands', 'vanuatu', 'new caledonia',
+  'samoa', 'tonga', 'kiribati', 'marshall islands', 'micronesia', 'palau', 'nauru',
+  'tuvalu', 'wallis and futuna', 'futuna', 'wallis', 'cook islands', 'niue', 'tokelau',
+  'french polynesia', 'pitcairn', 'easter island', 'chile', 'argentina', 'brazil',
+  'peru', 'colombia', 'venezuela', 'ecuador', 'bolivia', 'paraguay', 'uruguay',
+  'guyana', 'suriname', 'french guiana', 'panama', 'costa rica', 'nicaragua', 'honduras',
+  'el salvador', 'guatemala', 'belize', 'mexico', 'united states', 'canada', 'greenland',
+  'egypt', 'libya', 'algeria', 'tunisia', 'morocco', 'western sahara', 'mauritania',
+  'mali', 'niger', 'chad', 'sudan', 'south sudan', 'eritrea', 'ethiopia', 'djibouti',
+  'somalia', 'kenya', 'uganda', 'rwanda', 'burundi', 'tanzania', 'mozambique', 'malawi',
+  'zambia', 'zimbabwe', 'botswana', 'namibia', 'south africa', 'lesotho', 'eswatini',
+  'madagascar', 'comoros', 'mauritius', 'seychelles', 'maldives', 'sri lanka'
+];
+
+// List of specific places that are definitely not in India
+const NON_INDIAN_PLACES = [
+  'indian springs', 'indian wells', 'indianapolis', 'southeast indian ridge', 
+  'southwest indian ridge', 'central indian ridge', 'indian ocean', 'indian ridge',
+  'california', 'southern california', 'northern california', 'central california',
+  'ca, usa', 'ca,usa', 'usa', 'united states', 'nevada', 'oregon', 'washington',
+  'idaho', 'utah', 'arizona', 'new mexico', 'colorado', 'wyoming', 'montana',
+  'north dakota', 'south dakota', 'nebraska', 'kansas', 'oklahoma', 'texas',
+  'mexico', 'baja california', 'canada', 'british columbia', 'indonesia',
+  'sumatera', 'sumatra', 'simeulue', 'nias', 'mentawai', 'java', 'kalimantan',
+  'minahasa', 'sulawesi', 'kalimanta', 'lombok', 'bali', 'flores', 'sumba',
+  'timor', 'molucca', 'irian', 'maluku', 'papua', 'alaska', 'aleutian',
+  'kodiak', 'kenai', 'anchorage', 'fairbanks', 'juneau', 'bering sea',
+  'chukchi sea', 'beaufort sea', 'wallis and futuna', 'wallis', 'futuna',
+  'french polynesia', 'tahiti', 'samoa', 'tonga', 'fiji', 'vanuatu',
+  'new caledonia', 'solomon islands', 'marshall islands', 'caroline islands',
+  'mariana islands', 'palau', 'kiribati', 'nauru', 'tuvalu', 'cook islands',
+  'niue', 'tokelau', 'pitcairn', 'american samoa', 'guam', 'northern mariana',
+  'wake island', 'johnston atoll', 'midway', 'hawaiian islands', 'hawaii',
+  'pacific ocean', 'south pacific', 'north pacific', 'central pacific',
+  'western pacific', 'eastern pacific', 'ashford', 'alo', 'funaishikawa'
+];
+
+// List of Indian states and union territories
+const INDIAN_STATES = [
+  'andaman', 'nicobar', 'assam', 'gujarat', 'jammu', 'kashmir', 'maharashtra', 
+  'madhya pradesh', 'manipur', 'meghalaya', 'sikkim', 'tripura', 'uttar pradesh', 
+  'uttarakhand', 'west bengal', 'arunachal pradesh', 'telangana', 'himachal pradesh', 
+  'ladakh', 'andhra pradesh', 'tamil nadu', 'kerala', 'karnataka', 'goa', 'odisha',
+  'jharkhand', 'chhattisgarh', 'bihar', 'haryana', 'punjab', 'chandigarh',
+  'delhi', 'puducherry', 'lakshadweep', 'daman and diu', 'dadra and nagar haveli'
+];
+
+// List of major Indian cities
+const INDIAN_CITIES = [
+  'mumbai', 'delhi', 'bangalore', 'bengaluru', 'hyderabad', 'ahmedabad', 'chennai', 
+  'kolkata', 'surat', 'pune', 'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore', 
+  'thane', 'bhopal', 'visakhapatnam', 'pimpri-chinchwad', 'patna', 'vadodara', 
+  'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot', 
+  'kalyan-dombivli', 'vasai-virar', 'varanasi', 'srinagar', 'aurangabad', 
+  'dhanbad', 'amritsar', 'navi mumbai', 'allahabad', 'prayagraj', 'ranchi', 
+  'howrah', 'coimbatore', 'jabalpur', 'gwalior', 'vijayawada', 'jodhpur', 
+  'madurai', 'raipur', 'kota', 'chandigarh', 'guwahati', 'solapur', 'hubli-dharwad',
+  'mysore', 'mysuru', 'tiruchirappalli', 'bareilly', 'aligarh', 'tiruppur', 'gurgaon',
+  'gurugram', 'moradabad', 'jalandhar', 'bhubaneswar', 'salem', 'warangal', 'mira-bhayandar',
+  'jalgaon', 'guntur', 'thiruvananthapuram', 'bhiwandi', 'saharanpur', 'gorakhpur',
+  'bikaner', 'amravati', 'noida', 'jamshedpur', 'bhilai', 'cuttack', 'firozabad',
+  'kochi', 'cochin', 'nellore', 'bhavnagar', 'dehradun', 'durgapur', 'asansol',
+  'rourkela', 'nanded', 'kolhapur', 'ajmer', 'akola', 'gulbarga', 'jamnagar',
+  'ujjain', 'loni', 'siliguri', 'jhansi', 'ulhasnagar', 'jammu', 'sangli-miraj & kupwad',
+  'mangalore', 'erode', 'belgaum', 'ambattur', 'tirunelveli', 'malegaon', 'gaya',
+  'jalgaon', 'udaipur', 'maheshtala', 'davanagere', 'kozhikode', 'calicut', 'kurnool',
+  'rajpur sonarpur', 'rajahmundry', 'bokaro', 'south dumdum', 'bellary', 'patiala',
+  'gopalpur', 'agartala', 'bhagalpur', 'muzaffarnagar', 'bhatpara', 'panihati',
+  'latur', 'dhule', 'rohtak', 'srinagar', 'korba', 'bhilwara', 'berhampur', 'muzaffarpur',
+  'ahmednagar', 'mathura', 'kollam', 'avadi', 'kadapa', 'kamarhati', 'sambalpur',
+  'bilaspur', 'shahjahanpur', 'satara', 'bijapur', 'rampur', 'shivamogga', 'shimoga',
+  'chandrapur', 'junagadh', 'thrissur', 'trichur', 'alwar', 'bardhaman', 'kulti',
+  'kakinada', 'nizamabad', 'parbhani', 'tumkur', 'khammam', 'uzhavarkarai', 'bihar sharif',
+  'panipat', 'darbhanga', 'bally', 'aizawl', 'dewas', 'ichalkaranji', 'karnal',
+  'bathinda', 'jalna', 'eluru', 'barasat', 'kirari suleman nagar', 'purnia', 'satna',
+  'mau', 'sonipat', 'farrukhabad', 'durg', 'imphal', 'ratlam', 'hapur', 'arrah',
+  'anantapur', 'karimnagar', 'etawah', 'ambarnath', 'north dumdum', 'bharatpur',
+  'begusarai', 'new delhi', 'gandhidham', 'baranagar', 'tiruvottiyur', 'pondicherry',
+  'puducherry', 'sikar', 'thoothukudi', 'rewa', 'mirzapur', 'raichur', 'pali', 'ramagundam',
+  'silchar', 'haridwar', 'vijayanagaram', 'tenali', 'nagercoil', 'sri ganganagar',
+  'karawal nagar', 'mango', 'thanjavur', 'bulandshahr', 'uluberia', 'katni',
+  'sambhal', 'singrauli', 'nadiad', 'secunderabad', 'naihati', 'yamunanagar',
+  'bidhannagar', 'pallavaram', 'bidar', 'munger', 'panchkula', 'burhanpur',
+  'raurkela industrial township', 'kharagpur', 'dindigul', 'gandhinagar', 'hospet',
+  'nangloi jat', 'malda', 'ongole', 'deoghar', 'chapra', 'haldia', 'khandwa',
+  'nandyal', 'morena', 'amroha', 'anand', 'bhind', 'bhalswa jahangir pur',
+  'madhyamgram', 'bhiwani', 'berhampore', 'ambala', 'morbi', 'fatehpur', 'raebareli',
+  'khora', 'chittoor', 'bhusawal', 'orai', 'bahraich', 'phusro', 'vellore',
+  'mehsana', 'raiganj', 'sirsa', 'danapur', 'serampore', 'sultan pur majra',
+  'guna', 'jaunpur', 'panvel', 'shivpuri', 'surendranagar dudhrej', 'unnao',
+  'chinsurah', 'alappuzha', 'kottayam', 'machilipatnam', 'shimla', 'adoni',
+  'udupi', 'katihar', 'proddatur', 'mahbubnagar', 'saharsa', 'dibrugarh',
+  'jorhat', 'hazaribagh', 'hindupur', 'nagaon', 'sasaram', 'hajipur', 'bhimavaram',
+  'bettiah', 'ramgarh', 'tinsukia', 'guntakal', 'srikakulam', 'motihari', 'dharmavaram',
+  'medininagar', 'gudivada', 'phagwara', 'pudukkottai', 'hosur', 'navsari', 'kaithal',
+  'markapur', 'dahod', 'moga', 'karaikudi', 'siwan', 'jind', 'gangtok', 'kohima',
+  'port blair', 'itanagar', 'silvassa', 'daman', 'diu', 'kavaratti', 'shillong',
+  'hardwar', 'puri', 'konark', 'amarnath', 'badrinath', 'kedarnath', 'dwarka',
+  'pushkar', 'vaishno devi', 'bodh gaya', 'kanyakumari', 'rameshwaram', 'tirupati',
+  'shirdi', 'mathura', 'vrindavan', 'haridwar', 'rishikesh', 'gaya', 'allahabad',
+  'varanasi', 'ayodhya', 'madurai', 'thanjavur', 'mahabalipuram', 'hampi', 'khajuraho',
+  'ajanta', 'ellora', 'mahabaleswar', 'lonavala', 'matheran', 'darjeeling', 'manali',
+  'shimla', 'mussoorie', 'nainital', 'ooty', 'kodaikanal', 'munnar', 'thekkady',
+  'kumarakom', 'kovalam', 'mahabalipuram', 'pondicherry', 'goa', 'jaisalmer',
+  'jodhpur', 'udaipur', 'mount abu', 'ranthambore', 'agra', 'fatehpur sikri',
+  'jaipur', 'pushkar', 'ajmer', 'bikaner', 'jaisalmer', 'jodhpur', 'udaipur',
+  'mount abu', 'ranthambore', 'agra', 'fatehpur sikri', 'jaipur', 'pushkar',
+  'ajmer', 'bikaner', 'kochi', 'alleppey', 'kumarakom', 'kovalam', 'thekkady',
+  'munnar', 'wayanad', 'bekal', 'kozhikode', 'guruvayur', 'palakkad', 'thrissur',
+  'kollam', 'varkala', 'thiruvananthapuram', 'kanyakumari', 'madurai', 'kodaikanal',
+  'ooty', 'coonoor', 'yelagiri', 'yercaud', 'hogenakkal', 'chennai', 'mahabalipuram',
+  'pondicherry', 'tirupati', 'srikalahasti', 'horsely hills', 'araku valley',
+  'vizag', 'vijayawada', 'hyderabad', 'warangal', 'nagarjuna sagar', 'srisailam',
+  'bidar', 'gulbarga', 'bijapur', 'badami', 'hampi', 'hospet', 'bangalore',
+  'mysore', 'coorg', 'chikmagalur', 'belur', 'halebid', 'shravanabelagola',
+  'gokarna', 'murudeshwar', 'karwar', 'mangalore', 'udupi', 'manipal', 'goa',
+  'mahabaleshwar', 'lonavala', 'khandala', 'matheran', 'mumbai', 'elephanta',
+  'alibaug', 'kashid', 'murud janjira', 'dapoli', 'ganapatipule', 'tarkarli',
+  'amboli', 'malvan', 'sawantwadi', 'sindhudurg', 'kolhapur', 'sangli', 'solapur',
+  'pandharpur', 'tuljapur', 'osmanabad', 'nanded', 'aurangabad', 'ajanta', 'ellora',
+  'shirdi', 'nashik', 'trimbakeshwar', 'igatpuri', 'bhandardara', 'ahmednagar',
+  'pune', 'lavasa', 'kamshet', 'lonavala', 'khandala', 'panchgani', 'mahabaleshwar',
+  'pratapgad', 'raigad', 'daman', 'silvassa', 'saputara', 'valsad', 'surat',
+  'bharuch', 'vadodara', 'champaner', 'pavagadh', 'ahmedabad', 'gandhinagar',
+  'adalaj', 'modhera', 'patan', 'siddhpur', 'rani ki vav', 'lothal', 'bhuj',
+  'mandvi', 'dholavira', 'rann of kutch', 'dwarka', 'somnath', 'diu', 'gir',
+  'junagadh', 'palitana', 'bhavnagar', 'velavadar', 'blackbuck national park',
+  'rajkot', 'jamnagar', 'mount abu', 'udaipur', 'chittorgarh', 'kumbhalgarh',
+  'ranakpur', 'nathdwara', 'haldighati', 'eklingji', 'dungarpur', 'banswara',
+  'jodhpur', 'osian', 'jaisalmer', 'sam sand dunes', 'bikaner', 'deshnoke',
+  'karni mata temple', 'shekhawati', 'mandawa', 'nawalgarh', 'jhunjhunu',
+  'ajmer', 'pushkar', 'jaipur', 'amer', 'nahargarh', 'jaigarh', 'sanganer',
+  'abhaneri', 'bhangarh', 'sariska', 'alwar', 'bharatpur', 'deeg', 'agra',
+  'fatehpur sikri', 'mathura', 'vrindavan', 'gokul', 'nandgaon', 'barsana',
+  'govardhan', 'delhi', 'qutub minar', 'red fort', 'india gate', 'humayun tomb',
+  'akshardham', 'lotus temple', 'jama masjid', 'chandni chowk', 'connaught place',
+  'hauz khas', 'jantar mantar', 'rashtrapati bhavan', 'rajghat', 'lodi garden',
+  'purana qila', 'safdarjung tomb', 'tughlaqabad fort', 'garden of five senses',
+  'dilli haat', 'pragati maidan', 'national museum', 'national gallery of modern art',
+  'national science centre', 'national zoological park', 'nehru planetarium',
+  'indira gandhi memorial museum', 'gandhi smriti', 'raj ghat', 'shanti vana',
+  'vijay ghat', 'shakti sthal', 'vir bhumi', 'ab ghat', 'shanti van', 'vijay ghat',
+  'kisan ghat', 'gurgaon', 'gurugram', 'faridabad', 'noida', 'greater noida',
+  'ghaziabad', 'meerut', 'haridwar', 'rishikesh', 'mussoorie', 'dehradun',
+  'chakrata', 'dhanaulti', 'kanatal', 'chamba', 'tehri', 'new tehri', 'devprayag',
+  'rudraprayag', 'karnaprayag', 'nandprayag', 'vishnuprayag', 'joshimath',
+  'auli', 'badrinath', 'hemkund sahib', 'valley of flowers', 'govindghat',
+  'ghangaria', 'gaurikund', 'kedarnath', 'guptkashi', 'ukhimath', 'chopta',
+  'tungnath', 'rudranath', 'madhyamaheshwar', 'kalpeshwar', 'deoria tal',
+  'roopkund', 'nainital', 'bhimtal', 'sattal', 'naukuchiatal', 'khurpatal',
+  'mukteshwar', 'kausani', 'ranikhet', 'almora', 'jageshwar', 'binsar',
+  'patal bhuvaneshwar', 'champawat', 'pithoragarh', 'munsiyari', 'dharchula',
+  'jauljibi', 'berinag', 'chaukori', 'gangolihat', 'bageshwar', 'baijnath',
+  'kausani', 'gwaldam', 'karnaprayag', 'rudraprayag', 'srinagar', 'pauri',
+  'khirsu', 'lansdowne', 'kotdwar', 'corbett national park', 'ramnagar',
+  'kaladhungi', 'nainital', 'haldwani', 'bhowali', 'bhimtal', 'sattal',
+  'naukuchiatal', 'khurpatal', 'mukteshwar', 'ramgarh', 'dhanachuli',
+  'pangot', 'kilbury', 'kausani', 'baijnath', 'bageshwar', 'kapkot',
+  'someshwar', 'kausani', 'gwaldam', 'karnaprayag', 'rudraprayag',
+  'gauchar', 'chamoli', 'gopeshwar', 'joshimath', 'auli', 'badrinath',
+  'mana', 'hemkund sahib', 'valley of flowers', 'govindghat', 'ghangaria',
+  'gaurikund', 'kedarnath', 'guptkashi', 'ukhimath', 'chopta', 'tungnath',
+  'rudranath', 'madhyamaheshwar', 'kalpeshwar', 'deoria tal', 'roopkund',
+  'kumaon', 'garhwal', 'tehri garhwal', 'pauri garhwal', 'chamoli',
+  'rudraprayag', 'uttarkashi', 'dehradun', 'haridwar', 'nainital',
+  'udham singh nagar', 'champawat', 'bageshwar', 'almora', 'pithoragarh'
+];
+
+/**
+ * Determines if an earthquake is in India based on location name and coordinates
+ * This is a strict check that requires both the location name to be in India
+ * and the coordinates to be within India's bounding box
+ */
 const isInIndia = (feature: EarthquakeFeature): boolean => {
-  let locationLower = feature.properties.place.toLowerCase();
+  // Get the location name and coordinates
+  const locationLower = feature.properties.place.toLowerCase();
+  const [longitude, latitude] = feature.geometry.coordinates;
   
-  // First, check if we have coordinates to make a more accurate determination
-  if (feature.geometry && feature.geometry.coordinates) {
-    const [longitude, latitude] = feature.geometry.coordinates;
-    
-    // Define India's bounding box (approximate)
-    // India's mainland coordinates: 
-    // North: ~37°N (Kashmir), South: ~8°N (Kanyakumari)
-    // East: ~97°E (Arunachal Pradesh), West: ~68°E (Gujarat)
-    const isInIndianBounds = 
-      latitude >= 6 && latitude <= 37 && // Latitude (including Andaman & Nicobar)
-      longitude >= 68 && longitude <= 97; // Longitude
-      
-    // If not in India's bounding box, it's definitely not in India
-    if (!isInIndianBounds) {
-      return false;
-    }
-  }
-  
+  // First, check if the location explicitly mentions a non-Indian place
   // Handle relative distance descriptions like "284 km SSE of Alo, Wallis and Futuna"
-  // Extract the actual place name after "of" for more accurate location checking
   const distancePattern = /^\d+\s*km\s+[a-z]+\s+of\s+(.+)$/i;
   const match = locationLower.match(distancePattern);
+  
   if (match) {
-    const actualLocation = match[1].trim();
+    const actualLocation = match[1].trim().toLowerCase();
     
-    // If the actual location explicitly mentions a non-Indian place, return false
-    const nonIndianPlaces = [
-      'wallis', 'futuna', 'fiji', 'tonga', 'samoa', 'vanuatu', 'new caledonia',
-      'solomon', 'marshall', 'caroline', 'mariana', 'palau', 'kiribati', 'nauru',
-      'tuvalu', 'cook islands', 'niue', 'tokelau', 'pitcairn', 'american samoa',
-      'guam', 'wake island', 'johnston atoll', 'midway', 'hawaii', 'alaska',
-      'california', 'oregon', 'washington', 'nevada', 'idaho', 'utah', 'arizona',
-      'new mexico', 'colorado', 'wyoming', 'montana', 'north dakota', 'south dakota',
-      'nebraska', 'kansas', 'oklahoma', 'texas', 'mexico', 'canada', 'indonesia',
-      'china', 'afghanistan', 'burma', 'myanmar', 'tibet', 'pakistan', 'bangladesh',
-      'nepal', 'bhutan', 'sri lanka', 'maldives', 'japan', 'korea', 'vietnam',
-      'thailand', 'cambodia', 'laos', 'malaysia', 'singapore', 'philippines',
-      'taiwan', 'australia', 'new zealand', 'papua new guinea', 'timor', 'brunei',
-      'ashford', 'alo'
-    ];
+    // Check if the actual location is in any of our non-Indian countries or places list
+    for (const country of NON_INDIAN_COUNTRIES) {
+      if (actualLocation.includes(country)) {
+        return false;
+      }
+    }
     
-    for (const place of nonIndianPlaces) {
+    for (const place of NON_INDIAN_PLACES) {
       if (actualLocation.includes(place)) {
         return false;
       }
     }
   }
   
-  // First, explicitly exclude locations that clearly aren't in India but might match partial text
-  // This includes US locations, neighboring countries, and oceanic regions
-  if (locationLower.includes('indian springs') || 
-      locationLower.includes('indian wells') || 
-      locationLower.includes('indianapolis') ||
-      locationLower.includes('southeast indian ridge') ||
-      locationLower.includes('southwest indian ridge') ||
-      locationLower.includes('central indian ridge') ||
-      locationLower.includes('indian ocean') ||
-      locationLower.includes('indian ridge') ||
-      (locationLower.includes('indian') && locationLower.includes('california')) ||
-      locationLower.includes('california') || // Exclude all California locations
-      locationLower.includes('southern california') ||
-      locationLower.includes('northern california') ||
-      locationLower.includes('central california') ||
-      locationLower.includes('ca, usa') ||
-      locationLower.includes('ca,usa') ||
-      locationLower.includes('usa') || // Exclude all USA locations
-      locationLower.includes('united states') ||
-      locationLower.includes('nevada') ||
-      locationLower.includes('oregon') ||
-      locationLower.includes('washington') ||
-      locationLower.includes('idaho') ||
-      locationLower.includes('utah') ||
-      locationLower.includes('arizona') ||
-      locationLower.includes('new mexico') ||
-      locationLower.includes('colorado') ||
-      locationLower.includes('wyoming') ||
-      locationLower.includes('montana') ||
-      locationLower.includes('north dakota') ||
-      locationLower.includes('south dakota') ||
-      locationLower.includes('nebraska') ||
-      locationLower.includes('kansas') ||
-      locationLower.includes('oklahoma') ||
-      locationLower.includes('texas') ||
-      locationLower.includes('mexico') ||
-      locationLower.includes('baja california') ||
-      locationLower.includes('canada') ||
-      locationLower.includes('british columbia') ||
-      locationLower.includes('indonesia') ||
-      locationLower.includes('sumatera') ||
-      locationLower.includes('sumatra') ||
-      locationLower.includes('simeulue') ||
-      locationLower.includes('nias') ||
-      locationLower.includes('mentawai') ||
-      locationLower.includes('java') ||
-      locationLower.includes('kalimantan') ||
-      locationLower.includes('minahasa') ||
-      locationLower.includes('sulawesi') ||
-      locationLower.includes('kalimanta') ||
-      locationLower.includes('lombok') ||
-      locationLower.includes('bali') ||
-      locationLower.includes('flores') ||
-      locationLower.includes('sumba') ||
-      locationLower.includes('timor') ||
-      locationLower.includes('molucca') ||
-      locationLower.includes('irian') ||
-      locationLower.includes('maluku') ||
-      locationLower.includes('papua') ||
-      (locationLower.includes('indian') && locationLower.includes('nevada')) ||
-      (locationLower.includes('indian') && locationLower.includes('ridge')) ||
-      (locationLower.includes('indian') && locationLower.includes('ocean')) ||
-      locationLower.includes('china') ||
-      locationLower.includes('afghanistan') ||
-      locationLower.includes('burma') ||
-      locationLower.includes('myanmar') ||
-      locationLower.includes('tibet') ||
-      locationLower.includes('pakistan') ||
-      locationLower.includes('bangladesh') ||
-      locationLower.includes('nepal') ||
-      locationLower.includes('bhutan') ||
-      locationLower.includes('alaska') ||
-      locationLower.includes('aleutian') ||
-      locationLower.includes('kodiak') ||
-      locationLower.includes('kenai') ||
-      locationLower.includes('anchorage') ||
-      locationLower.includes('fairbanks') ||
-      locationLower.includes('juneau') ||
-      locationLower.includes('bering sea') ||
-      locationLower.includes('chukchi sea') ||
-      locationLower.includes('beaufort sea') ||
-      locationLower.includes('wallis and futuna') ||
-      locationLower.includes('wallis') ||
-      locationLower.includes('futuna') ||
-      locationLower.includes('french polynesia') ||
-      locationLower.includes('tahiti') ||
-      locationLower.includes('samoa') ||
-      locationLower.includes('tonga') ||
-      locationLower.includes('fiji') ||
-      locationLower.includes('vanuatu') ||
-      locationLower.includes('new caledonia') ||
-      locationLower.includes('solomon islands') ||
-      locationLower.includes('marshall islands') ||
-      locationLower.includes('caroline islands') ||
-      locationLower.includes('mariana islands') ||
-      locationLower.includes('palau') ||
-      locationLower.includes('kiribati') ||
-      locationLower.includes('nauru') ||
-      locationLower.includes('tuvalu') ||
-      locationLower.includes('cook islands') ||
-      locationLower.includes('niue') ||
-      locationLower.includes('tokelau') ||
-      locationLower.includes('pitcairn') ||
-      locationLower.includes('american samoa') ||
-      locationLower.includes('guam') ||
-      locationLower.includes('northern mariana') ||
-      locationLower.includes('wake island') ||
-      locationLower.includes('johnston atoll') ||
-      locationLower.includes('midway') ||
-      locationLower.includes('hawaiian islands') ||
-      locationLower.includes('hawaii') ||
-      locationLower.includes('pacific ocean') ||
-      locationLower.includes('south pacific') ||
-      locationLower.includes('north pacific') ||
-      locationLower.includes('central pacific') ||
-      locationLower.includes('western pacific') ||
-      locationLower.includes('eastern pacific') ||
-      locationLower.includes('ashford')
-  {
+  // Check if the location explicitly mentions any non-Indian place
+  for (const place of NON_INDIAN_PLACES) {
+    if (locationLower.includes(place)) {
+      return false;
+    }
+  }
+  
+  // Check if the location explicitly mentions any non-Indian country
+  for (const country of NON_INDIAN_COUNTRIES) {
+    if (locationLower.includes(country)) {
+      return false;
+    }
+  }
+  
+  // Check if the coordinates are within India's bounding box
+  const isInIndianBounds = 
+    latitude >= INDIA_LAT_MIN && 
+    latitude <= INDIA_LAT_MAX && 
+    longitude >= INDIA_LON_MIN && 
+    longitude <= INDIA_LON_MAX;
+  
+  if (!isInIndianBounds) {
     return false;
   }
   
-  // Include general Indian identifiers
-  if (locationLower.includes('india') || 
-      locationLower.includes('delhi') ||
-      locationLower.includes('west bengal') ||
-      locationLower.includes('rajasthan'))
-  {
-    return true;
-  }
-
-  // Check for specific Indian states and union territories
-  const indianStates = [
-    'andaman', 'nicobar', 'assam', 'gujarat', 'jammu', 'kashmir', 'maharashtra', 
-    'madhya pradesh', 'manipur', 'meghalaya', 'sikkim', 'tripura', 'uttar pradesh', 
-    'uttarakhand', 'west bengal', 'arunachal pradesh', 'telangana', 'himachal pradesh', 
-    'ladakh'
-  ];
-  
-  if (indianStates.some(state => locationLower.includes(state))) {
+  // If we've made it this far, check if the location explicitly mentions India
+  if (locationLower.includes('india')) {
     return true;
   }
   
-  // Check for specific cities/locations in Andaman and Nicobar Islands
-  const andamanLocations = ['bamboo flat', 'diglipur', 'little nicobar', 'rongat', 'ariel bay'];
-  if (andamanLocations.some(location => locationLower.includes(location))) {
-    return true;
+  // Check if the location mentions any Indian state
+  for (const state of INDIAN_STATES) {
+    if (locationLower.includes(state)) {
+      return true;
+    }
   }
   
-  // Check for specific cities/locations in Assam
-  const assamLocations = ['guwahati', 'kamrup', 'hailakandi', 'cachar', 'dhekiajuli', 'udalguri', 
-                         'goalpara', 'goālpāra', 'marigaon', 'hojai', 'hojāi', 'haflong', 
-                         'hāflong', 'silchar'];
-  if (assamLocations.some(location => locationLower.includes(location))) {
-    return true;
+  // Check if the location mentions any Indian city
+  for (const city of INDIAN_CITIES) {
+    if (locationLower.includes(city)) {
+      return true;
+    }
   }
   
-  // Check for specific cities/locations in Gujarat
-  const gujaratLocations = ['gandhidham', 'bhuj', 'ahmadabad', 'rajkot', 'jaisalmer', 'rupar', 
-                           'chanasma', 'chānasma', 'anjar', 'kandla', 'broach', 'bhachau', 
-                           'mundra', 'khadir', 'khavda', 'lakhpat', 'rapar', 'kheda', 'amreli', 
-                           'jamnagar', 'mendarda', 'dwarka', 'dwārka', 'visavadar', 'vīsāvadar', 
-                           'dhari', 'dhāri', 'paddhari', 'sikka', 'chalala', 'chalāla', 'naliya', 
-                           'delvada', 'delvāda'];
-  if (gujaratLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Jammu and Kashmir
-  const jkLocations = ['kupwara', 'kishtwar', 'doda', 'ramban', 'dharmsala'];
-  if (jkLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Maharashtra
-  const maharashtraLocations = ['palghar', 'satara', 'ambeghar', 'dicholi', 'kisrule', 'dhebewadi', 
-                              'kolhapur', 'ratnagiri', 'latur', 'osmanabad', 'killari'];
-  if (maharashtraLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Madhya Pradesh
-  const mpLocations = ['jabalpur'];
-  if (mpLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Manipur
-  const manipurLocations = ['impahl', 'imphal', 'wangjing', 'wāngjing', 'churachandpur', 
-                          'churāchāndpur', 'yairipok', 'phek', 'moirang', 'moirāng'];
-  if (manipurLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Meghalaya
-  const meghalayaLocations = ['kokrajhar', 'nongstoin', 'tura'];
-  if (meghalayaLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Sikkim
-  const sikkimLocations = ['jausari', 'chamoli', 'nandprayag', 'singtam', 'naya bazar', 'naya bāzār'];
-  if (sikkimLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Tripura
-  const tripuraLocations = ['ambasa', 'agartala'];
-  if (tripuraLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Uttar Pradesh
-  const upLocations = ['badaun', 'meerut', 'noida', 'rewari'];
-  if (upLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Uttarakhand
-  const uttarakhandLocations = ['uttarkashi', 'chamoli', 'rudraprayag', 'tehri', 'pithoragarh', 
-                              'bageshwar', 'almora', 'champawat', 'nainital', 'udham singh nagar', 
-                              'haridwar', 'dehradun'];
-  if (uttarakhandLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in West Bengal
-  const wbLocations = ['darjeeling', 'jalpaiguri', 'cooch behar', 'alipurduar', 'uttar dinajpur', 
-                     'dakshin dinajpur', 'malda', 'murshidabad', 'birbhum', 'purba bardhaman', 
-                     'paschim bardhaman', 'nadia', 'north 24 parganas', 'hooghly', 'bankura', 
-                     'purulia', 'purba medinipur', 'paschim medinipur', 'jhargram', 'howrah', 
-                     'south 24 parganas', 'kolkata'];
-  if (wbLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Arunachal Pradesh
-  const arunachalLocations = ['tawang', 'west kameng', 'east kameng', 'papum pare', 'kurung kumey', 
-                            'kra daadi', 'lower subansiri', 'upper subansiri', 'west siang', 
-                            'east siang', 'siang', 'upper siang', 'lower siang', 'lower dibang valley', 
-                            'dibang valley', 'anjaw', 'lohit', 'namsai', 'changlang', 'tirap', 
-                            'longding'];
-  if (arunachalLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Telangana
-  const telanganaLocations = ['adilabad', 'bhadradri kothagudem', 'hyderabad', 'jagtial', 'jangaon', 
-                            'jayashankar bhupalpally', 'jogulamba gadwal', 'kamareddy', 'karimnagar', 
-                            'khammam', 'komaram bheem asifabad', 'mahabubabad', 'mahabubnagar', 
-                            'mancherial', 'medak', 'medchal–malkajgiri', 'nagarkurnool', 'nalgonda', 
-                            'nirmal', 'nizamabad', 'peddapalli', 'rajanna sircilla', 'rangareddy', 
-                            'sangareddy', 'siddipet', 'suryapet', 'vikarabad', 'wanaparthy', 
-                            'warangal rural', 'warangal urban', 'yadadri bhuvanagiri'];
-  if (telanganaLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Himachal Pradesh
-  const hpLocations = ['bilaspur', 'chamba', 'hamirpur', 'kangra', 'kinnaur', 'kullu', 'lahaul and spiti', 
-                     'mandi', 'shimla', 'sirmaur', 'solan', 'una'];
-  if (hpLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // Check for specific cities/locations in Ladakh
-  const ladakhLocations = ['leh', 'kargil'];
-  if (ladakhLocations.some(location => locationLower.includes(location))) {
-    return true;
-  }
-  
-  // If none of the above conditions are met, it's not in India
+  // If we've made it this far and the coordinates are in India's bounding box,
+  // but we couldn't find any explicit mention of an Indian location,
+  // we'll return false to be safe
   return false;
-};
+}
 
 // Helper function to convert USGS feature to our Earthquake format
 const featureToEarthquake = (feature: EarthquakeFeature): Earthquake => {
@@ -685,35 +628,34 @@ export const fetchShakeAlertData = async (): Promise<ShakeAlertEvent[]> => {
         isPriority: false // Default value
       };
       
-      // Double-check if the event is in India using both the isInIndia function and coordinates
+      // Check if the event is in India using our strict isInIndia function
       const isIndianEarthquake = isInIndia(feature);
       
-      // Additional coordinate check for India's bounding box
-      // India's mainland coordinates: 
-      // North: ~37°N (Kashmir), South: ~8°N (Kanyakumari)
-      // East: ~97°E (Arunachal Pradesh), West: ~68°E (Gujarat)
-      const [longitude, latitude] = feature.geometry.coordinates;
-      const isInIndianBounds = 
-        latitude >= 6 && latitude <= 37 && // Latitude (including Andaman & Nicobar)
-        longitude >= 68 && longitude <= 97; // Longitude
+      // Debug logging
+      console.log(`Earthquake: ${feature.properties.place}`);
+      console.log(`Coordinates: [${feature.geometry.coordinates[0]}, ${feature.geometry.coordinates[1]}]`);
+      console.log(`Is in India: ${isIndianEarthquake}`);
       
-      // Only mark as priority if it's actually in India (both by name and coordinates)
-      if (isIndianEarthquake && isInIndianBounds) {
+      // Only mark as priority if it's actually in India
+      if (isIndianEarthquake) {
         // Mark as priority for India
         shakeAlertEvent.isPriority = true;
         // For Indian events, we want to highlight them more prominently
         if (shakeAlertEvent.alertLevel === 'green') shakeAlertEvent.alertLevel = 'yellow';
         indianEvents.push(shakeAlertEvent);
+        console.log(`Added to India priority: ${feature.properties.place}`);
       } 
       // Check if it's in US West Coast regions
       else {
         const location = feature.properties.place?.toLowerCase() || '';
         if (usWestCoastRegions.some(region => location.includes(region))) {
           otherEvents.push(shakeAlertEvent);
+          console.log(`Added to US West Coast events: ${feature.properties.place}`);
         } else {
           // For all other events, add to otherEvents but ensure they're not marked as priority
           shakeAlertEvent.isPriority = false;
           otherEvents.push(shakeAlertEvent);
+          console.log(`Added to other events: ${feature.properties.place}`);
         }
       }
     });
@@ -810,86 +752,6 @@ export const fetchEarthquakesByCity = async (city: string): Promise<Earthquake[]
 };
 
 export const fetchEarthquakesByZipCode = async (zipCode: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByAddress = async (address: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceName = async (placeName: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceType = async (placeType: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceId = async (placeId: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCode = async (placeCode: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeType = async (placeCodeType: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeValue = async (placeCodeValue: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeSystem = async (placeCodeSystem: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeSystemName = async (placeCodeSystemName: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeSystemVersion = async (placeCodeSystemVersion: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeSystemOID = async (placeCodeSystemOID: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeSystemUID = async (placeCodeSystemUID: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeSystemURI = async (placeCodeSystemURI: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeSystemURL = async (placeCodeSystemURL: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeSystemURN = async (placeCodeSystemURN: string): Promise<Earthquake[]> => {
-  // Implementation would go here
-  return [];
-};
-
-export const fetchEarthquakesByPlaceCodeSystemUUID = async (placeCodeSystemUUID: string): Promise<Earthquake[]> => {
   // Implementation would go here
   return [];
 };
