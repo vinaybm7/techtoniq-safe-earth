@@ -71,12 +71,52 @@ export interface ShakeAlertEvent {
 const isInIndia = (feature: EarthquakeFeature): boolean => {
   let locationLower = feature.properties.place.toLowerCase();
   
+  // First, check if we have coordinates to make a more accurate determination
+  if (feature.geometry && feature.geometry.coordinates) {
+    const [longitude, latitude] = feature.geometry.coordinates;
+    
+    // Define India's bounding box (approximate)
+    // India's mainland coordinates: 
+    // North: ~37°N (Kashmir), South: ~8°N (Kanyakumari)
+    // East: ~97°E (Arunachal Pradesh), West: ~68°E (Gujarat)
+    const isInIndianBounds = 
+      latitude >= 6 && latitude <= 37 && // Latitude (including Andaman & Nicobar)
+      longitude >= 68 && longitude <= 97; // Longitude
+      
+    // If not in India's bounding box, it's definitely not in India
+    if (!isInIndianBounds) {
+      return false;
+    }
+  }
+  
   // Handle relative distance descriptions like "284 km SSE of Alo, Wallis and Futuna"
   // Extract the actual place name after "of" for more accurate location checking
   const distancePattern = /^\d+\s*km\s+[a-z]+\s+of\s+(.+)$/i;
   const match = locationLower.match(distancePattern);
   if (match) {
-    locationLower = match[1].trim();
+    const actualLocation = match[1].trim();
+    
+    // If the actual location explicitly mentions a non-Indian place, return false
+    const nonIndianPlaces = [
+      'wallis', 'futuna', 'fiji', 'tonga', 'samoa', 'vanuatu', 'new caledonia',
+      'solomon', 'marshall', 'caroline', 'mariana', 'palau', 'kiribati', 'nauru',
+      'tuvalu', 'cook islands', 'niue', 'tokelau', 'pitcairn', 'american samoa',
+      'guam', 'wake island', 'johnston atoll', 'midway', 'hawaii', 'alaska',
+      'california', 'oregon', 'washington', 'nevada', 'idaho', 'utah', 'arizona',
+      'new mexico', 'colorado', 'wyoming', 'montana', 'north dakota', 'south dakota',
+      'nebraska', 'kansas', 'oklahoma', 'texas', 'mexico', 'canada', 'indonesia',
+      'china', 'afghanistan', 'burma', 'myanmar', 'tibet', 'pakistan', 'bangladesh',
+      'nepal', 'bhutan', 'sri lanka', 'maldives', 'japan', 'korea', 'vietnam',
+      'thailand', 'cambodia', 'laos', 'malaysia', 'singapore', 'philippines',
+      'taiwan', 'australia', 'new zealand', 'papua new guinea', 'timor', 'brunei',
+      'ashford', 'alo'
+    ];
+    
+    for (const place of nonIndianPlaces) {
+      if (actualLocation.includes(place)) {
+        return false;
+      }
+    }
   }
   
   // First, explicitly exclude locations that clearly aren't in India but might match partial text
@@ -195,7 +235,8 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
       locationLower.includes('north pacific') ||
       locationLower.includes('central pacific') ||
       locationLower.includes('western pacific') ||
-      locationLower.includes('eastern pacific')
+      locationLower.includes('eastern pacific') ||
+      locationLower.includes('ashford')
   {
     return false;
   }
@@ -644,8 +685,20 @@ export const fetchShakeAlertData = async (): Promise<ShakeAlertEvent[]> => {
         isPriority: false // Default value
       };
       
-      // Check if the event is in India using the existing isInIndia function
-      if (isInIndia(feature)) {
+      // Double-check if the event is in India using both the isInIndia function and coordinates
+      const isIndianEarthquake = isInIndia(feature);
+      
+      // Additional coordinate check for India's bounding box
+      // India's mainland coordinates: 
+      // North: ~37°N (Kashmir), South: ~8°N (Kanyakumari)
+      // East: ~97°E (Arunachal Pradesh), West: ~68°E (Gujarat)
+      const [longitude, latitude] = feature.geometry.coordinates;
+      const isInIndianBounds = 
+        latitude >= 6 && latitude <= 37 && // Latitude (including Andaman & Nicobar)
+        longitude >= 68 && longitude <= 97; // Longitude
+      
+      // Only mark as priority if it's actually in India (both by name and coordinates)
+      if (isIndianEarthquake && isInIndianBounds) {
         // Mark as priority for India
         shakeAlertEvent.isPriority = true;
         // For Indian events, we want to highlight them more prominently
@@ -656,6 +709,10 @@ export const fetchShakeAlertData = async (): Promise<ShakeAlertEvent[]> => {
       else {
         const location = feature.properties.place?.toLowerCase() || '';
         if (usWestCoastRegions.some(region => location.includes(region))) {
+          otherEvents.push(shakeAlertEvent);
+        } else {
+          // For all other events, add to otherEvents but ensure they're not marked as priority
+          shakeAlertEvent.isPriority = false;
           otherEvents.push(shakeAlertEvent);
         }
       }
