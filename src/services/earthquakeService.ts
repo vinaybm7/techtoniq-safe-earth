@@ -69,7 +69,15 @@ export interface ShakeAlertEvent {
 
 // Updated function to check if an earthquake is in India based on specific locations
 const isInIndia = (feature: EarthquakeFeature): boolean => {
-  const locationLower = feature.properties.place.toLowerCase();
+  let locationLower = feature.properties.place.toLowerCase();
+  
+  // Handle relative distance descriptions like "284 km SSE of Alo, Wallis and Futuna"
+  // Extract the actual place name after "of" for more accurate location checking
+  const distancePattern = /^\d+\s*km\s+[a-z]+\s+of\s+(.+)$/i;
+  const match = locationLower.match(distancePattern);
+  if (match) {
+    locationLower = match[1].trim();
+  }
   
   // First, explicitly exclude locations that clearly aren't in India but might match partial text
   // This includes US locations, neighboring countries, and oceanic regions
