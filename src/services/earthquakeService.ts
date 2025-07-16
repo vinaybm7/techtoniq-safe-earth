@@ -257,97 +257,103 @@ const INDIAN_CITIES = [
 
 /**
  * Determines if an earthquake is in India based on location name and coordinates.
- * This is a strict check that prioritizes location name filtering over coordinates.
+ * This is an extremely strict check to ensure only Indian locations are marked as priority.
  */
 const isInIndia = (feature: EarthquakeFeature): boolean => {
   // Get the location name and coordinates
   const locationLower = feature.properties.place.toLowerCase();
   const [longitude, latitude] = feature.geometry.coordinates;
 
-  // CRITICAL: Immediate exclusion for Japan - this should never be marked as India priority
-  if (locationLower.includes('japan') || locationLower.includes('japanese')) {
-    console.log(`EXCLUDED: Japan earthquake detected: ${feature.properties.place}`);
-    return false;
-  }
+  // 1. FIRST PASS: Check for explicit non-Indian indicators
+  // List of countries/regions that should NEVER be marked as India
+  const NON_INDIAN_REGIONS = [
+    // Asian countries
+    'japan', 'china', 'nepal', 'bhutan', 'bangladesh', 'pakistan', 'sri lanka', 'maldives',
+    'myanmar', 'thailand', 'vietnam', 'cambodia', 'laos', 'malaysia', 'singapore', 'indonesia',
+    'philippines', 'taiwan', 'south korea', 'north korea', 'mongolia', 'russia',
+    
+    // Other regions that might cause confusion
+    'indian ocean', 'bay of bengal', 'arabian sea', 'andaman sea', 'nicobar',
+    
+    // Additional exclusions based on past issues
+    'japanese', 'tokyo', 'osaka', 'kyoto', 'honshu', 'hokkaido', 'okinawa'
+  ];
 
-  // FIRST: Strict exclusion checks - if any of these match, it's definitely NOT in India
-  // Handle relative distance descriptions like "284 km SSE of Alo, Wallis and Futuna"
-  const distancePattern = /^\d+\s*km\s+[a-z]+\s+of\s+(.+)$/i;
-  const match = locationLower.match(distancePattern);
-
-  if (match) {
-    const actualLocation = match[1].trim().toLowerCase();
-
-    // Check if the actual location is in any of our non-Indian countries or places list
-    for (const country of NON_INDIAN_COUNTRIES) {
-      if (actualLocation.includes(country)) {
-        console.log(`EXCLUDED: Distance-based location contains non-Indian country '${country}': ${feature.properties.place}`);
-        return false;
-      }
-    }
-
-    for (const place of NON_INDIAN_PLACES) {
-      if (actualLocation.includes(place)) {
-        console.log(`EXCLUDED: Distance-based location contains non-Indian place '${place}': ${feature.properties.place}`);
-        return false;
-      }
-    }
-  }
-
-  // Check if the location explicitly mentions any non-Indian country
-  for (const country of NON_INDIAN_COUNTRIES) {
-    if (locationLower.includes(country)) {
-      console.log(`EXCLUDED: Contains non-Indian country '${country}': ${feature.properties.place}`);
+  // Check for any non-Indian region in the location string
+  for (const region of NON_INDIAN_REGIONS) {
+    if (locationLower.includes(region)) {
+      console.log(`EXCLUDED: Contains non-Indian region '${region}': ${feature.properties.place}`);
       return false;
     }
   }
 
-  // Check if the location explicitly mentions any non-Indian place
-  for (const place of NON_INDIAN_PLACES) {
-    if (locationLower.includes(place)) {
-      console.log(`EXCLUDED: Contains non-Indian place '${place}': ${feature.properties.place}`);
-      return false;
+  // 2. Check for relative distance patterns (e.g., "100 km NE of City, Country")
+  const distancePatterns = [
+    /^\d+\s*km\s+[a-z]+\s+of\s+(.+)$/i,  // "100 km NE of City, Country"
+    /near\s+the\s+(north|south|east|west|northeast|northwest|southeast|southwest)\s+coast\s+of\s+(.+)/i,  // "Near the east coast of Japan"
+    /\d+\s*km\s*(n|s|e|w|ne|nw|se|sw|north|south|east|west|northeast|northwest|southeast|southwest)\s+of\s+(.+)/i  // "100 km NE of City"
+  ];
+
+  for (const pattern of distancePatterns) {
+    const match = locationLower.match(pattern);
+    if (match) {
+      const actualLocation = (match[2] || match[1] || '').trim().toLowerCase();
+      if (actualLocation) {
+        // Check if the actual location is in our non-Indian regions list
+        for (const region of NON_INDIAN_REGIONS) {
+          if (actualLocation.includes(region)) {
+            console.log(`EXCLUDED: Distance-based location contains non-Indian region '${region}': ${feature.properties.place}`);
+            return false;
+          }
+        }
+      }
     }
   }
 
-  // SECOND: Check if coordinates are within India's bounding box
+  // 3. Check coordinates against India's bounding box
   const isInIndianBounds =
     latitude >= INDIA_LAT_MIN &&
     latitude <= INDIA_LAT_MAX &&
     longitude >= INDIA_LON_MIN &&
     longitude <= INDIA_LON_MAX;
 
-  // If coordinates are not in Indian bounds, it's definitely not in India
   if (!isInIndianBounds) {
     console.log(`EXCLUDED: Coordinates outside Indian bounds: ${feature.properties.place} [${longitude}, ${latitude}]`);
     return false;
   }
 
-  // THIRD: If coordinates are in bounds, check for positive Indian indicators
-  // Check if the location explicitly mentions India
-  if (locationLower.includes('india')) {
-    console.log(`INCLUDED: Contains 'india': ${feature.properties.place}`);
+  // 4. POSITIVE INDICATORS - Only mark as India if we have strong evidence
+  
+  // Check for 'India' in the location
+  if (locationLower.includes('india') || locationLower.includes('indian')) {
+    console.log(`INCLUDED: Contains 'India' reference: ${feature.properties.place}`);
     return true;
   }
 
-  // Check if the location mentions any Indian state
+  // Check for Indian states
   for (const state of INDIAN_STATES) {
-    if (locationLower.includes(state)) {
+    // Use word boundaries to avoid partial matches
+    const stateRegex = new RegExp(`\\b${state}\\b`, 'i');
+    if (stateRegex.test(locationLower)) {
       console.log(`INCLUDED: Contains Indian state '${state}': ${feature.properties.place}`);
       return true;
     }
   }
 
-  // Check if the location mentions any Indian city
+  // Check for Indian cities
   for (const city of INDIAN_CITIES) {
-    if (locationLower.includes(city)) {
+    // Use word boundaries to avoid partial matches
+    const cityRegex = new RegExp(`\\b${city}\\b`, 'i');
+    if (cityRegex.test(locationLower)) {
       console.log(`INCLUDED: Contains Indian city '${city}': ${feature.properties.place}`);
       return true;
     }
   }
 
-  // FOURTH: Final safety check - if coordinates are in Indian bounds but no explicit Indian references found,
-  // we need to be very conservative and return false to avoid false positives
+  // 5. FINAL SAFETY CHECK
+  // If we get here, the coordinates are in India but we don't have strong evidence
+  // from the location name. Be conservative and exclude to avoid false positives.
+  console.log(`EXCLUDED: Location in Indian bounds but no strong Indian indicators: ${feature.properties.place}`);
   console.log(`EXCLUDED: Coordinates in bounds but no explicit Indian references: ${feature.properties.place}`);
   return false;
 };
@@ -514,94 +520,82 @@ interface NCSEarthquakeResponse {
 /**
  * Fetches earthquake data from National Center for Seismology (NCS) API
  * This API provides real-time earthquake data for India
+ * All events from this source are considered priority as they are India-specific
  */
 export const fetchNCSEarthquakeData = async (): Promise<ShakeAlertEvent[]> => {
   try {
     // NCS API endpoint for recent earthquakes in India
     // Note: This is a simulated endpoint as the actual NCS API might have a different structure
     const response = await fetch(
-      'https://api.ncs.gov.in/earthquakes/v1/recent'
+      'https://api.ncs.gov.in/earthquakes/v1/recent',
+      {
+        // Add a timeout to prevent hanging
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      }
     );
     
     if (!response.ok) {
-      console.error('Failed to fetch NCS earthquake data, falling back to USGS data');
+      console.warn('NCS API not available, will use USGS data only');
       return [];
     }
     
     const data: NCSEarthquakeResponse = await response.json();
     
-    // Filter for events actually in India before mapping using the same logic as isInIndia
-    const indianNCSFeatures = data.features.filter(feature => {
-        // Create a mock EarthquakeFeature to use with isInIndia function
-        const mockFeature: EarthquakeFeature = {
-            id: feature.id,
-            properties: {
-                place: feature.properties.place,
-                mag: feature.properties.mag,
-                time: new Date(feature.properties.time).getTime(),
-                updated: 0,
-                url: '',
-                detail: '',
-                status: '',
-                depth: feature.properties.depth,
-                felt: null,
-                cdi: null,
-                mmi: null,
-                alert: null,
-                tsunami: 0,
-                sig: 0,
-                code: '',
-                ids: '',
-                sources: '',
-                types: ''
-            },
-            geometry: {
-                coordinates: [feature.properties.longitude, feature.properties.latitude, feature.properties.depth]
-            }
-        };
-        
-        return isInIndia(mockFeature);
-    });
-
-    // Process NCS earthquake data
-    return indianNCSFeatures.map(feature => {
-      // Determine alert level based on magnitude
-      let alertLevel: ShakeAlertEvent['alertLevel'] = null;
-      if (feature.properties.mag >= 5.0) alertLevel = 'red';
-      else if (feature.properties.mag >= 4.0) alertLevel = 'orange';
-      else if (feature.properties.mag >= 3.0) alertLevel = 'yellow';
-      else alertLevel = 'green';
+    // Process NCS earthquake data - all these are considered Indian events
+    const processedEvents = data.features.map(feature => {
+      const magnitude = feature.properties.mag || 0;
+      const location = feature.properties.place || 'India Region';
+      const time = new Date(feature.properties.time);
       
-      // Determine expected shaking based on magnitude
-      let expectedShaking: ShakeAlertEvent['expectedShaking'] = null;
-      if (feature.properties.mag >= 7.0) expectedShaking = 'violent';
-      else if (feature.properties.mag >= 6.0) expectedShaking = 'very strong';
-      else if (feature.properties.mag >= 5.0) expectedShaking = 'strong';
-      else if (feature.properties.mag >= 4.0) expectedShaking = 'moderate';
-      else if (feature.properties.mag >= 3.0) expectedShaking = 'light';
-      else expectedShaking = 'weak';
+      // Ensure we have valid coordinates
+      const longitude = Number(feature.properties.longitude);
+      const latitude = Number(feature.properties.latitude);
+      const coordinates: [number, number] = [longitude, latitude];
+      
+      // Create a minimal event for the seconds calculation
+      const minimalEvent: ShakeAlertEvent = {
+        id: '',
+        title: '',
+        magnitude: 0,
+        location: '',
+        time: time.toISOString(),
+        coordinates,
+        url: '',
+        alertLevel: 'green',
+        expectedShaking: 'weak',
+        isPriority: false
+      };
       
       // Create ShakeAlert event from NCS data
       return {
-        id: feature.id,
-        title: `M${feature.properties.mag.toFixed(1)} - ${feature.properties.place}`,
-        magnitude: feature.properties.mag,
-        location: feature.properties.place,
-        time: new Date(feature.properties.time).toLocaleString(),
-        coordinates: [feature.properties.longitude, feature.properties.latitude],
-        url: `https://seismo.gov.in/earthquake/${feature.id}`, // Simulated URL
-        alertLevel,
-        expectedShaking,
-        secondsUntilShaking: Math.floor(Math.random() * 30) + 5, // Simulated value
+        id: `ncs-${feature.id}`,
+        title: `M${magnitude.toFixed(1)} - ${location}`,
+        magnitude,
+        location,
+        time: time.toISOString(),
+        coordinates,
+        url: `https://seismo.gov.in/earthquake/${feature.id}`,
+        alertLevel: getAlertLevel(magnitude),
+        expectedShaking: getExpectedShaking(magnitude),
+        secondsUntilShaking: calculateSecondsUntilShaking(minimalEvent),
         isPriority: true // All NCS events are India priority
       };
     });
+    
+    // Filter out any events that somehow don't have valid coordinates
+    return processedEvents.filter(event => 
+      event.coordinates[0] !== 0 && 
+      event.coordinates[1] !== 0 &&
+      !isNaN(event.coordinates[0]) && 
+      !isNaN(event.coordinates[1])
+    );
+    
   } catch (error) {
-    // Improved error logging for better diagnostics
+    // Log the error but don't fail the entire request
     if (error instanceof Error) {
-      console.error('Error fetching NCS earthquake data:', {
+      console.warn('Error fetching NCS earthquake data (non-fatal):', {
         message: error.message,
-        stack: error.stack,
+        name: error.name,
         errorObj: error
       });
     } else {
@@ -613,126 +607,130 @@ export const fetchNCSEarthquakeData = async (): Promise<ShakeAlertEvent[]> => {
 
 /**
  * Fetches ShakeAlert data for earthquake early warnings
- * Combines data from National Center for Seismology (NCS) for India
- * and USGS API for global coverage
+ * Only marks Indian locations as priority
  */
 export const fetchShakeAlertData = async (): Promise<ShakeAlertEvent[]> => {
   try {
-    // Fetch Indian earthquake data from NCS
+    // 1. First fetch Indian earthquake data from NCS
     const ncsEvents = await fetchNCSEarthquakeData();
     
-    // USGS Earthquake API for ShakeAlert-eligible events (including India as priority)
-    const response = await fetch(
-      'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson'
-    );
-    
+    // 2. Then fetch global data from USGS
+    const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson');
     if (!response.ok) {
-      throw new Error('Failed to fetch ShakeAlert data');
+      throw new Error('Failed to fetch USGS earthquake data');
     }
     
     const data = await response.json();
     
-    // Process all features to identify Indian and US West Coast events
-    const indianEvents: ShakeAlertEvent[] = [];
-    const otherEvents: ShakeAlertEvent[] = [];
+    // 3. Process USGS data
+    const usgsEvents: ShakeAlertEvent[] = [];
     
-    // Filter regions for ShakeAlert events
-    const usWestCoastRegions = [
-      'california', 'oregon', 'washington', 'nevada', 'idaho',
-      'ca', 'or', 'wa', 'nv', 'id'
-    ];
-    
-    // Process each earthquake feature
-    data.features.forEach((feature: any) => {
-      // Create the basic ShakeAlert event object
-      // Determine alert level based on magnitude
-      let alertLevel: ShakeAlertEvent['alertLevel'] = null;
-      if (feature.properties.mag >= 5.0) alertLevel = 'red';
-      else if (feature.properties.mag >= 4.0) alertLevel = 'orange';
-      else if (feature.properties.mag >= 3.0) alertLevel = 'yellow';
-      else alertLevel = 'green';
+    for (const feature of data.features) {
+      // Skip any features that don't have required data
+      if (!feature.id || !feature.properties || !feature.geometry) continue;
       
-      // Determine expected shaking based on magnitude
-      let expectedShaking: ShakeAlertEvent['expectedShaking'] = null;
-      if (feature.properties.mag >= 7.0) expectedShaking = 'violent';
-      else if (feature.properties.mag >= 6.0) expectedShaking = 'very strong';
-      else if (feature.properties.mag >= 5.0) expectedShaking = 'strong';
-      else if (feature.properties.mag >= 4.0) expectedShaking = 'moderate';
-      else if (feature.properties.mag >= 3.0) expectedShaking = 'light';
-      else expectedShaking = 'weak';
-      
-      const shakeAlertEvent: ShakeAlertEvent = {
-        id: feature.id,
-        title: feature.properties.title,
-        magnitude: feature.properties.mag,
-        location: feature.properties.place,
-        time: new Date(feature.properties.time).toLocaleString(),
-        coordinates: [feature.geometry.coordinates[0], feature.geometry.coordinates[1]],
-        url: feature.properties.url,
-        alertLevel,
-        expectedShaking,
-        // In a real implementation, this would come from the ShakeAlert system
-        secondsUntilShaking: Math.floor(Math.random() * 30) + 5, // Simulated value between 5-35 seconds
-        isPriority: false // Default value
+      // Create basic event
+      const event: ShakeAlertEvent = {
+        id: `usgs-${feature.id}`,
+        title: feature.properties.title || 'Earthquake',
+        magnitude: feature.properties.mag || 0,
+        location: feature.properties.place || 'Unknown location',
+        time: new Date(feature.properties.time).toISOString(),
+        coordinates: [
+          feature.geometry.coordinates[0], 
+          feature.geometry.coordinates[1]
+        ],
+        url: feature.properties.url || 'https://earthquake.usgs.gov',
+        alertLevel: getAlertLevel(feature.properties.mag),
+        expectedShaking: getExpectedShaking(feature.properties.mag),
+        secondsUntilShaking: 0, // Will be set based on location
+        isPriority: false // Default to false, will be set for Indian events
       };
       
-      // Check if the event is in India using our strict isInIndia function
-      const isIndianEarthquake = isInIndia(feature);
+      // Check if this is an Indian earthquake
+      const isIndian = isInIndia(feature);
+      event.isPriority = isIndian;
       
-      // Only mark as priority if it's actually in India
-      if (isIndianEarthquake) {
-        // Mark as priority for India
-        shakeAlertEvent.isPriority = true;
-        // For Indian events, we want to highlight them more prominently
-        if (shakeAlertEvent.alertLevel === 'green') shakeAlertEvent.alertLevel = 'yellow';
-        indianEvents.push(shakeAlertEvent);
-      } 
-      // Check if it's in US West Coast regions
-      else {
-        const location = feature.properties.place?.toLowerCase() || '';
-        if (usWestCoastRegions.some(region => location.includes(region))) {
-          otherEvents.push(shakeAlertEvent);
-        } else {
-          // For all other events, add to otherEvents but ensure they're not marked as priority
-          shakeAlertEvent.isPriority = false;
-          otherEvents.push(shakeAlertEvent);
-        }
+      // For Indian events, ensure they have a minimum alert level of yellow
+      if (isIndian && event.alertLevel === 'green') {
+        event.alertLevel = 'yellow';
       }
-    });
-    
-    // Combine all events with NCS events first (highest priority), then USGS Indian events, then other events
-    const combinedEvents = [...ncsEvents, ...indianEvents, ...otherEvents];
-    
-    // Remove duplicates (NCS and USGS might report the same earthquake)
-    // Using a simple approach based on location and time proximity
-    const uniqueEvents: ShakeAlertEvent[] = [];
-    const seenLocations = new Set<string>();
-    
-    combinedEvents.forEach(event => {
-      // Create a key based on location and approximate time (rounded to nearest hour)
-      const eventTime = new Date(event.time);
-      const timeKey = Math.floor(eventTime.getTime() / (1000 * 60 * 60)); // Round to nearest hour
-      const locationKey = event.location.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const key = `${locationKey}-${timeKey}-${Math.floor(event.magnitude)}`;
       
-      if (!seenLocations.has(key)) {
-        seenLocations.add(key);
-        uniqueEvents.push(event);
-      }
-    });
+      // Calculate seconds until shaking (simplified)
+      event.secondsUntilShaking = calculateSecondsUntilShaking(event);
+      
+      usgsEvents.push(event);
+    }
     
-    // Sort by time (newest first) within each priority group
+    // 4. Combine NCS and USGS events, with NCS first
+    const allEvents = [...ncsEvents, ...usgsEvents];
+    
+    // 5. Remove duplicates based on location and time
+    const uniqueEvents = removeDuplicates(allEvents);
+    
+    // 6. Sort by priority (Indian first) and then by time (newest first)
     return uniqueEvents.sort((a, b) => {
-      // First sort by priority (Indian events first)
+      // Indian events first
       if (a.isPriority && !b.isPriority) return -1;
       if (!a.isPriority && b.isPriority) return 1;
+      
       // Then sort by time (newest first)
       return new Date(b.time).getTime() - new Date(a.time).getTime();
     });
+    
   } catch (error) {
-    console.error('Error fetching ShakeAlert data:', error);
-    throw error;
+    console.error('Error in fetchShakeAlertData:', error);
+    // Return empty array on error to prevent breaking the UI
+    return [];
   }
+};
+
+// Helper function to determine alert level based on magnitude
+const getAlertLevel = (magnitude: number): ShakeAlertEvent['alertLevel'] => {
+  if (magnitude >= 5.0) return 'red';
+  if (magnitude >= 4.0) return 'orange';
+  if (magnitude >= 3.0) return 'yellow';
+  return 'green';
+};
+
+// Helper function to determine expected shaking
+const getExpectedShaking = (magnitude: number): ShakeAlertEvent['expectedShaking'] => {
+  if (magnitude >= 7.0) return 'violent';
+  if (magnitude >= 6.0) return 'very strong';
+  if (magnitude >= 5.0) return 'strong';
+  if (magnitude >= 4.0) return 'moderate';
+  if (magnitude >= 3.0) return 'light';
+  return 'weak';
+};
+
+// Helper function to calculate seconds until shaking (simplified)
+const calculateSecondsUntilShaking = (event: ShakeAlertEvent): number => {
+  // In a real implementation, this would use the user's location
+  // and the earthquake's location to calculate actual time
+  return Math.floor(Math.random() * 30) + 5; // 5-35 seconds
+};
+
+// Helper function to remove duplicate events
+const removeDuplicates = (events: ShakeAlertEvent[]): ShakeAlertEvent[] => {
+  const seen = new Set<string>();
+  const unique: ShakeAlertEvent[] = [];
+  
+  for (const event of events) {
+    // Create a unique key based on location, time, and magnitude
+    const time = new Date(event.time);
+    const timeKey = Math.floor(time.getTime() / (1000 * 60 * 15)); // 15-minute windows
+    const locationKey = event.coordinates
+      .map(coord => coord.toFixed(2))
+      .join(',');
+    const key = `${locationKey}-${timeKey}-${event.magnitude.toFixed(1)}`;
+    
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(event);
+    }
+  }
+  
+  return unique;
 };
 
 // Placeholder functions for additional earthquake data fetching methods
