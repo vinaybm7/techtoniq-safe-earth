@@ -257,15 +257,20 @@ const INDIAN_CITIES = [
 
 /**
  * Determines if an earthquake is in India based on location name and coordinates.
- * This is a strict check that requires both the location name to be in India
- * and the coordinates to be within India's bounding box.
+ * This is a strict check that prioritizes location name filtering over coordinates.
  */
 const isInIndia = (feature: EarthquakeFeature): boolean => {
   // Get the location name and coordinates
   const locationLower = feature.properties.place.toLowerCase();
   const [longitude, latitude] = feature.geometry.coordinates;
 
-  // First, check if the location explicitly mentions a non-Indian place
+  // CRITICAL: Immediate exclusion for Japan - this should never be marked as India priority
+  if (locationLower.includes('japan') || locationLower.includes('japanese')) {
+    console.log(`EXCLUDED: Japan earthquake detected: ${feature.properties.place}`);
+    return false;
+  }
+
+  // FIRST: Strict exclusion checks - if any of these match, it's definitely NOT in India
   // Handle relative distance descriptions like "284 km SSE of Alo, Wallis and Futuna"
   const distancePattern = /^\d+\s*km\s+[a-z]+\s+of\s+(.+)$/i;
   const match = locationLower.match(distancePattern);
@@ -276,51 +281,59 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
     // Check if the actual location is in any of our non-Indian countries or places list
     for (const country of NON_INDIAN_COUNTRIES) {
       if (actualLocation.includes(country)) {
+        console.log(`EXCLUDED: Distance-based location contains non-Indian country '${country}': ${feature.properties.place}`);
         return false;
       }
     }
 
     for (const place of NON_INDIAN_PLACES) {
       if (actualLocation.includes(place)) {
+        console.log(`EXCLUDED: Distance-based location contains non-Indian place '${place}': ${feature.properties.place}`);
         return false;
       }
-    }
-  }
-
-  // Check if the location explicitly mentions any non-Indian place
-  for (const place of NON_INDIAN_PLACES) {
-    if (locationLower.includes(place)) {
-      return false;
     }
   }
 
   // Check if the location explicitly mentions any non-Indian country
   for (const country of NON_INDIAN_COUNTRIES) {
     if (locationLower.includes(country)) {
+      console.log(`EXCLUDED: Contains non-Indian country '${country}': ${feature.properties.place}`);
       return false;
     }
   }
 
-  // Check if the coordinates are within India's bounding box
+  // Check if the location explicitly mentions any non-Indian place
+  for (const place of NON_INDIAN_PLACES) {
+    if (locationLower.includes(place)) {
+      console.log(`EXCLUDED: Contains non-Indian place '${place}': ${feature.properties.place}`);
+      return false;
+    }
+  }
+
+  // SECOND: Check if coordinates are within India's bounding box
   const isInIndianBounds =
     latitude >= INDIA_LAT_MIN &&
     latitude <= INDIA_LAT_MAX &&
     longitude >= INDIA_LON_MIN &&
     longitude <= INDIA_LON_MAX;
 
-  // If the coordinates are not in the bounding box, it's not in India.
+  // If coordinates are not in Indian bounds, it's definitely not in India
   if (!isInIndianBounds) {
+    console.log(`EXCLUDED: Coordinates outside Indian bounds: ${feature.properties.place} [${longitude}, ${latitude}]`);
     return false;
   }
 
-  // If we've made it this far, check if the location explicitly mentions India
+  // THIRD: If coordinates are in bounds, check for positive Indian indicators
+  // Check if the location explicitly mentions India
   if (locationLower.includes('india')) {
+    console.log(`INCLUDED: Contains 'india': ${feature.properties.place}`);
     return true;
   }
 
   // Check if the location mentions any Indian state
   for (const state of INDIAN_STATES) {
     if (locationLower.includes(state)) {
+      console.log(`INCLUDED: Contains Indian state '${state}': ${feature.properties.place}`);
       return true;
     }
   }
@@ -328,13 +341,14 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
   // Check if the location mentions any Indian city
   for (const city of INDIAN_CITIES) {
     if (locationLower.includes(city)) {
+      console.log(`INCLUDED: Contains Indian city '${city}': ${feature.properties.place}`);
       return true;
     }
   }
 
-  // If we've made it this far and the coordinates are in India's bounding box,
-  // but we couldn't find any explicit mention of an Indian location,
-  // we'll return false to be safe.
+  // FOURTH: Final safety check - if coordinates are in Indian bounds but no explicit Indian references found,
+  // we need to be very conservative and return false to avoid false positives
+  console.log(`EXCLUDED: Coordinates in bounds but no explicit Indian references: ${feature.properties.place}`);
   return false;
 };
 
@@ -516,30 +530,37 @@ export const fetchNCSEarthquakeData = async (): Promise<ShakeAlertEvent[]> => {
     
     const data: NCSEarthquakeResponse = await response.json();
     
-    // Filter for events actually in India before mapping
+    // Filter for events actually in India before mapping using the same logic as isInIndia
     const indianNCSFeatures = data.features.filter(feature => {
-        const locationLower = feature.properties.place.toLowerCase();
-        const { latitude, longitude } = feature.properties;
-
-        // Run the negative checks first to exclude non-Indian locations
-        if (NON_INDIAN_COUNTRIES.some(c => locationLower.includes(c))) return false;
-        if (NON_INDIAN_PLACES.some(p => locationLower.includes(p))) return false;
+        // Create a mock EarthquakeFeature to use with isInIndia function
+        const mockFeature: EarthquakeFeature = {
+            id: feature.id,
+            properties: {
+                place: feature.properties.place,
+                mag: feature.properties.mag,
+                time: new Date(feature.properties.time).getTime(),
+                updated: 0,
+                url: '',
+                detail: '',
+                status: '',
+                depth: feature.properties.depth,
+                felt: null,
+                cdi: null,
+                mmi: null,
+                alert: null,
+                tsunami: 0,
+                sig: 0,
+                code: '',
+                ids: '',
+                sources: '',
+                types: ''
+            },
+            geometry: {
+                coordinates: [feature.properties.longitude, feature.properties.latitude, feature.properties.depth]
+            }
+        };
         
-        // Then run positive checks
-        const isInIndianBounds =
-            latitude >= INDIA_LAT_MIN &&
-            latitude <= INDIA_LAT_MAX &&
-            longitude >= INDIA_LON_MIN &&
-            longitude <= INDIA_LON_MAX;
-        
-        if (isInIndianBounds) return true;
-
-        if (locationLower.includes('india') || INDIAN_STATES.some(s => locationLower.includes(s)) || INDIAN_CITIES.some(c => locationLower.includes(c))) {
-            return true;
-        }
-
-        // If it fails all checks, filter it out
-        return false;
+        return isInIndia(mockFeature);
     });
 
     // Process NCS earthquake data
@@ -658,11 +679,6 @@ export const fetchShakeAlertData = async (): Promise<ShakeAlertEvent[]> => {
       // Check if the event is in India using our strict isInIndia function
       const isIndianEarthquake = isInIndia(feature);
       
-      // Debug logging
-      console.log(`Earthquake: ${feature.properties.place}`);
-      console.log(`Coordinates: [${feature.geometry.coordinates[0]}, ${feature.geometry.coordinates[1]}]`);
-      console.log(`Is in India: ${isIndianEarthquake}`);
-      
       // Only mark as priority if it's actually in India
       if (isIndianEarthquake) {
         // Mark as priority for India
@@ -670,19 +686,16 @@ export const fetchShakeAlertData = async (): Promise<ShakeAlertEvent[]> => {
         // For Indian events, we want to highlight them more prominently
         if (shakeAlertEvent.alertLevel === 'green') shakeAlertEvent.alertLevel = 'yellow';
         indianEvents.push(shakeAlertEvent);
-        console.log(`Added to India priority: ${feature.properties.place}`);
       } 
       // Check if it's in US West Coast regions
       else {
         const location = feature.properties.place?.toLowerCase() || '';
         if (usWestCoastRegions.some(region => location.includes(region))) {
           otherEvents.push(shakeAlertEvent);
-          console.log(`Added to US West Coast events: ${feature.properties.place}`);
         } else {
           // For all other events, add to otherEvents but ensure they're not marked as priority
           shakeAlertEvent.isPriority = false;
           otherEvents.push(shakeAlertEvent);
-          console.log(`Added to other events: ${feature.properties.place}`);
         }
       }
     });
