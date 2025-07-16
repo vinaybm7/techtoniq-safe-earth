@@ -722,13 +722,61 @@ const AIEarthquakePrediction = ({
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Gemini AI Tag/Badge */}
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Google_Gemini_logo.svg/32px-Google_Gemini_logo.svg.png" alt="Gemini AI" className="h-4 w-4 mr-1" style={{display: 'inline'}} />
-          Gemini AI Powered Prediction
-        </span>
+    <div className={`space-y-6 ${className}`}>
+      {/* Enhanced Gemini AI Header Section */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border border-blue-200/50 p-6">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
+        <div className="relative">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 border border-blue-200/50 shadow-sm">
+                <img 
+                  src="/gemini-logo.png" 
+                  alt="Google Gemini" 
+                  className="h-6 w-6 object-contain" 
+                />
+                <span className="text-sm font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Gemini AI Powered
+                </span>
+              </div>
+              <div className="hidden sm:flex items-center gap-1 text-xs text-techtoniq-earth/70">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Live Analysis</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-techtoniq-earth/60 mb-1">API Calls Today</div>
+              <div className="text-sm font-medium text-techtoniq-earth">
+                {apiCallCount}/{API_CALL_LIMIT_PER_DAY}
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <h2 className="text-xl font-bold text-techtoniq-earth-dark">
+              AI-Powered Earthquake Prediction
+            </h2>
+            <p className="text-sm text-techtoniq-earth/80 leading-relaxed">
+              Advanced seismic pattern analysis powered by Google Gemini AI to predict potential earthquake events. 
+              Get personalized risk assessments and AI-generated safety recommendations based on real-time data.
+            </p>
+            
+            <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex items-center gap-1 text-xs bg-white/60 backdrop-blur-sm rounded-full px-3 py-1 border border-blue-200/30">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                <span className="text-techtoniq-earth/70">Real-time Analysis</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs bg-white/60 backdrop-blur-sm rounded-full px-3 py-1 border border-purple-200/30">
+                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                <span className="text-techtoniq-earth/70">Pattern Recognition</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs bg-white/60 backdrop-blur-sm rounded-full px-3 py-1 border border-pink-200/30">
+                <div className="w-1.5 h-1.5 bg-pink-500 rounded-full"></div>
+                <span className="text-techtoniq-earth/70">Risk Assessment</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       {apiLimitWarning && (
         <Alert className="bg-amber-50 border-amber-200">

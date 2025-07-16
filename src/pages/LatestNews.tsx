@@ -75,10 +75,46 @@ const LatestNews = () => {
       const handleProgress = (progressArticles: any[]) => {
         const newsOnly = progressArticles.filter(article => article.type === 'news');
         const seismicOnly = progressArticles.filter(article => article.type === 'seismic');
-        // Strict filtering for India section - only articles with country explicitly set to 'India'
-        const indiaArticles = progressArticles.filter(article => 
-          article.location?.country === 'India'
-        );
+        
+        // Enhanced India filtering - check both country and location text
+        const indiaArticles = progressArticles.filter(article => {
+          // Check if country is explicitly set to India
+          if (article.location?.country === 'India') return true;
+          
+          // Check if the location text contains Indian states/cities
+          const locationText = (article.location?.region || '').toLowerCase();
+          const titleText = (article.title || '').toLowerCase();
+          const descriptionText = (article.description || '').toLowerCase();
+          
+          // List of Indian states and major cities
+          const indianLocations = [
+            // States
+            'andhra pradesh', 'arunachal pradesh', 'assam', 'bihar', 'chhattisgarh',
+            'goa', 'gujarat', 'haryana', 'himachal pradesh', 'jharkhand',
+            'karnataka', 'kerala', 'madhya pradesh', 'maharashtra', 'manipur',
+            'meghalaya', 'mizoram', 'nagaland', 'odisha', 'punjab', 'rajasthan',
+            'sikkim', 'tamil nadu', 'telangana', 'tripura', 'uttar pradesh',
+            'uttarakhand', 'west bengal',
+            // Union Territories
+            'andaman and nicobar', 'chandigarh', 'dadra and nagar haveli and daman and diu',
+            'delhi', 'jammu and kashmir', 'ladakh', 'lakshadweep', 'puducherry',
+            // Major cities
+            'mumbai', 'delhi', 'bangalore', 'hyderabad', 'ahmedabad', 'chennai',
+            'kolkata', 'surat', 'pune', 'jaipur', 'lucknow', 'kanpur', 'nagpur',
+            'indore', 'thane', 'bhopal', 'visakhapatnam', 'patna', 'vadodara',
+            'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut',
+            'rajkot', 'kalyan', 'vasai', 'vijayawada', 'jodhpur', 'madurai',
+            'raipur', 'kota', 'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon',
+            'noida', 'greater noida'
+          ];
+          
+          // Check if any Indian location is mentioned in the article
+          return indianLocations.some(location => 
+            locationText.includes(location) || 
+            titleText.includes(location) || 
+            descriptionText.includes(location)
+          );
+        });
         
         setNews(progressArticles);
         setNewsArticles(newsOnly);
@@ -91,30 +127,151 @@ const LatestNews = () => {
       // Fetch with progressive loading
       const allArticles = await fetchEarthquakeNews(handleProgress);
       
-      // Final update with complete data
-      const newsOnly = allArticles.filter(article => article.type === 'news');
-      const seismicOnly = allArticles.filter(article => article.type === 'seismic');
-      // Strict filtering for India section - only articles with country explicitly set to 'India'
-      const indiaArticles = allArticles.filter(article => 
-        article.location?.country === 'India'
+      // Enhanced and strict India filtering
+      const indiaArticles = allArticles.filter(article => {
+        // Get all relevant text fields (convert to lowercase once)
+        const locationText = (article.location?.region || '').toLowerCase();
+        const titleText = (article.title || '').toLowerCase();
+        const descriptionText = (article.description || '').toLowerCase();
+        const contentText = (article.content || '').toLowerCase();
+        
+        // List of Indian states, UTs, and major cities
+        const indianLocations = [
+          // States
+          'andhra pradesh', 'arunachal pradesh', 'assam', 'bihar', 'chhattisgarh',
+          'goa', 'gujarat', 'haryana', 'himachal pradesh', 'jharkhand',
+          'karnataka', 'kerala', 'madhya pradesh', 'maharashtra', 'manipur',
+          'meghalaya', 'mizoram', 'nagaland', 'odisha', 'punjab', 'rajasthan',
+          'sikkim', 'tamil nadu', 'telangana', 'tripura', 'uttar pradesh',
+          'uttarakhand', 'west bengal',
+          // Union Territories
+          'andaman and nicobar', 'chandigarh', 'dadra and nagar haveli and daman and diu',
+          'delhi', 'jammu and kashmir', 'ladakh', 'lakshadweep', 'puducherry'
+        ];
+
+        // List of major Indian cities (with word boundaries to avoid false positives)
+        const indianCities = [
+          'mumbai', 'delhi', 'bangalore', 'hyderabad', 'ahmedabad', 'chennai',
+          'kolkata', 'surat', 'pune', 'jaipur', 'lucknow', 'kanpur', 'nagpur',
+          'indore', 'thane', 'bhopal', 'visakhapatnam', 'patna', 'vadodara',
+          'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut',
+          'rajkot', 'kalyan', 'vasai', 'vijayawada', 'jodhpur', 'madurai',
+          'raipur', 'kota', 'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon',
+          'noida', 'greater noida'
+        ];
+
+        // List of non-Indian countries/regions that might cause false positives
+        const nonIndianRegions = [
+          'nepal', 'bangladesh', 'pakistan', 'china', 'sri lanka', 'myanmar', 'bhutan',
+          'afghanistan', 'tibet', 'maldives', 'thailand', 'indonesia', 'malaysia',
+          'united states', 'usa', 'us', 'america', 'uk', 'united kingdom', 'england',
+          'australia', 'canada', 'japan', 'russia', 'france', 'germany', 'italy',
+          'spain', 'brazil', 'mexico', 'south africa', 'nigeria', 'egypt', 'kenya',
+          'saudi arabia', 'uae', 'dubai', 'qatar', 'iran', 'iraq', 'israel', 'turkey'
+        ];
+
+        // 1. Check if country is explicitly set to India
+        if (article.location?.country?.toLowerCase() === 'india') {
+          // Additional verification to ensure it's not a false positive
+          const hasNonIndianMentions = nonIndianRegions.some(region => 
+            locationText.includes(region) || 
+            titleText.includes(region) ||
+            descriptionText.includes(region) ||
+            contentText.includes(region)
+          );
+          
+          if (!hasNonIndianMentions) {
+            return true;
+          }
+        }
+
+        // 2. Check for non-Indian regions in the content (exclude if found)
+        const hasNonIndianMentions = nonIndianRegions.some(region => 
+          locationText.includes(region) || 
+          titleText.includes(region) ||
+          descriptionText.includes(region) ||
+          contentText.includes(region)
+        );
+        
+        if (hasNonIndianMentions) {
+          return false;
+        }
+
+        // 3. Check for Indian states/UTs in location text
+        const hasIndianState = indianLocations.some(state => 
+          locationText.includes(state) ||
+          titleText.includes(state) ||
+          descriptionText.includes(state) ||
+          contentText.includes(state)
+        );
+
+        // 4. Check for Indian cities with word boundaries
+        const hasIndianCity = indianCities.some(city => {
+          const regex = new RegExp(`\\b${city}\\b`, 'i');
+          return regex.test(locationText) || 
+                 regex.test(titleText) || 
+                 regex.test(descriptionText) ||
+                 regex.test(contentText);
+        });
+
+        return hasIndianState || hasIndianCity;
+      });
+
+      // Get non-Indian articles (excluding those already in indiaArticles)
+      const nonIndiaArticles = allArticles.filter(article => !indiaArticles.includes(article));
+      
+      // Sort articles by date (newest first)
+      const sortedIndiaArticles = [...indiaArticles].sort((a, b) => 
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
       );
       
-      setNews(allArticles);
-      setNewsArticles(newsOnly);
-      setSeismicData(seismicOnly);
-      setIndiaNews(indiaArticles);
-      setError(null);
-      setLastUpdated(new Date());
-      setUsingCache(false);
+      const sortedNonIndiaArticles = [...nonIndiaArticles].sort((a, b) => 
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      );
+
+      // Calculate how many non-India articles to include (max 30% of total)
+      const maxNonIndiaArticles = Math.min(
+        Math.floor(30 * 0.3), // Max 30% of 30 (9 articles)
+        sortedNonIndiaArticles.length
+      );
       
-      // Cache the final results
-      saveCachedNews({
-        news: allArticles,
-        indiaNews: indiaArticles,
+      const indiaArticlesCount = Math.min(
+        30 - maxNonIndiaArticles, // Ensure we don't exceed 30 total
+        sortedIndiaArticles.length
+      );
+      
+      // Combine articles with priority to Indian news
+      const combinedArticles = [
+        ...sortedIndiaArticles.slice(0, indiaArticlesCount),
+        ...sortedNonIndiaArticles.slice(0, maxNonIndiaArticles)
+      ];
+
+      // Categorize the final combined articles
+      const newsOnly = combinedArticles.filter(article => article.type === 'news');
+      const seismicOnly = combinedArticles.filter(article => article.type === 'seismic');
+      const finalIndiaArticles = combinedArticles.filter(article => 
+        indiaArticles.includes(article)
+      );
+      
+      // Save to cache
+      const cacheData = {
+        news: combinedArticles,
         newsArticles: newsOnly,
         seismicData: seismicOnly,
-        lastUpdated: new Date().toISOString(),
-      });
+        indiaNews: finalIndiaArticles,
+        lastUpdated: new Date()
+      };
+      saveCachedNews(cacheData);
+      
+      // Update state
+      setNews(combinedArticles);
+      setNewsArticles(newsOnly);
+      setSeismicData(seismicOnly);
+      setIndiaNews(finalIndiaArticles);
+      setLastUpdated(new Date());
+      setLoading(false);
+      setRefreshing(false);
+      setUsingCache(false);
       
     } catch (err) {
       setError("Failed to load earthquake news. Please try again later.");
