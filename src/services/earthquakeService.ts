@@ -257,9 +257,8 @@ const INDIAN_CITIES = [
 
 /**
  * Determines if an earthquake is in India based on location name and coordinates.
- * This function first checks for explicit non-Indian locations, then checks
- * if the coordinates are within India's bounding box or if the location name
- * contains an Indian place name.
+ * This is a strict check that requires both the location name to be in India
+ * and the coordinates to be within India's bounding box.
  */
 const isInIndia = (feature: EarthquakeFeature): boolean => {
   // Get the location name and coordinates
@@ -309,29 +308,33 @@ const isInIndia = (feature: EarthquakeFeature): boolean => {
     longitude >= INDIA_LON_MIN &&
     longitude <= INDIA_LON_MAX;
 
-  // If the coordinates are within the bounding box, it's considered in India.
-  if (isInIndianBounds) {
-    return true;
+  // If the coordinates are not in the bounding box, it's not in India.
+  if (!isInIndianBounds) {
+    return false;
   }
 
-  // Also, if the location name contains "India" or an Indian state/city, it's in India.
+  // If we've made it this far, check if the location explicitly mentions India
   if (locationLower.includes('india')) {
     return true;
   }
 
+  // Check if the location mentions any Indian state
   for (const state of INDIAN_STATES) {
     if (locationLower.includes(state)) {
       return true;
     }
   }
 
+  // Check if the location mentions any Indian city
   for (const city of INDIAN_CITIES) {
     if (locationLower.includes(city)) {
       return true;
     }
   }
 
-  // Otherwise, it's not in India.
+  // If we've made it this far and the coordinates are in India's bounding box,
+  // but we couldn't find any explicit mention of an Indian location,
+  // we'll return false to be safe.
   return false;
 };
 
