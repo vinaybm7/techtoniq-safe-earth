@@ -25,12 +25,63 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Helper function to check if article is related to India
 const isIndiaRelated = (article: NewsArticle): boolean => {
-  const indianKeywords = [
-    'india', 'indian', 'delhi', 'mumbai', 'bengaluru', 'chennai', 'kolkata',
-    'hyderabad', 'ahmedabad', 'pune', 'jaipur', 'lucknow', 'kanpur', 'nagpur',
-    'indore', 'thane', 'bhopal', 'visakhapatnam', 'patna', 'vadodara',
-    'tamil nadu', 'kerala', 'karnataka', 'maharashtra', 'gujarat', 'rajasthan',
-    'west bengal', 'andhra pradesh', 'telangana', 'uttar pradesh', 'madhya pradesh'
+  // If the article has a location and it's explicitly set to India
+  if (article.location?.country?.toLowerCase() === 'india') {
+    return true;
+  }
+
+  // Check if the source is an Indian news outlet
+  const indianSources = [
+    'the hindu', 'times of india', 'hindustan times', 'the economic times',
+    'indian express', 'the telegraph', 'deccan herald', 'the hindu business line',
+    'mint', 'business standard', 'india today', 'ndtv', 'republic world',
+    'wion', 'news18', 'indiatv', 'zee news', 'aaj tak', 'india today',
+    'times now', 'news nation', 'the print', 'the wire', 'scroll', 'the quint',
+    'newslaundry', 'news minute', 'the better india', 'the logical indian'
+  ];
+
+  const sourceName = article.source?.name?.toLowerCase() || '';
+  if (indianSources.some(source => sourceName.includes(source))) {
+    return true;
+  }
+
+  // Check content for India-related keywords
+  const indiaKeywords = [
+    // Major cities
+    'delhi', 'new delhi', 'mumbai', 'bombay', 'bengaluru', 'bangalore', 'chennai', 'madras',
+    'kolkata', 'calcutta', 'hyderabad', 'pune', 'ahmedabad', 'surat', 'jaipur', 'lucknow',
+    'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam', 'vizag', 'patna',
+    'vadodara', 'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot',
+    'kalyan', 'vasai', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota', 'chandigarh',
+    'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon', 'gurugram', 'noida', 'greater noida',
+    
+    // States and UTs
+    'andhra pradesh', 'arunachal pradesh', 'assam', 'bihar', 'chhattisgarh', 'goa', 'gujarat',
+    'haryana', 'himachal pradesh', 'jharkhand', 'karnataka', 'kerala', 'madhya pradesh',
+    'maharashtra', 'manipur', 'meghalaya', 'mizoram', 'nagaland', 'odisha', 'punjab',
+    'rajasthan', 'sikkim', 'tamil nadu', 'telangana', 'tripura', 'uttar pradesh', 'uttarakhand',
+    'west bengal', 'andaman and nicobar', 'chandigarh', 'dadra and nagar haveli', 'daman and diu',
+    'delhi', 'jammu and kashmir', 'ladakh', 'lakshadweep', 'puducherry',
+    
+    // Common terms
+    'india', 'indian', 'bharat', 'hindustan', 'republic of india', 'indian government', 'pm modi',
+    'narendra modi', 'indian army', 'indian navy', 'indian air force', 'indian railways',
+    'reserve bank of india', 'rbi', 'supreme court of india', 'parliament of india', 'lok sabha',
+    'rajya sabha', 'indian economy', 'indian rupee', 'indian stock market', 'sensex', 'nifty',
+    'indian culture', 'indian cuisine', 'bollywood', 'tollywood', 'kollywood', 'indian cricket',
+    'bcci', 'indian premier league', 'ipl', 'indian football', 'indian hockey', 'indian badminton',
+    'indian tennis', 'indian olympics', 'commonwealth games', 'asian games', 'south asian',
+    'indian ocean', 'bay of bengal', 'arabian sea', 'himalayas', 'western ghats', 'eastern ghats',
+    'thar desert', 'sundarbans', 'kashmir', 'ladakh', 'northeast india', 'seven sisters'
+  ];
+
+  // Terms that explicitly indicate non-India content
+  const excludeTerms = [
+    'pakistan', 'china', 'nepal', 'bangladesh', 'sri lanka', 'bhutan', 'myanmar',
+    'afghanistan', 'maldives', 'tibet', 'tibetan', 'kashmir issue', 'pak occupied kashmir',
+    'pok', 'loc', 'line of control', 'india vs', 'vs india', 'indian origin', 'indian-american',
+    'indian american', 'indian diaspora', 'nri', 'pio', 'indian community in', 'indians in',
+    'indian restaurant', 'indian food', 'indian cuisine', 'indian culture', 'indian festival'
   ];
   
   const searchText = [
@@ -41,19 +92,53 @@ const isIndiaRelated = (article: NewsArticle): boolean => {
     article.location?.country?.toLowerCase() || ''
   ].join(' ');
 
-  return indianKeywords.some(keyword => searchText.includes(keyword));
+  // If any exclude terms are found, it's not about India
+  if (excludeTerms.some(term => searchText.includes(term))) {
+    return false;
+  }
+
+  // Check for India-related keywords
+  return indiaKeywords.some(keyword => {
+    // Use word boundaries to avoid partial matches (e.g., 'indian' in 'indiana')
+    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+    return regex.test(searchText);
+  });
 };
 
 // Process raw news data into categories
 const processNewsData = (data: NewsArticle[]): NewsData => {
   const now = new Date().toISOString();
   
+  // Filter out any invalid or error articles
+  const validArticles = data.filter(article => 
+    article && 
+    article.title && 
+    article.source?.name &&
+    !article.title.includes('Error:') &&
+    !article.title.includes('Failed to fetch')
+  );
+  
+  // Sort all articles by date (newest first)
+  const sortedArticles = [...validArticles].sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
+  
+  // Filter India-related articles with additional checks
+  const indiaArticles = validArticles.filter(article => {
+    try {
+      return isIndiaRelated(article);
+    } catch (error) {
+      console.error('Error checking India related article:', error);
+      return false;
+    }
+  });
+  
   return {
-    all: [...data].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()),
-    news: data.filter(article => article.type === 'news'),
-    seismic: data.filter(article => article.type === 'seismic'),
-    india: data.filter(isIndiaRelated),
-    significant: data.filter(article => article.magnitude && article.magnitude >= 6.0),
+    all: sortedArticles,
+    news: validArticles.filter(article => article.type === 'news'),
+    seismic: validArticles.filter(article => article.type === 'seismic'),
+    india: indiaArticles,
+    significant: validArticles.filter(article => article.magnitude && article.magnitude >= 6.0),
     lastUpdated: now
   };
 };
@@ -118,12 +203,31 @@ const LatestNews = () => {
     fetchNews(true);
   };
 
-  const renderTabContent = (articles: NewsArticle[]) => {
+  const renderTabContent = (articles: NewsArticle[], tabName: string = '') => {
     if (loading) {
       return <NewsSkeleton />;
     }
 
     if (articles.length === 0) {
+      // Special message for India tab when no articles are found
+      if (tabName === 'india') {
+        return (
+          <div className="col-span-full text-center py-12 text-muted-foreground">
+            <Newspaper className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">No India-specific earthquake news found</h3>
+            <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+              We couldn't find any recent earthquake news specifically about India. This could be because:
+            </p>
+            <ul className="mt-2 text-sm text-gray-500 max-w-md mx-auto text-left list-disc list-inside">
+              <li>There are no recent earthquakes in India</li>
+              <li>News sources may not have reported on the earthquakes yet</li>
+              <li>Try refreshing the page or check back later for updates</li>
+            </ul>
+          </div>
+        );
+      }
+      
+      // Default message for other tabs
       return (
         <div className="col-span-full text-center py-12 text-muted-foreground">
           <Newspaper className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -198,20 +302,20 @@ const LatestNews = () => {
             <TabsTrigger value="india">India ({newsData.india.length})</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all">
-            {renderTabContent(newsData.all)}
+          <TabsContent value="all" className="mt-0">
+            {renderTabContent(newsData.all, 'all')}
           </TabsContent>
-
           <TabsContent value="news">
-            {renderTabContent(newsData.news)}
+            {renderTabContent(newsData.news, 'news')}
           </TabsContent>
-
           <TabsContent value="seismic">
-            {renderTabContent(newsData.seismic)}
+            {renderTabContent(newsData.seismic, 'seismic')}
           </TabsContent>
-
           <TabsContent value="india">
-            {renderTabContent(newsData.india)}
+            {renderTabContent(newsData.india, 'india')}
+          </TabsContent>
+          <TabsContent value="significant">
+            {renderTabContent(newsData.significant, 'significant')}
           </TabsContent>
         </Tabs>
 
