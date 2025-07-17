@@ -21,6 +21,7 @@ interface NewsData {
 }
 
 const CACHE_KEY = 'earthquake_news_cache';
+const CACHE_VERSION = 'v2'; // Increment this when changing the data structure
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Helper function to check if article is related to India
@@ -157,20 +158,28 @@ const LatestNews = () => {
 
   const fetchNews = useCallback(async (force = false) => {
     try {
+      // Clear old cache if it exists from previous versions
+      localStorage.removeItem('earthquake_news_cache');
+      
       // Check cache first if not forcing refresh
       if (!force) {
-        const cached = localStorage.getItem(CACHE_KEY);
+        const cached = localStorage.getItem(`${CACHE_KEY}_${CACHE_VERSION}`);
         if (cached) {
           const { data, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < CACHE_DURATION) {
+          const isCacheValid = Date.now() - timestamp < CACHE_DURATION;
+          
+          if (isCacheValid) {
             setNewsData(processNewsData(data));
             setLoading(false);
             
-            // Refresh in background
+            // Refresh in background if cache is older than half its duration
             if (Date.now() - timestamp > CACHE_DURATION / 2) {
               fetchNews(true);
             }
             return;
+          } else {
+            // Clear expired cache
+            localStorage.removeItem(`${CACHE_KEY}_${CACHE_VERSION}`);
           }
         }
       }
@@ -182,14 +191,44 @@ const LatestNews = () => {
       setNewsData(processedData);
       setError(null);
       
-      // Update cache
-      localStorage.setItem(CACHE_KEY, JSON.stringify({
+      // Update cache with versioning
+      const cacheData = {
         data,
-        timestamp: Date.now()
-      }));
+        timestamp: Date.now(),
+        version: CACHE_VERSION
+      };
+      localStorage.setItem(`${CACHE_KEY}_${CACHE_VERSION}`, JSON.stringify(cacheData));
+      
+      // Clear any old cache versions
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith(CACHE_KEY) && key !== `${CACHE_KEY}_${CACHE_VERSION}`) {
+          localStorage.removeItem(key);
+        }
+      });
     } catch (err) {
       console.error('Error fetching news:', err);
-      setError('Failed to load news. Please try again later.');
+      // Clear cache on error to prevent serving stale data
+      localStorage.removeItem(`${CACHE_KEY}_${CACHE_VERSION}`);
+      
+      // Set appropriate error message
+      if (err.message?.includes('429')) {
+        setError('Too many requests. Please wait a few minutes before refreshing.');
+      } else if (err.message?.includes('network')) {
+        setError('Network error. Please check your internet connection.');
+      } else {
+        setError('Failed to load news. Please try again later.');
+      }
+      
+      // If we have cached data, use it even if it's stale
+      const cached = localStorage.getItem(`${CACHE_KEY}_${CACHE_VERSION}`);
+      if (cached) {
+        try {
+          const { data } = JSON.parse(cached);
+          setNewsData(processNewsData(data));
+        } catch (parseError) {
+          console.error('Error parsing cached data:', parseError);
+        }
+      }
     } finally {
       setLoading(false);
     }
