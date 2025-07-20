@@ -26,17 +26,11 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Helper function to check if article is related to India
 const isIndiaRelated = (article: NewsArticle): boolean => {
-  // If the article has a location and it's explicitly set to India
-  if (article.location?.country?.toLowerCase() === 'india') {
-    return true;
-  }
-
-  // Check if the source is an Indian news outlet
+  // Check if the source is an Indian news outlet (most reliable indicator)
   const indianSources = [
-    'the hindu', 'times of india', 'hindustan times', 'the economic times',
-    'indian express', 'the telegraph', 'deccan herald', 'the hindu business line',
-    'mint', 'business standard', 'india today', 'ndtv', 'republic world',
-    'wion', 'news18', 'indiatv', 'zee news', 'aaj tak', 'india today',
+    'times of india', 'hindustan times', 'the hindu', 'indian express', 'the economic times',
+    'deccan herald', 'the hindu business line', 'mint', 'business standard', 'india today',
+    'ndtv', 'republic world', 'wion', 'news18', 'indiatv', 'zee news', 'aaj tak',
     'times now', 'news nation', 'the print', 'the wire', 'scroll', 'the quint',
     'newslaundry', 'news minute', 'the better india', 'the logical indian'
   ];
@@ -46,45 +40,6 @@ const isIndiaRelated = (article: NewsArticle): boolean => {
     return true;
   }
 
-  // Check content for India-related keywords
-  const indiaKeywords = [
-    // Major cities
-    'delhi', 'new delhi', 'mumbai', 'bombay', 'bengaluru', 'bangalore', 'chennai', 'madras',
-    'kolkata', 'calcutta', 'hyderabad', 'pune', 'ahmedabad', 'surat', 'jaipur', 'lucknow',
-    'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam', 'vizag', 'patna',
-    'vadodara', 'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot',
-    'kalyan', 'vasai', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota', 'chandigarh',
-    'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon', 'gurugram', 'noida', 'greater noida',
-    
-    // States and UTs
-    'andhra pradesh', 'arunachal pradesh', 'assam', 'bihar', 'chhattisgarh', 'goa', 'gujarat',
-    'haryana', 'himachal pradesh', 'jharkhand', 'karnataka', 'kerala', 'madhya pradesh',
-    'maharashtra', 'manipur', 'meghalaya', 'mizoram', 'nagaland', 'odisha', 'punjab',
-    'rajasthan', 'sikkim', 'tamil nadu', 'telangana', 'tripura', 'uttar pradesh', 'uttarakhand',
-    'west bengal', 'andaman and nicobar', 'chandigarh', 'dadra and nagar haveli', 'daman and diu',
-    'delhi', 'jammu and kashmir', 'ladakh', 'lakshadweep', 'puducherry',
-    
-    // Common terms
-    'india', 'indian', 'bharat', 'hindustan', 'republic of india', 'indian government', 'pm modi',
-    'narendra modi', 'indian army', 'indian navy', 'indian air force', 'indian railways',
-    'reserve bank of india', 'rbi', 'supreme court of india', 'parliament of india', 'lok sabha',
-    'rajya sabha', 'indian economy', 'indian rupee', 'indian stock market', 'sensex', 'nifty',
-    'indian culture', 'indian cuisine', 'bollywood', 'tollywood', 'kollywood', 'indian cricket',
-    'bcci', 'indian premier league', 'ipl', 'indian football', 'indian hockey', 'indian badminton',
-    'indian tennis', 'indian olympics', 'commonwealth games', 'asian games', 'south asian',
-    'indian ocean', 'bay of bengal', 'arabian sea', 'himalayas', 'western ghats', 'eastern ghats',
-    'thar desert', 'sundarbans', 'kashmir', 'ladakh', 'northeast india', 'seven sisters'
-  ];
-
-  // Terms that explicitly indicate non-India content
-  const excludeTerms = [
-    'pakistan', 'china', 'nepal', 'bangladesh', 'sri lanka', 'bhutan', 'myanmar',
-    'afghanistan', 'maldives', 'tibet', 'tibetan', 'kashmir issue', 'pak occupied kashmir',
-    'pok', 'loc', 'line of control', 'india vs', 'vs india', 'indian origin', 'indian-american',
-    'indian american', 'indian diaspora', 'nri', 'pio', 'indian community in', 'indians in',
-    'indian restaurant', 'indian food', 'indian cuisine', 'indian culture', 'indian festival'
-  ];
-  
   const searchText = [
     article.title?.toLowerCase() || '',
     article.description?.toLowerCase() || '',
@@ -93,17 +48,93 @@ const isIndiaRelated = (article: NewsArticle): boolean => {
     article.location?.country?.toLowerCase() || ''
   ].join(' ');
 
-  // If any exclude terms are found, it's not about India
-  if (excludeTerms.some(term => searchText.includes(term))) {
+  // Strong exclusion terms that indicate non-India content
+  const strongExcludeTerms = [
+    'indiana', 'indianapolis', 'indian ocean tsunami', 'american indian', 'native american',
+    'west indies', 'east indies', 'indian restaurant', 'indian cuisine', 'indian food',
+    'indian culture', 'indian festival', 'indian diaspora', 'indian community in',
+    'indians in america', 'indians in canada', 'indians in uk', 'indian-american',
+    'indian american', 'indian origin', 'nri', 'pio', 'overseas indian',
+    'pakistan', 'china', 'nepal', 'bangladesh', 'sri lanka', 'bhutan', 'myanmar',
+    'afghanistan', 'maldives', 'tibet', 'tibetan', 'indonesia', 'philippines',
+    'malaysia', 'thailand', 'vietnam', 'cambodia', 'laos', 'singapore',
+    'kashmir issue', 'pak occupied kashmir', 'pok', 'loc', 'line of control',
+    'india vs', 'vs india', 'india-pakistan', 'india-china', 'india-nepal'
+  ];
+
+  // If any strong exclude terms are found, it's definitely not about India
+  if (strongExcludeTerms.some(term => searchText.includes(term))) {
     return false;
   }
 
-  // Check for India-related keywords
-  return indiaKeywords.some(keyword => {
-    // Use word boundaries to avoid partial matches (e.g., 'indian' in 'indiana')
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+  // Specific India location keywords (more precise matching)
+  const indiaLocationKeywords = [
+    // Major cities with specific context
+    'delhi earthquake', 'mumbai earthquake', 'bangalore earthquake', 'chennai earthquake',
+    'kolkata earthquake', 'hyderabad earthquake', 'pune earthquake', 'ahmedabad earthquake',
+    'jaipur earthquake', 'lucknow earthquake', 'kanpur earthquake', 'nagpur earthquake',
+    'indore earthquake', 'bhopal earthquake', 'patna earthquake', 'guwahati earthquake',
+    
+    // States with earthquake context
+    'kerala earthquake', 'tamil nadu earthquake', 'karnataka earthquake', 'andhra pradesh earthquake',
+    'telangana earthquake', 'maharashtra earthquake', 'gujarat earthquake', 'rajasthan earthquake',
+    'madhya pradesh earthquake', 'uttar pradesh earthquake', 'bihar earthquake', 'west bengal earthquake',
+    'odisha earthquake', 'assam earthquake', 'punjab earthquake', 'haryana earthquake',
+    'himachal pradesh earthquake', 'uttarakhand earthquake', 'jharkhand earthquake',
+    'chhattisgarh earthquake', 'goa earthquake', 'manipur earthquake', 'meghalaya earthquake',
+    'tripura earthquake', 'nagaland earthquake', 'arunachal pradesh earthquake', 'mizoram earthquake',
+    'sikkim earthquake', 'jammu and kashmir earthquake', 'ladakh earthquake',
+    
+    // Geographic regions in India
+    'western ghats earthquake', 'eastern ghats earthquake', 'himalayan earthquake',
+    'northeast india earthquake', 'north india earthquake', 'south india earthquake',
+    'central india earthquake', 'western india earthquake', 'eastern india earthquake',
+    
+    // Specific earthquake-related terms for India
+    'earthquake in india', 'india earthquake', 'indian earthquake', 'earthquake hits india',
+    'earthquake strikes india', 'tremors in india', 'seismic activity in india',
+    'earthquake felt in india', 'india seismic', 'indian seismic'
+  ];
+
+  // Check for specific India earthquake keywords
+  const hasIndiaEarthquakeKeyword = indiaLocationKeywords.some(keyword => 
+    searchText.includes(keyword)
+  );
+
+  if (hasIndiaEarthquakeKeyword) {
+    return true;
+  }
+
+  // Check if location is explicitly set to India (but be cautious)
+  if (article.location?.country?.toLowerCase() === 'india') {
+    // Additional validation - make sure it's actually about India
+    const hasIndiaContext = searchText.includes('india') || 
+                           searchText.includes('indian') ||
+                           searchText.includes('delhi') ||
+                           searchText.includes('mumbai') ||
+                           searchText.includes('bangalore') ||
+                           searchText.includes('chennai') ||
+                           searchText.includes('kolkata') ||
+                           searchText.includes('hyderabad');
+    
+    return hasIndiaContext;
+  }
+
+  // Final check for general India terms but with stricter validation
+  const generalIndiaTerms = ['india', 'indian subcontinent', 'bharat', 'hindustan'];
+  const hasGeneralIndiaTerm = generalIndiaTerms.some(term => {
+    const regex = new RegExp(`\\b${term}\\b`, 'i');
     return regex.test(searchText);
   });
+
+  if (hasGeneralIndiaTerm) {
+    // Must also have earthquake-related context
+    const earthquakeTerms = ['earthquake', 'quake', 'tremor', 'seismic', 'magnitude', 'richter'];
+    const hasEarthquakeContext = earthquakeTerms.some(term => searchText.includes(term));
+    return hasEarthquakeContext;
+  }
+
+  return false;
 };
 
 // Process raw news data into categories

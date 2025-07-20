@@ -1,4 +1,3 @@
-
 interface NewsArticle {
   id: string;
   title: string;
@@ -96,46 +95,19 @@ interface GuardianResponse {
   };
 }
 
-// Enhanced India detection with more comprehensive keywords
+// Enhanced India detection with more precise matching
 const isLocationInIndia = (place: string): boolean => {
   if (!place) return false;
   
-  const indiaKeywords = [
-    // Major cities
-    'delhi', 'mumbai', 'bangalore', 'chennai', 'kolkata', 'hyderabad', 'pune', 'ahmedabad', 
-    'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam', 
-    'patna', 'vadodara', 'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 
-    'rajkot', 'kalyan', 'vasai', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota', 
-    'chandigarh', 'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon', 'noida', 'greater noida',
-    
-    // States and Union Territories
-    'kerala', 'tamil nadu', 'karnataka', 'andhra pradesh', 'telangana', 'maharashtra',
-    'gujarat', 'rajasthan', 'madhya pradesh', 'uttar pradesh', 'bihar', 'west bengal',
-    'odisha', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
-    'jharkhand', 'chhattisgarh', 'goa', 'manipur', 'meghalaya', 'tripura',
-    'nagaland', 'arunachal pradesh', 'mizoram', 'sikkim', 'andaman', 'nicobar',
-    'lakshadweep', 'dadra', 'nagar haveli', 'daman', 'diu',
-    
-    // Regions and areas within India
-    'delhi ncr', 'ncr', 'national capital region', 'konkan', 'malabar', 'coromandel',
-    'deccan', 'gangetic', 'himalayan foothills', 'northeast india', 'north east india', 
-    'south india', 'north india', 'east india', 'west india', 'central india',
-    
-    // Common terms
-    'india', 'indian subcontinent', 'bharat', 'hindustan', 'republic of india',
-    
-    // Geographic regions in India
-    'western ghats', 'eastern ghats', 'arabian sea', 'bay of bengal', 'indian ocean',
-    'thar desert', 'sundarbans', 'nilgiri', 'sahyadri'
-  ];
+  const searchText = place.toLowerCase();
   
-  // Countries/regions that should NOT be considered India
+  // Strong exclusion terms that indicate non-India locations
   const excludeKeywords = [
     'nepal', 'bangladesh', 'pakistan', 'china', 'sri lanka', 'myanmar', 'bhutan',
-    'afghanistan', 'tibet', 'maldives', 'thailand', 'indonesia', 'malaysia'
+    'afghanistan', 'tibet', 'maldives', 'thailand', 'indonesia', 'malaysia',
+    'philippines', 'vietnam', 'cambodia', 'laos', 'singapore', 'brunei',
+    'indian ocean', 'pacific ocean', 'atlantic ocean', 'mediterranean sea'
   ];
-  
-  const searchText = place.toLowerCase();
   
   // First check if it contains any exclude keywords
   const hasExcludeKeyword = excludeKeywords.some(keyword => 
@@ -144,40 +116,63 @@ const isLocationInIndia = (place: string): boolean => {
   
   if (hasExcludeKeyword) return false;
   
-  // Then check if it contains India keywords
-  return indiaKeywords.some(keyword => searchText.includes(keyword.toLowerCase()));
+  // Specific Indian locations (cities, states, regions)
+  const indiaLocations = [
+    // Major cities
+    'delhi', 'new delhi', 'mumbai', 'bangalore', 'bengaluru', 'chennai', 'kolkata', 
+    'hyderabad', 'pune', 'ahmedabad', 'jaipur', 'lucknow', 'kanpur', 'nagpur', 
+    'indore', 'thane', 'bhopal', 'visakhapatnam', 'vizag', 'patna', 'vadodara', 
+    'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot',
+    'kalyan', 'vasai', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota', 
+    'chandigarh', 'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon', 'gurugram',
+    'noida', 'greater noida',
+    
+    // States and Union Territories
+    'kerala', 'tamil nadu', 'karnataka', 'andhra pradesh', 'telangana', 'maharashtra',
+    'gujarat', 'rajasthan', 'madhya pradesh', 'uttar pradesh', 'bihar', 'west bengal',
+    'odisha', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
+    'jharkhand', 'chhattisgarh', 'goa', 'manipur', 'meghalaya', 'tripura',
+    'nagaland', 'arunachal pradesh', 'mizoram', 'sikkim', 'andaman and nicobar',
+    'lakshadweep', 'dadra and nagar haveli', 'daman and diu', 'jammu and kashmir', 'ladakh',
+    
+    // Geographic regions specific to India
+    'western ghats', 'eastern ghats', 'deccan plateau', 'gangetic plain',
+    'thar desert', 'sundarbans', 'nilgiri hills', 'sahyadri mountains',
+    'northeast india', 'north east india'
+  ];
+  
+  // Check for specific Indian locations using simple string matching
+  const hasIndiaLocation = indiaLocations.some(location => 
+    searchText.includes(location.toLowerCase())
+  );
+  
+  if (hasIndiaLocation) return true;
+  
+  // Check for general India terms with word boundaries
+  const generalIndiaTerms = ['india', 'bharat', 'hindustan'];
+  return generalIndiaTerms.some(term => {
+    const regex = new RegExp(`\\b${term}\\b`, 'i');
+    return regex.test(searchText);
+  });
 };
 
 // Helper for India detection in news articles
 const isNewsAboutIndia = (text: string): boolean => {
   if (!text) return false;
   
-  const indiaKeywords = [
-    'india', 'indian', 'bharat', 'hindustan', 'republic of india',
-    'delhi', 'mumbai', 'bangalore', 'chennai', 'kolkata', 'hyderabad', 'pune', 'ahmedabad',
-    'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam',
-    'patna', 'vadodara', 'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut',
-    'rajkot', 'kalyan', 'vasai', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota',
-    'chandigarh', 'guwahati', 'solapur', 'hubli', 'mysore', 'gurgaon', 'noida', 'greater noida',
-    'kerala', 'tamil nadu', 'karnataka', 'andhra pradesh', 'telangana', 'maharashtra',
-    'gujarat', 'rajasthan', 'madhya pradesh', 'uttar pradesh', 'bihar', 'west bengal',
-    'odisha', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
-    'jharkhand', 'chhattisgarh', 'goa', 'manipur', 'meghalaya', 'tripura',
-    'nagaland', 'arunachal pradesh', 'mizoram', 'sikkim', 'andaman', 'nicobar',
-    'lakshadweep', 'dadra', 'nagar haveli', 'daman', 'diu',
-    'delhi ncr', 'ncr', 'national capital region', 'kashmir', 'ladakh',
-    'western ghats', 'eastern ghats', 'arabian sea', 'bay of bengal', 'indian ocean',
-    'thar desert', 'sundarbans', 'nilgiri', 'sahyadri'
-  ];
-  
-  // Countries/regions that should NOT be considered India
-  const excludeKeywords = [
-    'nepal', 'bangladesh', 'pakistan', 'china', 'sri lanka', 'myanmar', 'bhutan',
-    'afghanistan', 'tibet', 'maldives', 'thailand', 'indonesia', 'malaysia',
-    'nepal border', 'china border', 'pakistan border', 'bangladesh border', 'myanmar border'
-  ];
-  
   const lower = text.toLowerCase();
+  
+  // Strong exclusion terms that indicate non-India content
+  const excludeKeywords = [
+    'indiana', 'indianapolis', 'american indian', 'native american', 'west indies', 'east indies',
+    'indian restaurant', 'indian cuisine', 'indian food', 'indian culture', 'indian festival',
+    'indian diaspora', 'indian community in', 'indians in america', 'indians in canada',
+    'indians in uk', 'indian-american', 'indian american', 'indian origin', 'nri', 'pio',
+    'overseas indian', 'nepal', 'bangladesh', 'pakistan', 'china', 'sri lanka', 'myanmar',
+    'bhutan', 'afghanistan', 'tibet', 'maldives', 'thailand', 'indonesia', 'malaysia',
+    'philippines', 'vietnam', 'cambodia', 'laos', 'singapore', 'brunei',
+    'indian ocean tsunami', 'pacific ocean', 'atlantic ocean', 'mediterranean sea'
+  ];
   
   // First check if it contains any exclude keywords
   const hasExcludeKeyword = excludeKeywords.some(keyword => 
@@ -186,11 +181,54 @@ const isNewsAboutIndia = (text: string): boolean => {
   
   if (hasExcludeKeyword) return false;
   
-  // Then check if it contains India keywords
-  return indiaKeywords.some(keyword => lower.includes(keyword));
+  // Specific India-related terms with earthquake context
+  const indiaEarthquakeTerms = [
+    'earthquake in india', 'india earthquake', 'indian earthquake', 'earthquake hits india',
+    'earthquake strikes india', 'tremors in india', 'seismic activity in india',
+    'earthquake felt in india', 'india seismic', 'indian seismic'
+  ];
+  
+  // Check for specific India earthquake terms first
+  if (indiaEarthquakeTerms.some(term => lower.includes(term))) {
+    return true;
+  }
+  
+  // Indian cities and states
+  const indiaLocations = [
+    'delhi', 'mumbai', 'bangalore', 'bengaluru', 'chennai', 'kolkata', 'hyderabad', 
+    'pune', 'ahmedabad', 'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore', 'bhopal',
+    'kerala', 'tamil nadu', 'karnataka', 'andhra pradesh', 'telangana', 'maharashtra',
+    'gujarat', 'rajasthan', 'madhya pradesh', 'uttar pradesh', 'bihar', 'west bengal',
+    'odisha', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
+    'jharkhand', 'chhattisgarh', 'goa', 'jammu and kashmir', 'ladakh'
+  ];
+  
+  // Check if it mentions specific Indian locations
+  const hasIndiaLocation = indiaLocations.some(location => lower.includes(location));
+  
+  if (hasIndiaLocation) {
+    // Must also have earthquake context
+    const earthquakeTerms = ['earthquake', 'quake', 'tremor', 'seismic', 'magnitude'];
+    return earthquakeTerms.some(term => lower.includes(term));
+  }
+  
+  // Check for general India terms with strict validation
+  const generalIndiaTerms = ['india', 'bharat', 'hindustan'];
+  const hasGeneralIndiaTerm = generalIndiaTerms.some(term => {
+    const regex = new RegExp(`\\b${term}\\b`, 'i');
+    return regex.test(lower);
+  });
+  
+  if (hasGeneralIndiaTerm) {
+    // Must also have earthquake context
+    const earthquakeTerms = ['earthquake', 'quake', 'tremor', 'seismic', 'magnitude'];
+    return earthquakeTerms.some(term => lower.includes(term));
+  }
+  
+  return false;
 };
-
-// Helper function to create news article from earthquake data
+// Hel
+per function to create news article from earthquake data
 const createSeismicArticle = (
   earthquake: USGSEarthquake | EMSCEarthquake | IRISEvent,
   source: string,
