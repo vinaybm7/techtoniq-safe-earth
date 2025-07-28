@@ -15,6 +15,85 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// News API proxy routes
+app.get('/api/news/earthquake', async (req, res) => {
+  try {
+    // For now, return a simple fallback response until we set up proper server-side news fetching
+    const fallbackNews = [
+      {
+        id: 'server-fallback-1',
+        title: 'Earthquake Monitoring Systems Active',
+        description: 'Global seismic monitoring networks continue to track earthquake activity worldwide.',
+        content: 'Seismic monitoring stations worldwide work 24/7 to detect and analyze earthquake activity.',
+        url: 'https://earthquake.usgs.gov',
+        image: '/placeholder.svg',
+        publishedAt: new Date().toISOString(),
+        source: {
+          name: 'USGS',
+          url: 'https://earthquake.usgs.gov'
+        },
+        location: {
+          country: 'Global',
+          region: 'Worldwide'
+        },
+        type: 'news'
+      }
+    ];
+    res.json(fallbackNews);
+  } catch (error) {
+    console.error('Error fetching earthquake news:', error);
+    res.status(500).json({ error: 'Failed to fetch earthquake news' });
+  }
+});
+
+app.get('/api/news/india', async (req, res) => {
+  try {
+    // For now, return a simple fallback response
+    const fallbackNews = [
+      {
+        id: 'server-india-fallback-1',
+        title: 'India Seismic Monitoring Active',
+        description: 'Indian seismic monitoring networks continue to track earthquake activity across the country.',
+        content: 'India maintains a comprehensive network of seismic monitoring stations.',
+        url: 'https://earthquake.usgs.gov',
+        image: '/placeholder.svg',
+        publishedAt: new Date().toISOString(),
+        source: {
+          name: 'India Meteorological Department',
+          url: 'https://mausam.imd.gov.in'
+        },
+        location: {
+          country: 'India',
+          region: 'India'
+        },
+        type: 'news'
+      }
+    ];
+    res.json(fallbackNews);
+  } catch (error) {
+    console.error('Error fetching India earthquake news:', error);
+    res.status(500).json({ error: 'Failed to fetch India earthquake news' });
+  }
+});
+
+// RSS proxy to avoid CORS issues
+app.get('/api/rss-proxy', async (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).json({ error: 'URL parameter is required' });
+  }
+  
+  try {
+    const fetch = require('node-fetch');
+    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('RSS proxy error:', error);
+    res.status(500).json({ error: 'Failed to fetch RSS feed' });
+  }
+});
+
 // API Routes
 app.get('/api/fault-lines', async (req, res) => {
   try {

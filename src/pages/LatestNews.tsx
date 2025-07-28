@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewsCard } from '@/components/news/NewsCard';
 import { NewsSkeleton } from '@/components/news/NewsSkeleton';
-import { fetchEarthquakeNews } from '@/services/newsService';
+import { fetchEarthquakeNews } from '@/services/newsServiceClient';
 import type { NewsArticle } from '@/types/news';
 
 interface NewsData {
