@@ -1,319 +1,232 @@
 import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
-import { AlertTriangle, RefreshCw, Newspaper } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Newspaper, Zap, MapPin, Clock, ExternalLink, Globe, Activity } from 'lucide-react';
 
 import PageLayout from '@/components/PageLayout';
 import PageBreadcrumbs from '@/components/PageBreadcrumbs';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { NewsCard } from '@/components/news/NewsCard';
-import { NewsSkeleton } from '@/components/news/NewsSkeleton';
-import { fetchEarthquakeNews } from '@/services/newsServiceClient';
-import type { NewsArticle } from '@/types/news';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
-interface NewsData {
-  all: NewsArticle[];
-  news: NewsArticle[];
-  seismic: NewsArticle[];
-  india: NewsArticle[];
-  significant: NewsArticle[];
-  lastUpdated: string;
+import { fetchEarthquakeNews, fetchIndiaEarthquakes, fetchNewsOnly, fetchSeismicOnly } from '@/services/newsService';
+
+interface NewsArticle {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  url: string;
+  image: string;
+  publishedAt: string;
+  source: {
+    name: string;
+    url: string;
+  };
+  location?: {
+    country: string;
+    region: string;
+    coordinates?: [number, number];
+  };
+  magnitude?: number;
+  depth?: number;
+  type: 'seismic' | 'news';
 }
 
-const CACHE_KEY = 'earthquake_news_cache';
-const CACHE_VERSION = 'v2'; // Increment this when changing the data structure
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-// Helper function to check if article is related to India
-const isIndiaRelated = (article: NewsArticle): boolean => {
-  // Check if the source is an Indian news outlet (most reliable indicator)
-  const indianSources = [
-    'times of india', 'hindustan times', 'the hindu', 'indian express', 'the economic times',
-    'deccan herald', 'the hindu business line', 'mint', 'business standard', 'india today',
-    'ndtv', 'republic world', 'wion', 'news18', 'indiatv', 'zee news', 'aaj tak',
-    'times now', 'news nation', 'the print', 'the wire', 'scroll', 'the quint',
-    'newslaundry', 'news minute', 'the better india', 'the logical indian'
-  ];
-
-  const sourceName = article.source?.name?.toLowerCase() || '';
-  if (indianSources.some(source => sourceName.includes(source))) {
-    return true;
-  }
-
-  const searchText = [
-    article.title?.toLowerCase() || '',
-    article.description?.toLowerCase() || '',
-    article.content?.toLowerCase() || '',
-    article.location?.region?.toLowerCase() || '',
-    article.location?.country?.toLowerCase() || ''
-  ].join(' ');
-
-  // Strong exclusion terms that indicate non-India content
-  const strongExcludeTerms = [
-    'indiana', 'indianapolis', 'indian ocean tsunami', 'american indian', 'native american',
-    'west indies', 'east indies', 'indian restaurant', 'indian cuisine', 'indian food',
-    'indian culture', 'indian festival', 'indian diaspora', 'indian community in',
-    'indians in america', 'indians in canada', 'indians in uk', 'indian-american',
-    'indian american', 'indian origin', 'nri', 'pio', 'overseas indian',
-    'pakistan', 'china', 'nepal', 'bangladesh', 'sri lanka', 'bhutan', 'myanmar',
-    'afghanistan', 'maldives', 'tibet', 'tibetan', 'indonesia', 'philippines',
-    'malaysia', 'thailand', 'vietnam', 'cambodia', 'laos', 'singapore',
-    'kashmir issue', 'pak occupied kashmir', 'pok', 'loc', 'line of control',
-    'india vs', 'vs india', 'india-pakistan', 'india-china', 'india-nepal'
-  ];
-
-  // If any strong exclude terms are found, it's definitely not about India
-  if (strongExcludeTerms.some(term => searchText.includes(term))) {
-    return false;
-  }
-
-  // Specific India location keywords (more precise matching)
-  const indiaLocationKeywords = [
-    // Major cities with specific context
-    'delhi earthquake', 'mumbai earthquake', 'bangalore earthquake', 'chennai earthquake',
-    'kolkata earthquake', 'hyderabad earthquake', 'pune earthquake', 'ahmedabad earthquake',
-    'jaipur earthquake', 'lucknow earthquake', 'kanpur earthquake', 'nagpur earthquake',
-    'indore earthquake', 'bhopal earthquake', 'patna earthquake', 'guwahati earthquake',
-    
-    // States with earthquake context
-    'kerala earthquake', 'tamil nadu earthquake', 'karnataka earthquake', 'andhra pradesh earthquake',
-    'telangana earthquake', 'maharashtra earthquake', 'gujarat earthquake', 'rajasthan earthquake',
-    'madhya pradesh earthquake', 'uttar pradesh earthquake', 'bihar earthquake', 'west bengal earthquake',
-    'odisha earthquake', 'assam earthquake', 'punjab earthquake', 'haryana earthquake',
-    'himachal pradesh earthquake', 'uttarakhand earthquake', 'jharkhand earthquake',
-    'chhattisgarh earthquake', 'goa earthquake', 'manipur earthquake', 'meghalaya earthquake',
-    'tripura earthquake', 'nagaland earthquake', 'arunachal pradesh earthquake', 'mizoram earthquake',
-    'sikkim earthquake', 'jammu and kashmir earthquake', 'ladakh earthquake',
-    
-    // Geographic regions in India
-    'western ghats earthquake', 'eastern ghats earthquake', 'himalayan earthquake',
-    'northeast india earthquake', 'north india earthquake', 'south india earthquake',
-    'central india earthquake', 'western india earthquake', 'eastern india earthquake',
-    
-    // Specific earthquake-related terms for India
-    'earthquake in india', 'india earthquake', 'indian earthquake', 'earthquake hits india',
-    'earthquake strikes india', 'tremors in india', 'seismic activity in india',
-    'earthquake felt in india', 'india seismic', 'indian seismic'
-  ];
-
-  // Check for specific India earthquake keywords
-  const hasIndiaEarthquakeKeyword = indiaLocationKeywords.some(keyword => 
-    searchText.includes(keyword)
-  );
-
-  if (hasIndiaEarthquakeKeyword) {
-    return true;
-  }
-
-  // Check if location is explicitly set to India (but be cautious)
-  if (article.location?.country?.toLowerCase() === 'india') {
-    // Additional validation - make sure it's actually about India
-    const hasIndiaContext = searchText.includes('india') || 
-                           searchText.includes('indian') ||
-                           searchText.includes('delhi') ||
-                           searchText.includes('mumbai') ||
-                           searchText.includes('bangalore') ||
-                           searchText.includes('chennai') ||
-                           searchText.includes('kolkata') ||
-                           searchText.includes('hyderabad');
-    
-    return hasIndiaContext;
-  }
-
-  // Final check for general India terms but with stricter validation
-  const generalIndiaTerms = ['india', 'indian subcontinent', 'bharat', 'hindustan'];
-  const hasGeneralIndiaTerm = generalIndiaTerms.some(term => {
-    const regex = new RegExp(`\\b${term}\\b`, 'i');
-    return regex.test(searchText);
-  });
-
-  if (hasGeneralIndiaTerm) {
-    // Must also have earthquake-related context
-    const earthquakeTerms = ['earthquake', 'quake', 'tremor', 'seismic', 'magnitude', 'richter'];
-    const hasEarthquakeContext = earthquakeTerms.some(term => searchText.includes(term));
-    return hasEarthquakeContext;
-  }
-
-  return false;
-};
-
-// Process raw news data into categories
-const processNewsData = (data: NewsArticle[]): NewsData => {
-  const now = new Date().toISOString();
-  
-  // Filter out any invalid or error articles
-  const validArticles = data.filter(article => 
-    article && 
-    article.title && 
-    article.source?.name &&
-    !article.title.includes('Error:') &&
-    !article.title.includes('Failed to fetch')
-  );
-  
-  // Sort all articles by date (newest first)
-  const sortedArticles = [...validArticles].sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  );
-  
-  // Filter India-related articles with additional checks
-  const indiaArticles = validArticles.filter(article => {
-    try {
-      return isIndiaRelated(article);
-    } catch (error) {
-      console.error('Error checking India related article:', error);
-      return false;
-    }
-  });
-  
-  return {
-    all: sortedArticles,
-    news: validArticles.filter(article => article.type === 'news'),
-    seismic: validArticles.filter(article => article.type === 'seismic'),
-    india: indiaArticles,
-    significant: validArticles.filter(article => article.magnitude && article.magnitude >= 6.0),
-    lastUpdated: now
-  };
-};
-
 const LatestNews = () => {
-  const [newsData, setNewsData] = useState<NewsData>({
-    all: [],
-    news: [],
-    seismic: [],
-    india: [],
-    significant: [],
-    lastUpdated: new Date().toISOString()
-  });
+  const [allNews, setAllNews] = useState<NewsArticle[]>([]);
+  const [indiaNews, setIndiaNews] = useState<NewsArticle[]>([]);
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
+  const [seismicData, setSeismicData] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  const fetchNews = useCallback(async (force = false) => {
+  const loadNews = useCallback(async () => {
     try {
-      // Clear old cache if it exists from previous versions
-      localStorage.removeItem('earthquake_news_cache');
-      
-      // Check cache first if not forcing refresh
-      if (!force) {
-        const cached = localStorage.getItem(`${CACHE_KEY}_${CACHE_VERSION}`);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          const isCacheValid = Date.now() - timestamp < CACHE_DURATION;
-          
-          if (isCacheValid) {
-            setNewsData(processNewsData(data));
-            setLoading(false);
-            
-            // Refresh in background if cache is older than half its duration
-            if (Date.now() - timestamp > CACHE_DURATION / 2) {
-              fetchNews(true);
-            }
-            return;
-          } else {
-            // Clear expired cache
-            localStorage.removeItem(`${CACHE_KEY}_${CACHE_VERSION}`);
-          }
-        }
-      }
-
       setLoading(true);
-      const data = await fetchEarthquakeNews();
-      const processedData = processNewsData(data);
-      
-      setNewsData(processedData);
       setError(null);
       
-      // Update cache with versioning
-      const cacheData = {
-        data,
-        timestamp: Date.now(),
-        version: CACHE_VERSION
-      };
-      localStorage.setItem(`${CACHE_KEY}_${CACHE_VERSION}`, JSON.stringify(cacheData));
+      console.log('🔄 Loading earthquake news...');
       
-      // Clear any old cache versions
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith(CACHE_KEY) && key !== `${CACHE_KEY}_${CACHE_VERSION}`) {
-          localStorage.removeItem(key);
-        }
-      });
+      // Fetch all data concurrently
+      const [all, india, news, seismic] = await Promise.all([
+        fetchEarthquakeNews(),
+        fetchIndiaEarthquakes(),
+        fetchNewsOnly(),
+        fetchSeismicOnly()
+      ]);
+      
+      setAllNews(all);
+      setIndiaNews(india);
+      setNewsArticles(news);
+      setSeismicData(seismic);
+      setLastUpdated(new Date());
+      
+      console.log(`✅ Loaded: ${all.length} total, ${india.length} India, ${news.length} news, ${seismic.length} seismic`);
+      
     } catch (err) {
-      console.error('Error fetching news:', err);
-      // Clear cache on error to prevent serving stale data
-      localStorage.removeItem(`${CACHE_KEY}_${CACHE_VERSION}`);
-      
-      // Set appropriate error message
-      if (err.message?.includes('429')) {
-        setError('Too many requests. Please wait a few minutes before refreshing.');
-      } else if (err.message?.includes('network')) {
-        setError('Network error. Please check your internet connection.');
-      } else {
-        setError('Failed to load news. Please try again later.');
-      }
-      
-      // If we have cached data, use it even if it's stale
-      const cached = localStorage.getItem(`${CACHE_KEY}_${CACHE_VERSION}`);
-      if (cached) {
-        try {
-          const { data } = JSON.parse(cached);
-          setNewsData(processNewsData(data));
-        } catch (parseError) {
-          console.error('Error parsing cached data:', parseError);
-        }
-      }
+      console.error('❌ Error loading news:', err);
+      setError('Failed to load earthquake news. Please try refreshing.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
+    loadNews();
+  }, [loadNews]);
 
   const handleRefresh = () => {
-    fetchNews(true);
+    loadNews();
   };
 
-  const renderTabContent = (articles: NewsArticle[], tabName: string = '') => {
+  const getMagnitudeColor = (magnitude?: number) => {
+    if (!magnitude) return 'bg-gray-500';
+    if (magnitude >= 7.0) return 'bg-red-500';
+    if (magnitude >= 6.0) return 'bg-orange-500';
+    if (magnitude >= 5.0) return 'bg-yellow-500';
+    if (magnitude >= 4.0) return 'bg-blue-500';
+    return 'bg-green-500';
+  };
+
+  const getTypeIcon = (type: string) => {
+    return type === 'news' ? <Newspaper className="h-4 w-4" /> : <Zap className="h-4 w-4" />;
+  };
+
+  const getTypeColor = (type: string) => {
+    return type === 'news' ? 'bg-blue-500' : 'bg-purple-500';
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "MMM d, yyyy 'at' h:mm a");
+    } catch {
+      return dateString;
+    }
+  };
+
+  const renderNewsCard = (article: NewsArticle) => (
+    <Card key={article.id} className="flex flex-col h-full hover:shadow-lg transition-shadow duration-300">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="line-clamp-2 text-lg">
+            {article.title}
+          </CardTitle>
+          <div className="flex gap-2 flex-shrink-0">
+            {article.magnitude && (
+              <Badge className={`${getMagnitudeColor(article.magnitude)} text-white font-bold`}>
+                M{article.magnitude}
+              </Badge>
+            )}
+            <Badge className={`${getTypeColor(article.type)} text-white`}>
+              {getTypeIcon(article.type)}
+              <span className="ml-1">{article.type === 'news' ? 'News' : 'Seismic'}</span>
+            </Badge>
+          </div>
+        </div>
+        <CardDescription className="flex items-center gap-2 text-sm">
+          <Globe className="h-3 w-3" />
+          {article.source?.name}
+          <span>•</span>
+          <Clock className="h-3 w-3" />
+          {formatDate(article.publishedAt)}
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent className="flex-grow pb-3">
+        <div className="space-y-3">
+          {article.location?.region && article.location.region !== 'Unknown location' && (
+            <div className="flex items-center gap-2 text-sm">
+              <MapPin className="h-3 w-3 text-blue-500" />
+              <span className="font-medium">{article.location.region}</span>
+              {article.location.country === 'India' && (
+                <Badge variant="outline" className="text-xs border-blue-500 text-blue-500">
+                  🇮🇳 India
+                </Badge>
+              )}
+            </div>
+          )}
+          
+          {article.depth && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Activity className="h-3 w-3 text-teal-500" />
+              <span>Depth: {article.depth} km</span>
+            </div>
+          )}
+          
+          <p className="text-sm text-gray-700 line-clamp-3">
+            {article.description}
+          </p>
+        </div>
+      </CardContent>
+      
+      <CardFooter className="pt-0">
+        <Button asChild variant="outline" size="sm" className="w-full">
+          <a 
+            href={article.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1"
+          >
+            {article.type === 'news' ? 'Read Article' : 'View Details'}
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+
+  const renderSkeletonCards = () => (
+    <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      {[...Array(6)].map((_, i) => (
+        <Card key={i} className="h-[400px]">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-2">
+              <Skeleton className="h-6 w-3/4" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-12" />
+                <Skeleton className="h-6 w-16" />
+              </div>
+            </div>
+            <Skeleton className="h-4 w-1/2" />
+          </CardHeader>
+          <CardContent className="flex-grow pb-3">
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          </CardContent>
+          <CardFooter className="pt-0">
+            <Skeleton className="h-10 w-full" />
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const renderTabContent = (articles: NewsArticle[], emptyMessage: string) => {
     if (loading) {
-      return <NewsSkeleton />;
+      return renderSkeletonCards();
     }
 
     if (articles.length === 0) {
-      // Special message for India tab when no articles are found
-      if (tabName === 'india') {
-        return (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            <Newspaper className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">No India-specific earthquake news found</h3>
-            <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-              We couldn't find any recent earthquake news specifically about India. This could be because:
-            </p>
-            <ul className="mt-2 text-sm text-gray-500 max-w-md mx-auto text-left list-disc list-inside">
-              <li>There are no recent earthquakes in India</li>
-              <li>News sources may not have reported on the earthquakes yet</li>
-              <li>Try refreshing the page or check back later for updates</li>
-            </ul>
-          </div>
-        );
-      }
-      
-      // Default message for other tabs
       return (
-        <div className="col-span-full text-center py-12 text-muted-foreground">
+        <div className="col-span-full text-center py-12">
           <Newspaper className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">No articles found</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            We couldn't find any articles matching your criteria.
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{emptyMessage}</h3>
+          <p className="text-sm text-gray-500">
+            Try refreshing the page or check back later for updates.
           </p>
         </div>
       );
     }
 
     return (
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {articles.map((article) => (
-          <NewsCard key={article.id} article={article} />
-        ))}
+      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {articles.map(renderNewsCard)}
       </div>
     );
   };
@@ -341,8 +254,7 @@ const LatestNews = () => {
         <PageBreadcrumbs 
           items={[
             { label: 'Home', href: '/' },
-            { label: 'News', href: '/news' },
-            { label: 'Latest Updates' }
+            { label: 'Latest News' }
           ]} 
           className="mb-6"
         />
@@ -350,49 +262,68 @@ const LatestNews = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Latest Earthquake News</h1>
-            <p className="text-muted-foreground">
-              Stay updated with the latest seismic activity and news from around the world
+            <p className="text-gray-600 mt-2">
+              Real-time earthquake data and news from around the world
             </p>
           </div>
-          <Button 
-            onClick={handleRefresh}
-            disabled={loading}
-            variant="outline"
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-500">
+              Last updated: {format(lastUpdated, "MMM d, yyyy 'at' h:mm a")}
+            </div>
+            <Button 
+              onClick={handleRefresh}
+              disabled={loading}
+              variant="outline"
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Loading...' : 'Refresh'}
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="all">All ({newsData.all.length})</TabsTrigger>
-            <TabsTrigger value="news">News ({newsData.news.length})</TabsTrigger>
-            <TabsTrigger value="seismic">Seismic ({newsData.seismic.length})</TabsTrigger>
-            <TabsTrigger value="india">India ({newsData.india.length})</TabsTrigger>
+            <TabsTrigger value="all">All ({allNews.length})</TabsTrigger>
+            <TabsTrigger value="seismic">Seismic ({seismicData.length})</TabsTrigger>
+            <TabsTrigger value="news">News ({newsArticles.length})</TabsTrigger>
+            <TabsTrigger value="india">India ({indiaNews.length})</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="mt-0">
-            {renderTabContent(newsData.all, 'all')}
+          <TabsContent value="all">
+            {renderTabContent(allNews, 'No earthquake data available')}
           </TabsContent>
-          <TabsContent value="news">
-            {renderTabContent(newsData.news, 'news')}
-          </TabsContent>
+          
           <TabsContent value="seismic">
-            {renderTabContent(newsData.seismic, 'seismic')}
+            {renderTabContent(seismicData, 'No seismic data available')}
           </TabsContent>
+          
+          <TabsContent value="news">
+            {renderTabContent(newsArticles, 'No news articles available')}
+          </TabsContent>
+          
           <TabsContent value="india">
-            {renderTabContent(newsData.india, 'india')}
-          </TabsContent>
-          <TabsContent value="significant">
-            {renderTabContent(newsData.significant, 'significant')}
+            {renderTabContent(indiaNews, 'No India-specific earthquake data found')}
           </TabsContent>
         </Tabs>
 
         <div className="mt-12 pt-6 border-t">
-          <p className="text-sm text-muted-foreground text-center">
-            Last updated: {format(new Date(newsData.lastUpdated), "MMM d, yyyy 'at' h:mm a")}
-          </p>
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold mb-3">Data Sources</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-purple-500" />
+                <span><strong>USGS:</strong> United States Geological Survey</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-blue-500" />
+                <span><strong>Real-time:</strong> Updated continuously</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-4">
+              Data is fetched from reliable government sources and updated automatically. 
+              Earthquake magnitudes 2.5+ are shown for the past week.
+            </p>
+          </div>
         </div>
       </div>
     </PageLayout>
