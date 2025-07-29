@@ -192,11 +192,11 @@ const fetchGNewsEarthquakes = async (): Promise<NewsArticle[]> => {
         
         if (!hasEarthquakeContent) return false;
         
-        // Exclude Myanmar-heavy content unless it's major news
+        // HEAVILY exclude Myanmar content unless it's major news
         if (fullText.includes('myanmar') || fullText.includes('burma')) {
-          // Only include if it's a major earthquake (magnitude mentioned)
-          const hasMagnitude = /magnitude\s*[4-9]|m\s*[4-9]|[4-9]\.\d+\s*magnitude/i.test(fullText);
-          return hasMagnitude;
+          // Only include if it's a major earthquake (magnitude 6.0+)
+          const hasMajorMagnitude = /magnitude\s*[6-9]|m\s*[6-9]|[6-9]\.\d+\s*magnitude/i.test(fullText);
+          return hasMajorMagnitude && Math.random() < 0.2; // Only 20% chance even for major Myanmar earthquakes
         }
         
         // Exclude other non-relevant content
@@ -271,10 +271,10 @@ const fetchNewsAPIEarthquakes = async (): Promise<NewsArticle[]> => {
         
         if (!hasEarthquakeContent) return false;
         
-        // Reduce Myanmar content - only major earthquakes
+        // HEAVILY reduce Myanmar content - only magnitude 6.0+ earthquakes
         if (fullText.includes('myanmar') || fullText.includes('burma')) {
-          const hasMajorMagnitude = /magnitude\s*[5-9]|m\s*[5-9]|[5-9]\.\d+\s*magnitude/i.test(fullText);
-          return hasMajorMagnitude;
+          const hasMajorMagnitude = /magnitude\s*[6-9]|m\s*[6-9]|[6-9]\.\d+\s*magnitude/i.test(fullText);
+          return hasMajorMagnitude && Math.random() < 0.3; // Only 30% chance even for major Myanmar earthquakes
         }
         
         // Prioritize diverse geographical coverage
@@ -333,10 +333,10 @@ const fetchGuardianEarthquakes = async (): Promise<NewsArticle[]> => {
         
         const fullText = `${article.webTitle} ${article.fields?.bodyText || ''}`.toLowerCase();
         
-        // Limit Myanmar content
+        // HEAVILY limit Myanmar content
         if (fullText.includes('myanmar') || fullText.includes('burma')) {
-          const hasMajorMagnitude = /magnitude\s*[5-9]|m\s*[5-9]|[5-9]\.\d+\s*magnitude/i.test(fullText);
-          return hasMajorMagnitude;
+          const hasMajorMagnitude = /magnitude\s*[6-9]|m\s*[6-9]|[6-9]\.\d+\s*magnitude/i.test(fullText);
+          return hasMajorMagnitude && Math.random() < 0.2; // Only 20% chance even for major Myanmar earthquakes
         }
         
         return true;
@@ -371,6 +371,149 @@ const fetchGuardianEarthquakes = async (): Promise<NewsArticle[]> => {
   }
 };
 
+// Fetch from CurrentsAPI with enhanced filtering for diverse content
+const fetchCurrentsAPINews = async (): Promise<NewsArticle[]> => {
+  try {
+    const apiKey = 'qVWbmf0_0vrdrjVZ5BNc5MqMf4lwI0GVeSSl3VRMaZjeNwum';
+    const response = await fetch(
+      `https://api.currentsapi.services/v1/search?apiKey=${apiKey}&language=en&keywords=earthquake`
+    );
+    
+    if (!response.ok) {
+      if (response.status === 429) {
+        console.warn('CurrentsAPI rate limit reached');
+        return [];
+      }
+      throw new Error(`CurrentsAPI error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    return (data.news || [])
+      .filter((article: any) => {
+        if (!article.title || !article.description) return false;
+        
+        const fullText = `${article.title} ${article.description}`.toLowerCase();
+        
+        // Must contain earthquake-related terms
+        const hasEarthquakeContent = fullText.includes('earthquake') || 
+                                   fullText.includes('quake') || 
+                                   fullText.includes('seismic') ||
+                                   fullText.includes('tremor');
+        
+        if (!hasEarthquakeContent) return false;
+        
+        // PRIORITIZE NON-MYANMAR CONTENT
+        // Heavily limit Myanmar content - only magnitude 6.0+ earthquakes
+        if (fullText.includes('myanmar') || fullText.includes('burma')) {
+          const hasMajorMagnitude = /magnitude\s*[6-9]|m\s*[6-9]|[6-9]\.\d+\s*magnitude/i.test(fullText);
+          return hasMajorMagnitude && Math.random() < 0.2; // Only 20% chance even for major Myanmar earthquakes
+        }
+        
+        // PRIORITIZE DIVERSE COUNTRIES
+        const priorityCountries = [
+          'japan', 'california', 'turkey', 'chile', 'indonesia', 'italy', 'greece', 
+          'iran', 'india', 'mexico', 'peru', 'ecuador', 'philippines', 'taiwan',
+          'new zealand', 'alaska', 'hawaii', 'nevada', 'oklahoma', 'arkansas'
+        ];
+        
+        const hasPriorityCountry = priorityCountries.some(country => fullText.includes(country));
+        
+        // Include all priority country articles, and only 30% of others
+        return hasPriorityCountry || Math.random() < 0.3;
+      })
+      .slice(0, 15) // Limit to 15 articles
+      .map((article: any) => {
+        const fullText = `${article.title} ${article.description}`;
+        const isIndia = isAboutIndia(fullText);
+        
+        return {
+          id: article.url || `currents-${Date.now()}-${Math.random()}`,
+          title: article.title,
+          description: article.description || 'No description available',
+          content: article.description || 'No content available',
+          url: article.url,
+          image: article.image || '/placeholder.svg',
+          publishedAt: article.published || new Date().toISOString(),
+          source: {
+            name: 'CurrentsAPI',
+            url: 'https://currentsapi.services'
+          },
+          location: {
+            country: isIndia ? 'India' : 'Global',
+            region: isIndia ? 'India' : 'Global'
+          },
+          type: 'news' as const
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching CurrentsAPI news:', error);
+    return [];
+  }
+};
+
+// Fetch from CurrentsAPI India-specific with strict filtering
+const fetchCurrentsAPIIndiaNews = async (): Promise<NewsArticle[]> => {
+  try {
+    const apiKey = 'qVWbmf0_0vrdrjVZ5BNc5MqMf4lwI0GVeSSl3VRMaZjeNwum';
+    const response = await fetch(
+      `https://api.currentsapi.services/v1/search?apiKey=${apiKey}&language=en&country=IN&keywords=earthquake`
+    );
+    
+    if (!response.ok) {
+      if (response.status === 429) {
+        console.warn('CurrentsAPI India rate limit reached');
+        return [];
+      }
+      throw new Error(`CurrentsAPI India error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    return (data.news || [])
+      .filter((article: any) => {
+        if (!article.title || !article.description) return false;
+        
+        const fullText = `${article.title} ${article.description}`.toLowerCase();
+        
+        // Must contain earthquake-related terms
+        const hasEarthquakeContent = fullText.includes('earthquake') || 
+                                   fullText.includes('quake') || 
+                                   fullText.includes('seismic') ||
+                                   fullText.includes('tremor');
+        
+        if (!hasEarthquakeContent) return false;
+        
+        // STRICT: Must be about India (not Myanmar/Bangladesh/Pakistan)
+        return isAboutIndia(fullText);
+      })
+      .slice(0, 8) // Limit to 8 India-specific articles
+      .map((article: any) => {
+        return {
+          id: article.url || `currents-india-${Date.now()}-${Math.random()}`,
+          title: article.title,
+          description: article.description || 'No description available',
+          content: article.description || 'No content available',
+          url: article.url,
+          image: article.image || '/placeholder.svg',
+          publishedAt: article.published || new Date().toISOString(),
+          source: {
+            name: 'CurrentsAPI India',
+            url: 'https://currentsapi.services'
+          },
+          location: {
+            country: 'India',
+            region: 'India'
+          },
+          type: 'news' as const
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching CurrentsAPI India news:', error);
+    return [];
+  }
+};
+
 // Fetch RSS news with CORS proxy and enhanced filtering
 const fetchRSSNews = async (rssUrl: string, sourceName: string): Promise<NewsArticle[]> => {
   try {
@@ -398,10 +541,10 @@ const fetchRSSNews = async (rssUrl: string, sourceName: string): Promise<NewsArt
         
         if (!hasEarthquakeContent) return false;
         
-        // Limit Myanmar content to major earthquakes only
+        // HEAVILY limit Myanmar content to major earthquakes only
         if (fullText.includes('myanmar') || fullText.includes('burma')) {
-          const hasMajorMagnitude = /magnitude\s*[5-9]|m\s*[5-9]|[5-9]\.\d+\s*magnitude/i.test(fullText);
-          return hasMajorMagnitude;
+          const hasMajorMagnitude = /magnitude\s*[6-9]|m\s*[6-9]|[6-9]\.\d+\s*magnitude/i.test(fullText);
+          return hasMajorMagnitude && Math.random() < 0.15; // Only 15% chance even for major Myanmar earthquakes
         }
         
         return true;
@@ -510,35 +653,86 @@ const processArticles = (articles: NewsArticle[]): NewsArticle[] => {
   );
 };
 
-// Enhanced content balancing and filtering
+// Enhanced content balancing with geographical diversity
 const balanceContent = (articles: NewsArticle[]): NewsArticle[] => {
   // Separate seismic data and news articles
   const seismicArticles = articles.filter(article => article.type === 'seismic');
   const newsArticles = articles.filter(article => article.type === 'news');
   
-  // Sort both by date (newest first)
-  const sortedSeismic = seismicArticles.sort((a, b) => 
-    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  );
-  const sortedNews = newsArticles.sort((a, b) => 
-    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  );
+  // GEOGRAPHICAL DIVERSITY FOR NEWS ARTICLES
+  const diversifyNews = (news: NewsArticle[]): NewsArticle[] => {
+    const countryCount: { [key: string]: number } = {};
+    const diverseNews: NewsArticle[] = [];
+    
+    // Sort by date first
+    const sortedNews = news.sort((a, b) => 
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    );
+    
+    // Add articles with geographical diversity priority
+    for (const article of sortedNews) {
+      const content = `${article.title} ${article.description}`.toLowerCase();
+      
+      // Identify country/region
+      let region = 'other';
+      const regions = [
+        { key: 'myanmar', terms: ['myanmar', 'burma'] },
+        { key: 'japan', terms: ['japan', 'japanese'] },
+        { key: 'california', terms: ['california', 'los angeles', 'san francisco'] },
+        { key: 'turkey', terms: ['turkey', 'turkish', 'istanbul', 'ankara'] },
+        { key: 'chile', terms: ['chile', 'chilean', 'santiago'] },
+        { key: 'indonesia', terms: ['indonesia', 'indonesian', 'jakarta'] },
+        { key: 'italy', terms: ['italy', 'italian', 'rome'] },
+        { key: 'greece', terms: ['greece', 'greek', 'athens'] },
+        { key: 'iran', terms: ['iran', 'iranian', 'tehran'] },
+        { key: 'india', terms: ['india', 'indian', 'delhi', 'mumbai'] },
+        { key: 'mexico', terms: ['mexico', 'mexican'] },
+        { key: 'philippines', terms: ['philippines', 'filipino', 'manila'] },
+        { key: 'taiwan', terms: ['taiwan', 'taiwanese'] },
+        { key: 'new_zealand', terms: ['new zealand', 'zealand'] },
+        { key: 'alaska', terms: ['alaska', 'alaskan'] }
+      ];
+      
+      for (const r of regions) {
+        if (r.terms.some(term => content.includes(term))) {
+          region = r.key;
+          break;
+        }
+      }
+      
+      // Limit Myanmar to max 2 articles, others to max 3
+      const maxForRegion = region === 'myanmar' ? 2 : 3;
+      
+      if ((countryCount[region] || 0) < maxForRegion) {
+        diverseNews.push(article);
+        countryCount[region] = (countryCount[region] || 0) + 1;
+        
+        if (diverseNews.length >= 15) break; // Max 15 news articles
+      }
+    }
+    
+    console.log('📍 Geographical distribution:', countryCount);
+    return diverseNews;
+  };
   
-  // Take 15-20 seismic articles (prioritize higher magnitude)
-  const selectedSeismic = sortedSeismic
-    .sort((a, b) => (b.magnitude || 0) - (a.magnitude || 0)) // Sort by magnitude first
+  // Apply geographical diversity to news
+  const diverseNews = diversifyNews(newsArticles);
+  
+  // Sort seismic by magnitude (prioritize higher magnitude)
+  const sortedSeismic = seismicArticles
+    .sort((a, b) => (b.magnitude || 0) - (a.magnitude || 0))
     .slice(0, 18); // Take top 18 seismic events
   
   // Take remaining slots for news (30 total - seismic count)
-  const remainingSlots = 30 - selectedSeismic.length;
-  const selectedNews = sortedNews.slice(0, Math.max(remainingSlots, 10)); // At least 10 news articles
+  const remainingSlots = 30 - sortedSeismic.length;
+  const selectedNews = diverseNews.slice(0, Math.max(remainingSlots, 10));
   
   // Combine and sort by date
-  const combined = [...selectedSeismic, ...selectedNews].sort((a, b) => 
+  const combined = [...sortedSeismic, ...selectedNews].sort((a, b) => 
     new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
   
-  console.log(`📊 Content balance: ${selectedSeismic.length} seismic + ${selectedNews.length} news = ${combined.length} total`);
+  console.log(`📊 Content balance: ${sortedSeismic.length} seismic + ${selectedNews.length} news = ${combined.length} total`);
   
   return combined.slice(0, 30); // Ensure exactly 30 articles
 };
@@ -553,11 +747,15 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
     // Fetch from all sources concurrently with timeout
     const sources = [
       { name: 'USGS', fetch: fetchUSGSEarthquakes },
+      { name: 'CurrentsAPI', fetch: fetchCurrentsAPINews },
+      { name: 'CurrentsAPI India', fetch: fetchCurrentsAPIIndiaNews },
       { name: 'GNews', fetch: fetchGNewsEarthquakes },
       { name: 'NewsAPI', fetch: fetchNewsAPIEarthquakes },
       { name: 'Guardian', fetch: fetchGuardianEarthquakes },
       { name: 'Reuters RSS', fetch: () => fetchRSSNews('https://feeds.reuters.com/Reuters/worldNews', 'Reuters') },
-      { name: 'BBC RSS', fetch: () => fetchRSSNews('http://feeds.bbci.co.uk/news/world/rss.xml', 'BBC News') }
+      { name: 'BBC RSS', fetch: () => fetchRSSNews('http://feeds.bbci.co.uk/news/world/rss.xml', 'BBC News') },
+      { name: 'CNN RSS', fetch: () => fetchRSSNews('http://rss.cnn.com/rss/edition.rss', 'CNN') },
+      { name: 'AP News RSS', fetch: () => fetchRSSNews('https://feeds.apnews.com/rss/apf-topnews', 'Associated Press') }
     ];
     
     // Fetch with timeout to prevent hanging
