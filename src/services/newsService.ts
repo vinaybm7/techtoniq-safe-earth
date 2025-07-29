@@ -21,23 +21,68 @@ interface NewsArticle {
   type: 'seismic' | 'news';
 }
 
-// Meticulous India detection with strict filtering
-const isAboutIndia = (text: string): boolean => {
+// Function to detect metaphorical/non-geological earthquake usage
+const isActualEarthquake = (text: string): boolean => {
   if (!text) return false;
   
   const searchText = text.toLowerCase().trim();
   
-  // STRICT EXCLUSION - Countries that are NOT India
+  // EXCLUDE METAPHORICAL EARTHQUAKES
+  const metaphoricalTerms = [
+    'economic earthquake', 'political earthquake', 'financial earthquake', 'market earthquake',
+    'business earthquake', 'corporate earthquake', 'industry earthquake', 'tech earthquake',
+    'social earthquake', 'cultural earthquake', 'legal earthquake', 'regulatory earthquake',
+    'policy earthquake', 'election earthquake', 'electoral earthquake', 'diplomatic earthquake',
+    'trade earthquake', 'stock earthquake', 'cryptocurrency earthquake', 'crypto earthquake',
+    'housing earthquake', 'real estate earthquake', 'banking earthquake', 'investment earthquake',
+    'startup earthquake', 'layoff earthquake', 'employment earthquake', 'job earthquake',
+    'merger earthquake', 'acquisition earthquake', 'ipo earthquake', 'earnings earthquake',
+    'revenue earthquake', 'profit earthquake', 'loss earthquake', 'debt earthquake',
+    'inflation earthquake', 'recession earthquake', 'boom earthquake', 'bubble earthquake'
+  ];
+  
+  // If any metaphorical term is found, it's NOT a real earthquake
+  if (metaphoricalTerms.some(term => searchText.includes(term))) {
+    return false;
+  }
+  
+  // REQUIRE GEOLOGICAL/SEISMIC INDICATORS
+  const geologicalIndicators = [
+    'magnitude', 'richter', 'seismic', 'tremor', 'aftershock', 'foreshock', 'epicenter',
+    'fault', 'tectonic', 'geological', 'usgs', 'seismology', 'seismologist', 'seismograph',
+    'ground shaking', 'earth shaking', 'building collapse', 'structural damage',
+    'evacuation', 'rescue', 'casualties', 'injured', 'death toll', 'disaster',
+    'natural disaster', 'geological survey', 'seismic activity', 'seismic waves',
+    'p-wave', 's-wave', 'tsunami', 'landslide', 'rockfall', 'ground rupture'
+  ];
+  
+  // Must have at least one geological indicator
+  return geologicalIndicators.some(indicator => searchText.includes(indicator));
+};
+
+// Ultra-strict India detection with geological validation
+const isAboutIndiaEarthquake = (text: string): boolean => {
+  if (!text) return false;
+  
+  const searchText = text.toLowerCase().trim();
+  
+  // FIRST: Must be an actual earthquake (not metaphorical)
+  if (!isActualEarthquake(text)) {
+    return false;
+  }
+  
+  // ABSOLUTE EXCLUSION - Countries that are NOT India (including Myanmar)
   const excludeCountries = [
     'myanmar', 'burma', 'bangladesh', 'pakistan', 'nepal', 'china', 'sri lanka', 'bhutan',
     'afghanistan', 'tibet', 'maldives', 'thailand', 'indonesia', 'malaysia', 'philippines',
     'vietnam', 'cambodia', 'laos', 'singapore', 'brunei', 'japan', 'south korea', 'taiwan',
     'mongolia', 'kazakhstan', 'uzbekistan', 'kyrgyzstan', 'tajikistan', 'turkmenistan',
     'iran', 'iraq', 'turkey', 'syria', 'lebanon', 'jordan', 'israel', 'palestine',
-    'saudi arabia', 'yemen', 'oman', 'uae', 'qatar', 'bahrain', 'kuwait'
+    'saudi arabia', 'yemen', 'oman', 'uae', 'qatar', 'bahrain', 'kuwait', 'russia',
+    'ukraine', 'georgia', 'armenia', 'azerbaijan', 'north korea', 'south korea'
   ];
   
-  // STRICT EXCLUSION - Non-India terms
+  // ABSOLUTE EXCLUSION - Non-India terms and neighboring countries
   const excludeTerms = [
     'indiana', 'indianapolis', 'american indian', 'native american', 'west indies', 'east indies',
     'indian restaurant', 'indian cuisine', 'indian food', 'indian culture', 'indian festival',
@@ -45,53 +90,66 @@ const isAboutIndia = (text: string): boolean => {
     'indians in uk', 'indian-american', 'indian american', 'indian origin', 'nri', 'pio',
     'overseas indian', 'indian ocean', 'indian subcontinent region', 'south asian region',
     'myanmar earthquake', 'bangladesh earthquake', 'pakistan earthquake', 'nepal earthquake',
-    'china earthquake', 'sri lanka earthquake', 'bhutan earthquake', 'afghanistan earthquake'
+    'china earthquake', 'sri lanka earthquake', 'bhutan earthquake', 'afghanistan earthquake',
+    'tibet earthquake', 'tibetan earthquake', 'kashmir earthquake in pakistan',
+    'earthquake near myanmar', 'earthquake near bangladesh', 'earthquake near pakistan',
+    'border with myanmar', 'border with bangladesh', 'border with pakistan', 'border with china'
   ];
   
-  // If any exclusion term is found, it's definitely NOT about India
+  // IMMEDIATE REJECTION if any exclusion term is found
   if (excludeCountries.some(country => searchText.includes(country)) || 
       excludeTerms.some(term => searchText.includes(term))) {
     return false;
   }
   
-  // PRECISE INDIA KEYWORDS - Only specific Indian locations
+  // POSITIVE INDIA INDICATORS - Must have at least one
   const indiaSpecificKeywords = [
-    // Major Indian cities (must be exact matches)
-    'new delhi', 'delhi', 'mumbai', 'bangalore', 'bengaluru', 'chennai', 'kolkata', 'calcutta',
-    'hyderabad', 'pune', 'ahmedabad', 'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore',
-    'bhopal', 'visakhapatnam', 'vizag', 'patna', 'vadodara', 'ghaziabad', 'ludhiana',
-    'agra', 'nashik', 'faridabad', 'meerut', 'rajkot', 'kalyan', 'vasai', 'vijayawada',
-    'jodhpur', 'madurai', 'raipur', 'kota', 'chandigarh', 'guwahati', 'solapur',
-    'hubli', 'mysore', 'gurgaon', 'gurugram', 'noida', 'greater noida',
+    // Major Indian cities with earthquake context
+    'earthquake in delhi', 'earthquake in mumbai', 'earthquake in bangalore', 'earthquake in chennai',
+    'earthquake in kolkata', 'earthquake in hyderabad', 'earthquake in pune', 'earthquake in ahmedabad',
+    'delhi earthquake', 'mumbai earthquake', 'bangalore earthquake', 'chennai earthquake',
+    'kolkata earthquake', 'hyderabad earthquake', 'pune earthquake', 'ahmedabad earthquake',
     
-    // Indian states (must be exact matches)
-    'kerala', 'tamil nadu', 'karnataka', 'andhra pradesh', 'telangana', 'maharashtra',
-    'gujarat', 'rajasthan', 'madhya pradesh', 'uttar pradesh', 'bihar', 'west bengal',
-    'odisha', 'orissa', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
-    'jharkhand', 'chhattisgarh', 'goa', 'manipur', 'meghalaya', 'tripura', 'nagaland',
-    'arunachal pradesh', 'mizoram', 'sikkim', 'jammu and kashmir', 'ladakh',
+    // Indian states with earthquake context
+    'earthquake in kerala', 'earthquake in tamil nadu', 'earthquake in karnataka', 'earthquake in maharashtra',
+    'earthquake in gujarat', 'earthquake in rajasthan', 'earthquake in uttar pradesh', 'earthquake in bihar',
+    'earthquake in west bengal', 'earthquake in odisha', 'earthquake in assam', 'earthquake in punjab',
+    'earthquake in haryana', 'earthquake in himachal pradesh', 'earthquake in uttarakhand',
+    'kerala earthquake', 'tamil nadu earthquake', 'karnataka earthquake', 'maharashtra earthquake',
+    'gujarat earthquake', 'rajasthan earthquake', 'assam earthquake', 'himachal pradesh earthquake',
     
-    // Specific earthquake-related terms for India
+    // Specific India earthquake phrases
     'earthquake in india', 'india earthquake', 'indian earthquake', 'earthquake hits india',
     'earthquake strikes india', 'tremors in india', 'seismic activity in india',
-    'earthquake felt in india', 'india seismic', 'indian seismic activity'
+    'earthquake felt in india', 'india seismic', 'indian seismic activity',
+    'earthquake jolts india', 'earthquake rocks india', 'india tremor', 'indian tremor'
   ];
   
-  // Check for specific India keywords
+  // Must have at least one India-specific keyword
   const hasIndiaKeyword = indiaSpecificKeywords.some(keyword => searchText.includes(keyword));
   
   if (hasIndiaKeyword) {
     return true;
   }
   
-  // Final check for general "India" term with earthquake context
+  // Final check: General "India" term with strict earthquake context
   if (searchText.includes('india') && !searchText.includes('indian ocean')) {
-    // Must also have earthquake context
-    const earthquakeTerms = ['earthquake', 'quake', 'tremor', 'seismic', 'magnitude', 'richter'];
-    return earthquakeTerms.some(term => searchText.includes(term));
+    // Must have both earthquake terms AND geological indicators
+    const earthquakeTerms = ['earthquake', 'quake', 'tremor', 'seismic'];
+    const hasEarthquakeTerm = earthquakeTerms.some(term => searchText.includes(term));
+    
+    const geologicalTerms = ['magnitude', 'richter', 'epicenter', 'aftershock', 'fault'];
+    const hasGeologicalTerm = geologicalTerms.some(term => searchText.includes(term));
+    
+    return hasEarthquakeTerm && hasGeologicalTerm;
   }
   
   return false;
+};
+
+// Legacy function for backward compatibility
+const isAboutIndia = (text: string): boolean => {
+  return isAboutIndiaEarthquake(text);
 };
 
 // Helper function to check if location is in India
@@ -182,15 +240,10 @@ const fetchGNewsEarthquakes = async (): Promise<NewsArticle[]> => {
       .filter((article: any) => {
         if (!article.title || !article.description) return false;
         
-        const fullText = `${article.title} ${article.description} ${article.content || ''}`.toLowerCase();
+        const fullText = `${article.title} ${article.description} ${article.content || ''}`;
         
-        // Must contain earthquake-related terms
-        const hasEarthquakeContent = fullText.includes('earthquake') || 
-                                   fullText.includes('quake') || 
-                                   fullText.includes('seismic') ||
-                                   fullText.includes('tremor');
-        
-        if (!hasEarthquakeContent) return false;
+        // Must be an actual earthquake (not metaphorical)
+        if (!isActualEarthquake(fullText)) return false;
         
         // HEAVILY exclude Myanmar content unless it's major news
         if (fullText.includes('myanmar') || fullText.includes('burma')) {
@@ -261,15 +314,10 @@ const fetchNewsAPIEarthquakes = async (): Promise<NewsArticle[]> => {
           return false;
         }
         
-        const fullText = `${article.title} ${article.description} ${article.content || ''}`.toLowerCase();
+        const fullText = `${article.title} ${article.description} ${article.content || ''}`;
         
-        // Must contain earthquake-related terms
-        const hasEarthquakeContent = fullText.includes('earthquake') || 
-                                   fullText.includes('quake') || 
-                                   fullText.includes('seismic') ||
-                                   fullText.includes('tremor');
-        
-        if (!hasEarthquakeContent) return false;
+        // Must be an actual earthquake (not metaphorical)
+        if (!isActualEarthquake(fullText)) return false;
         
         // HEAVILY reduce Myanmar content - only magnitude 6.0+ earthquakes
         if (fullText.includes('myanmar') || fullText.includes('burma')) {
@@ -395,13 +443,8 @@ const fetchCurrentsAPINews = async (): Promise<NewsArticle[]> => {
         
         const fullText = `${article.title} ${article.description}`.toLowerCase();
         
-        // Must contain earthquake-related terms
-        const hasEarthquakeContent = fullText.includes('earthquake') || 
-                                   fullText.includes('quake') || 
-                                   fullText.includes('seismic') ||
-                                   fullText.includes('tremor');
-        
-        if (!hasEarthquakeContent) return false;
+        // Must be an actual earthquake (not metaphorical)
+        if (!isActualEarthquake(fullText)) return false;
         
         // PRIORITIZE NON-MYANMAR CONTENT
         // Heavily limit Myanmar content - only magnitude 6.0+ earthquakes
@@ -476,16 +519,11 @@ const fetchCurrentsAPIIndiaNews = async (): Promise<NewsArticle[]> => {
         
         const fullText = `${article.title} ${article.description}`.toLowerCase();
         
-        // Must contain earthquake-related terms
-        const hasEarthquakeContent = fullText.includes('earthquake') || 
-                                   fullText.includes('quake') || 
-                                   fullText.includes('seismic') ||
-                                   fullText.includes('tremor');
+        // Must be an actual earthquake (not metaphorical)
+        if (!isActualEarthquake(fullText)) return false;
         
-        if (!hasEarthquakeContent) return false;
-        
-        // STRICT: Must be about India (not Myanmar/Bangladesh/Pakistan)
-        return isAboutIndia(fullText);
+        // ULTRA-STRICT: Must be about India earthquake specifically
+        return isAboutIndiaEarthquake(fullText);
       })
       .slice(0, 8) // Limit to 8 India-specific articles
       .map((article: any) => {
@@ -533,13 +571,8 @@ const fetchRSSNews = async (rssUrl: string, sourceName: string): Promise<NewsArt
         
         const fullText = `${item.title} ${item.description}`.toLowerCase();
         
-        // Must contain earthquake-related terms
-        const hasEarthquakeContent = fullText.includes('earthquake') || 
-                                   fullText.includes('quake') || 
-                                   fullText.includes('seismic') ||
-                                   fullText.includes('tremor');
-        
-        if (!hasEarthquakeContent) return false;
+        // Must be an actual earthquake (not metaphorical)
+        if (!isActualEarthquake(fullText)) return false;
         
         // HEAVILY limit Myanmar content to major earthquakes only
         if (fullText.includes('myanmar') || fullText.includes('burma')) {
@@ -804,16 +837,32 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Fetch India-specific earthquake news
+// Fetch India-specific earthquake news with ultra-strict filtering
 export const fetchIndiaEarthquakes = async (): Promise<NewsArticle[]> => {
   try {
     const allNews = await fetchEarthquakeNews();
-    const indiaNews = allNews.filter(article => 
-      article.location?.country === 'India' || 
-      isAboutIndia(article.title + ' ' + article.description)
-    );
     
-    console.log(`🇮🇳 India-specific articles: ${indiaNews.length}`);
+    // ULTRA-STRICT FILTERING: Must pass both tests
+    const indiaNews = allNews.filter(article => {
+      const fullText = `${article.title} ${article.description} ${article.content || ''}`;
+      
+      // 1. Must be an actual earthquake (not metaphorical)
+      if (!isActualEarthquake(fullText)) {
+        console.log(`❌ Rejected non-geological: ${article.title}`);
+        return false;
+      }
+      
+      // 2. Must be specifically about India (not Myanmar/Bangladesh/Pakistan)
+      if (!isAboutIndiaEarthquake(fullText)) {
+        console.log(`❌ Rejected non-India: ${article.title}`);
+        return false;
+      }
+      
+      console.log(`✅ Accepted India earthquake: ${article.title}`);
+      return true;
+    });
+    
+    console.log(`🇮🇳 India-specific earthquake articles: ${indiaNews.length}`);
     
     // If no India-specific earthquakes, return India fallback
     if (indiaNews.length === 0) {
