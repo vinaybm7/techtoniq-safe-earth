@@ -21,36 +21,77 @@ interface NewsArticle {
   type: 'seismic' | 'news';
 }
 
-// Helper function to check if content is about India
+// Meticulous India detection with strict filtering
 const isAboutIndia = (text: string): boolean => {
   if (!text) return false;
   
-  const searchText = text.toLowerCase();
+  const searchText = text.toLowerCase().trim();
   
-  // Strong exclusion terms
-  const excludeTerms = [
-    'indiana', 'indianapolis', 'american indian', 'native american', 'west indies',
-    'indian restaurant', 'indian cuisine', 'indian food', 'indian culture',
-    'indian diaspora', 'indian community in', 'indians in america', 'indians in canada',
-    'indian-american', 'indian american', 'indian origin', 'nri', 'pio'
+  // STRICT EXCLUSION - Countries that are NOT India
+  const excludeCountries = [
+    'myanmar', 'burma', 'bangladesh', 'pakistan', 'nepal', 'china', 'sri lanka', 'bhutan',
+    'afghanistan', 'tibet', 'maldives', 'thailand', 'indonesia', 'malaysia', 'philippines',
+    'vietnam', 'cambodia', 'laos', 'singapore', 'brunei', 'japan', 'south korea', 'taiwan',
+    'mongolia', 'kazakhstan', 'uzbekistan', 'kyrgyzstan', 'tajikistan', 'turkmenistan',
+    'iran', 'iraq', 'turkey', 'syria', 'lebanon', 'jordan', 'israel', 'palestine',
+    'saudi arabia', 'yemen', 'oman', 'uae', 'qatar', 'bahrain', 'kuwait'
   ];
   
-  if (excludeTerms.some(term => searchText.includes(term))) {
+  // STRICT EXCLUSION - Non-India terms
+  const excludeTerms = [
+    'indiana', 'indianapolis', 'american indian', 'native american', 'west indies', 'east indies',
+    'indian restaurant', 'indian cuisine', 'indian food', 'indian culture', 'indian festival',
+    'indian diaspora', 'indian community in', 'indians in america', 'indians in canada',
+    'indians in uk', 'indian-american', 'indian american', 'indian origin', 'nri', 'pio',
+    'overseas indian', 'indian ocean', 'indian subcontinent region', 'south asian region',
+    'myanmar earthquake', 'bangladesh earthquake', 'pakistan earthquake', 'nepal earthquake',
+    'china earthquake', 'sri lanka earthquake', 'bhutan earthquake', 'afghanistan earthquake'
+  ];
+  
+  // If any exclusion term is found, it's definitely NOT about India
+  if (excludeCountries.some(country => searchText.includes(country)) || 
+      excludeTerms.some(term => searchText.includes(term))) {
     return false;
   }
   
-  // Indian locations and terms
-  const indiaKeywords = [
-    'india', 'delhi', 'mumbai', 'bangalore', 'bengaluru', 'chennai', 'kolkata', 'hyderabad',
-    'pune', 'ahmedabad', 'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore', 'bhopal',
-    'kerala', 'tamil nadu', 'karnataka', 'andhra pradesh', 'telangana', 
-    'maharashtra', 'gujarat', 'rajasthan', 'madhya pradesh', 'uttar pradesh',
-    'bihar', 'west bengal', 'odisha', 'assam', 'punjab', 'haryana',
-    'himachal pradesh', 'uttarakhand', 'jharkhand', 'chhattisgarh', 'goa',
-    'jammu and kashmir', 'ladakh', 'northeast india', 'north india', 'south india'
+  // PRECISE INDIA KEYWORDS - Only specific Indian locations
+  const indiaSpecificKeywords = [
+    // Major Indian cities (must be exact matches)
+    'new delhi', 'delhi', 'mumbai', 'bangalore', 'bengaluru', 'chennai', 'kolkata', 'calcutta',
+    'hyderabad', 'pune', 'ahmedabad', 'jaipur', 'lucknow', 'kanpur', 'nagpur', 'indore',
+    'bhopal', 'visakhapatnam', 'vizag', 'patna', 'vadodara', 'ghaziabad', 'ludhiana',
+    'agra', 'nashik', 'faridabad', 'meerut', 'rajkot', 'kalyan', 'vasai', 'vijayawada',
+    'jodhpur', 'madurai', 'raipur', 'kota', 'chandigarh', 'guwahati', 'solapur',
+    'hubli', 'mysore', 'gurgaon', 'gurugram', 'noida', 'greater noida',
+    
+    // Indian states (must be exact matches)
+    'kerala', 'tamil nadu', 'karnataka', 'andhra pradesh', 'telangana', 'maharashtra',
+    'gujarat', 'rajasthan', 'madhya pradesh', 'uttar pradesh', 'bihar', 'west bengal',
+    'odisha', 'orissa', 'assam', 'punjab', 'haryana', 'himachal pradesh', 'uttarakhand',
+    'jharkhand', 'chhattisgarh', 'goa', 'manipur', 'meghalaya', 'tripura', 'nagaland',
+    'arunachal pradesh', 'mizoram', 'sikkim', 'jammu and kashmir', 'ladakh',
+    
+    // Specific earthquake-related terms for India
+    'earthquake in india', 'india earthquake', 'indian earthquake', 'earthquake hits india',
+    'earthquake strikes india', 'tremors in india', 'seismic activity in india',
+    'earthquake felt in india', 'india seismic', 'indian seismic activity'
   ];
   
-  return indiaKeywords.some(keyword => searchText.includes(keyword));
+  // Check for specific India keywords
+  const hasIndiaKeyword = indiaSpecificKeywords.some(keyword => searchText.includes(keyword));
+  
+  if (hasIndiaKeyword) {
+    return true;
+  }
+  
+  // Final check for general "India" term with earthquake context
+  if (searchText.includes('india') && !searchText.includes('indian ocean')) {
+    // Must also have earthquake context
+    const earthquakeTerms = ['earthquake', 'quake', 'tremor', 'seismic', 'magnitude', 'richter'];
+    return earthquakeTerms.some(term => searchText.includes(term));
+  }
+  
+  return false;
 };
 
 // Helper function to check if location is in India
@@ -58,7 +99,7 @@ const isLocationInIndia = (place: string): boolean => {
   return isAboutIndia(place);
 };
 
-// Fetch earthquake data from USGS (seismic data)
+// Fetch earthquake data from USGS (seismic data) - Limited and filtered
 const fetchUSGSEarthquakes = async (): Promise<NewsArticle[]> => {
   try {
     const response = await fetch(
@@ -72,8 +113,21 @@ const fetchUSGSEarthquakes = async (): Promise<NewsArticle[]> => {
     const data = await response.json();
     
     return data.features
-      .filter((quake: any) => quake.properties.mag >= 3.0) // Filter for significant earthquakes
-      .slice(0, 30) // Limit to 30 most recent
+      .filter((quake: any) => {
+        const mag = quake.properties.mag;
+        const place = quake.properties.place || '';
+        
+        // Filter for significant earthquakes (3.0+) and exclude very small ones
+        if (mag < 3.0) return false;
+        
+        // Prioritize higher magnitude earthquakes
+        if (mag >= 5.0) return true;
+        
+        // For smaller earthquakes, be more selective
+        return Math.random() < 0.7; // Include 70% of 3.0-4.9 earthquakes
+      })
+      .sort((a: any, b: any) => b.properties.mag - a.properties.mag) // Sort by magnitude
+      .slice(0, 25) // Limit to 25 most significant
       .map((quake: any) => {
         const place = quake.properties.place || 'Unknown location';
         const isIndia = isLocationInIndia(place);
@@ -106,12 +160,12 @@ const fetchUSGSEarthquakes = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Fetch news from GNews API
+// Fetch news from GNews API with quality filtering
 const fetchGNewsEarthquakes = async (): Promise<NewsArticle[]> => {
   try {
     const apiKey = '0f2829470d1cca9155f182ffab0cb3b2'; // Your existing GNews API key
     const response = await fetch(
-      `https://gnews.io/api/v4/search?q=earthquake&lang=en&max=20&apikey=${apiKey}`
+      `https://gnews.io/api/v4/search?q=earthquake&lang=en&max=25&apikey=${apiKey}`
     );
     
     if (!response.ok) {
@@ -125,13 +179,35 @@ const fetchGNewsEarthquakes = async (): Promise<NewsArticle[]> => {
     const data = await response.json();
     
     return (data.articles || [])
-      .filter((article: any) => 
-        article.title && 
-        article.description &&
-        (article.title.toLowerCase().includes('earthquake') || 
-         article.description.toLowerCase().includes('earthquake'))
-      )
-      .slice(0, 15)
+      .filter((article: any) => {
+        if (!article.title || !article.description) return false;
+        
+        const fullText = `${article.title} ${article.description} ${article.content || ''}`.toLowerCase();
+        
+        // Must contain earthquake-related terms
+        const hasEarthquakeContent = fullText.includes('earthquake') || 
+                                   fullText.includes('quake') || 
+                                   fullText.includes('seismic') ||
+                                   fullText.includes('tremor');
+        
+        if (!hasEarthquakeContent) return false;
+        
+        // Exclude Myanmar-heavy content unless it's major news
+        if (fullText.includes('myanmar') || fullText.includes('burma')) {
+          // Only include if it's a major earthquake (magnitude mentioned)
+          const hasMagnitude = /magnitude\s*[4-9]|m\s*[4-9]|[4-9]\.\d+\s*magnitude/i.test(fullText);
+          return hasMagnitude;
+        }
+        
+        // Exclude other non-relevant content
+        const excludePatterns = [
+          'earthquake drill', 'earthquake simulation', 'earthquake movie', 'earthquake game',
+          'earthquake insurance', 'earthquake stocks', 'earthquake bonds'
+        ];
+        
+        return !excludePatterns.some(pattern => fullText.includes(pattern));
+      })
+      .slice(0, 12) // Reduced limit
       .map((article: any) => {
         const fullText = `${article.title} ${article.description} ${article.content || ''}`;
         const isIndia = isAboutIndia(fullText);
@@ -161,12 +237,12 @@ const fetchGNewsEarthquakes = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Fetch news from NewsAPI.org
+// Fetch news from NewsAPI.org with enhanced filtering
 const fetchNewsAPIEarthquakes = async (): Promise<NewsArticle[]> => {
   try {
     const apiKey = 'd4b87e3551324d55b23a8b04822bd917'; // Your existing NewsAPI key
     const response = await fetch(
-      `https://newsapi.org/v2/everything?q=earthquake&language=en&sortBy=publishedAt&pageSize=20&apiKey=${apiKey}`
+      `https://newsapi.org/v2/everything?q=earthquake&language=en&sortBy=publishedAt&pageSize=25&apiKey=${apiKey}`
     );
     
     if (!response.ok) {
@@ -180,14 +256,35 @@ const fetchNewsAPIEarthquakes = async (): Promise<NewsArticle[]> => {
     const data = await response.json();
     
     return (data.articles || [])
-      .filter((article: any) => 
-        article.title && 
-        article.description &&
-        !article.title.includes('[Removed]') &&
-        (article.title.toLowerCase().includes('earthquake') || 
-         article.description.toLowerCase().includes('earthquake'))
-      )
-      .slice(0, 15)
+      .filter((article: any) => {
+        if (!article.title || !article.description || article.title.includes('[Removed]')) {
+          return false;
+        }
+        
+        const fullText = `${article.title} ${article.description} ${article.content || ''}`.toLowerCase();
+        
+        // Must contain earthquake-related terms
+        const hasEarthquakeContent = fullText.includes('earthquake') || 
+                                   fullText.includes('quake') || 
+                                   fullText.includes('seismic') ||
+                                   fullText.includes('tremor');
+        
+        if (!hasEarthquakeContent) return false;
+        
+        // Reduce Myanmar content - only major earthquakes
+        if (fullText.includes('myanmar') || fullText.includes('burma')) {
+          const hasMajorMagnitude = /magnitude\s*[5-9]|m\s*[5-9]|[5-9]\.\d+\s*magnitude/i.test(fullText);
+          return hasMajorMagnitude;
+        }
+        
+        // Prioritize diverse geographical coverage
+        const priorityRegions = ['japan', 'california', 'turkey', 'chile', 'indonesia', 'italy', 'greece', 'iran', 'india'];
+        const hasPriorityRegion = priorityRegions.some(region => fullText.includes(region));
+        
+        // Include all priority region articles, and 60% of others
+        return hasPriorityRegion || Math.random() < 0.6;
+      })
+      .slice(0, 12) // Reduced limit
       .map((article: any) => {
         const fullText = `${article.title} ${article.description} ${article.content || ''}`;
         const isIndia = isAboutIndia(fullText);
@@ -217,11 +314,11 @@ const fetchNewsAPIEarthquakes = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Fetch news from The Guardian API (free tier)
+// Fetch news from The Guardian API with quality filtering
 const fetchGuardianEarthquakes = async (): Promise<NewsArticle[]> => {
   try {
     const response = await fetch(
-      'https://content.guardianapis.com/search?q=earthquake&section=world&show-fields=thumbnail,bodyText&page-size=15&api-key=test'
+      'https://content.guardianapis.com/search?q=earthquake&section=world&show-fields=thumbnail,bodyText&page-size=20&api-key=test'
     );
     
     if (!response.ok) {
@@ -231,8 +328,20 @@ const fetchGuardianEarthquakes = async (): Promise<NewsArticle[]> => {
     const data = await response.json();
     
     return (data.response?.results || [])
-      .filter((article: any) => article.webTitle && article.webUrl)
-      .slice(0, 10)
+      .filter((article: any) => {
+        if (!article.webTitle || !article.webUrl) return false;
+        
+        const fullText = `${article.webTitle} ${article.fields?.bodyText || ''}`.toLowerCase();
+        
+        // Limit Myanmar content
+        if (fullText.includes('myanmar') || fullText.includes('burma')) {
+          const hasMajorMagnitude = /magnitude\s*[5-9]|m\s*[5-9]|[5-9]\.\d+\s*magnitude/i.test(fullText);
+          return hasMajorMagnitude;
+        }
+        
+        return true;
+      })
+      .slice(0, 8) // Reduced limit
       .map((article: any) => {
         const fullText = `${article.webTitle} ${article.fields?.bodyText || ''}`;
         const isIndia = isAboutIndia(fullText);
@@ -262,7 +371,7 @@ const fetchGuardianEarthquakes = async (): Promise<NewsArticle[]> => {
   }
 };
 
-// Fetch RSS news with CORS proxy
+// Fetch RSS news with CORS proxy and enhanced filtering
 const fetchRSSNews = async (rssUrl: string, sourceName: string): Promise<NewsArticle[]> => {
   try {
     const response = await fetch(
@@ -276,13 +385,28 @@ const fetchRSSNews = async (rssUrl: string, sourceName: string): Promise<NewsArt
     const data = await response.json();
     
     return (data.items || [])
-      .filter((item: any) => 
-        item.title && 
-        item.description &&
-        (item.title.toLowerCase().includes('earthquake') || 
-         item.description.toLowerCase().includes('earthquake'))
-      )
-      .slice(0, 10)
+      .filter((item: any) => {
+        if (!item.title || !item.description) return false;
+        
+        const fullText = `${item.title} ${item.description}`.toLowerCase();
+        
+        // Must contain earthquake-related terms
+        const hasEarthquakeContent = fullText.includes('earthquake') || 
+                                   fullText.includes('quake') || 
+                                   fullText.includes('seismic') ||
+                                   fullText.includes('tremor');
+        
+        if (!hasEarthquakeContent) return false;
+        
+        // Limit Myanmar content to major earthquakes only
+        if (fullText.includes('myanmar') || fullText.includes('burma')) {
+          const hasMajorMagnitude = /magnitude\s*[5-9]|m\s*[5-9]|[5-9]\.\d+\s*magnitude/i.test(fullText);
+          return hasMajorMagnitude;
+        }
+        
+        return true;
+      })
+      .slice(0, 8) // Reduced limit for RSS
       .map((item: any) => {
         const fullText = `${item.title} ${item.description}`;
         const isIndia = isAboutIndia(fullText);
@@ -386,6 +510,39 @@ const processArticles = (articles: NewsArticle[]): NewsArticle[] => {
   );
 };
 
+// Enhanced content balancing and filtering
+const balanceContent = (articles: NewsArticle[]): NewsArticle[] => {
+  // Separate seismic data and news articles
+  const seismicArticles = articles.filter(article => article.type === 'seismic');
+  const newsArticles = articles.filter(article => article.type === 'news');
+  
+  // Sort both by date (newest first)
+  const sortedSeismic = seismicArticles.sort((a, b) => 
+    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
+  const sortedNews = newsArticles.sort((a, b) => 
+    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
+  
+  // Take 15-20 seismic articles (prioritize higher magnitude)
+  const selectedSeismic = sortedSeismic
+    .sort((a, b) => (b.magnitude || 0) - (a.magnitude || 0)) // Sort by magnitude first
+    .slice(0, 18); // Take top 18 seismic events
+  
+  // Take remaining slots for news (30 total - seismic count)
+  const remainingSlots = 30 - selectedSeismic.length;
+  const selectedNews = sortedNews.slice(0, Math.max(remainingSlots, 10)); // At least 10 news articles
+  
+  // Combine and sort by date
+  const combined = [...selectedSeismic, ...selectedNews].sort((a, b) => 
+    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
+  
+  console.log(`📊 Content balance: ${selectedSeismic.length} seismic + ${selectedNews.length} news = ${combined.length} total`);
+  
+  return combined.slice(0, 30); // Ensure exactly 30 articles
+};
+
 // Main function to fetch earthquake news from multiple sources
 export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
   const allArticles: NewsArticle[] = [];
@@ -407,7 +564,7 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
     const results = await Promise.allSettled(
       sources.map(async (source) => {
         const timeout = new Promise<NewsArticle[]>((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 10000)
+          setTimeout(() => reject(new Error('Timeout')), 8000) // Reduced timeout
         );
         
         try {
@@ -428,12 +585,15 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
       }
     });
     
-    // Process and return articles
-    const processedArticles = processArticles(allArticles);
+    // Remove duplicates first
+    const uniqueArticles = processArticles(allArticles);
     
-    if (processedArticles.length > 0) {
-      console.log(`✅ Total articles collected: ${processedArticles.length}`);
-      return processedArticles.slice(0, 50); // Limit to 50 most recent
+    // Apply content balancing
+    const balancedArticles = balanceContent(uniqueArticles);
+    
+    if (balancedArticles.length > 0) {
+      console.log(`✅ Final balanced content: ${balancedArticles.length} articles`);
+      return balancedArticles;
     }
     
     // If no articles, return fallback
