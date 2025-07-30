@@ -27,7 +27,7 @@ const isActualEarthquake = (text: string): boolean => {
   
   const searchText = text.toLowerCase().trim();
   
-  // EXCLUDE METAPHORICAL EARTHQUAKES
+  // EXCLUDE METAPHORICAL EARTHQUAKES - Enhanced detection
   const metaphoricalTerms = [
     'economic earthquake', 'political earthquake', 'financial earthquake', 'market earthquake',
     'business earthquake', 'corporate earthquake', 'industry earthquake', 'tech earthquake',
@@ -38,11 +38,30 @@ const isActualEarthquake = (text: string): boolean => {
     'startup earthquake', 'layoff earthquake', 'employment earthquake', 'job earthquake',
     'merger earthquake', 'acquisition earthquake', 'ipo earthquake', 'earnings earthquake',
     'revenue earthquake', 'profit earthquake', 'loss earthquake', 'debt earthquake',
-    'inflation earthquake', 'recession earthquake', 'boom earthquake', 'bubble earthquake'
+    'inflation earthquake', 'recession earthquake', 'boom earthquake', 'bubble earthquake',
+    // Additional specific patterns
+    'tcs layoff', 'layoffs announcement', 'cong expresses concern', 'congress expresses',
+    'economic', 'financial', 'business', 'corporate', 'political', 'social', 'cultural'
+  ];
+  
+  // Enhanced metaphorical detection - check for business/economic context
+  const businessContextTerms = [
+    'layoff', 'layoffs', 'job cuts', 'employment', 'hiring', 'firing', 'resignation',
+    'company', 'corporation', 'business', 'industry', 'market', 'stock', 'shares',
+    'revenue', 'profit', 'loss', 'earnings', 'financial', 'economic', 'budget',
+    'investment', 'merger', 'acquisition', 'ipo', 'startup', 'tech company',
+    'congress', 'political party', 'politician', 'government policy', 'election'
   ];
   
   // If any metaphorical term is found, it's NOT a real earthquake
   if (metaphoricalTerms.some(term => searchText.includes(term))) {
+    console.log(`🚫 BLOCKED metaphorical earthquake: "${text.substring(0, 100)}..."`);
+    return false;
+  }
+  
+  // Additional check: If it contains business context + "earthquake", it's likely metaphorical
+  if (searchText.includes('earthquake') && businessContextTerms.some(term => searchText.includes(term))) {
+    console.log(`🚫 BLOCKED business earthquake: "${text.substring(0, 100)}..."`);
     return false;
   }
   
@@ -822,9 +841,22 @@ export const fetchEarthquakeNews = async (): Promise<NewsArticle[]> => {
     // Apply content balancing
     const balancedArticles = balanceContent(uniqueArticles);
     
-    if (balancedArticles.length > 0) {
-      console.log(`✅ Final balanced content: ${balancedArticles.length} articles`);
-      return balancedArticles;
+    // FINAL SAFETY FILTER: Remove any metaphorical earthquakes that slipped through
+    const finalFilteredArticles = balancedArticles.filter(article => {
+      const fullText = `${article.title} ${article.description} ${article.content || ''}`;
+      
+      // For news articles, apply strict geological validation
+      if (article.type === 'news' && !isActualEarthquake(fullText)) {
+        console.log(`🚫 FINAL FILTER: Removed metaphorical earthquake: ${article.title}`);
+        return false;
+      }
+      
+      return true;
+    });
+    
+    if (finalFilteredArticles.length > 0) {
+      console.log(`✅ Final filtered content: ${finalFilteredArticles.length} articles (removed ${balancedArticles.length - finalFilteredArticles.length} metaphorical)`);
+      return finalFilteredArticles;
     }
     
     // If no articles, return fallback
@@ -842,37 +874,50 @@ export const fetchIndiaEarthquakes = async (): Promise<NewsArticle[]> => {
   try {
     const allNews = await fetchEarthquakeNews();
     
-    // ULTRA-STRICT FILTERING: Must pass both tests
+    // ULTRA-STRICT FILTERING: Ignore pre-set location tags, validate content directly
     const indiaNews = allNews.filter(article => {
       const fullText = `${article.title} ${article.description} ${article.content || ''}`;
       
-      // 1. Must be an actual earthquake (not metaphorical)
+      console.log(`🔍 Checking article: "${article.title}"`);
+      console.log(`📝 Full text: "${fullText.substring(0, 100)}..."`);
+      
+      // 1. Must be an actual earthquake (not metaphorical) - STRICT CHECK
       if (!isActualEarthquake(fullText)) {
-        console.log(`❌ Rejected non-geological: ${article.title}`);
+        console.log(`❌ REJECTED - Not geological earthquake: ${article.title}`);
         return false;
       }
       
-      // 2. Must be specifically about India (not Myanmar/Bangladesh/Pakistan)
+      // 2. Must be specifically about India (not Myanmar/Bangladesh/Pakistan) - STRICT CHECK
       if (!isAboutIndiaEarthquake(fullText)) {
-        console.log(`❌ Rejected non-India: ${article.title}`);
+        console.log(`❌ REJECTED - Not about India: ${article.title}`);
         return false;
       }
       
-      console.log(`✅ Accepted India earthquake: ${article.title}`);
+      console.log(`✅ ACCEPTED - Valid India earthquake: ${article.title}`);
       return true;
     });
     
-    console.log(`🇮🇳 India-specific earthquake articles: ${indiaNews.length}`);
+    console.log(`🇮🇳 Final India-specific earthquake articles: ${indiaNews.length}`);
     
-    // If no India-specific earthquakes, return India fallback
+    // If no India-specific earthquakes, return India fallback (but validate these too)
     if (indiaNews.length === 0) {
-      return getFallbackNews().filter(item => item.location?.country === 'India');
+      const fallbackNews = getFallbackNews().filter(item => {
+        const fullText = `${item.title} ${item.description} ${item.content || ''}`;
+        return item.location?.country === 'India' && isActualEarthquake(fullText);
+      });
+      console.log(`🔄 Using ${fallbackNews.length} validated fallback articles`);
+      return fallbackNews;
     }
     
     return indiaNews;
   } catch (error) {
     console.error('Error fetching India earthquakes:', error);
-    return getFallbackNews().filter(item => item.location?.country === 'India');
+    // Even fallback should be validated
+    const fallbackNews = getFallbackNews().filter(item => {
+      const fullText = `${item.title} ${item.description} ${item.content || ''}`;
+      return item.location?.country === 'India' && isActualEarthquake(fullText);
+    });
+    return fallbackNews;
   }
 };
 
